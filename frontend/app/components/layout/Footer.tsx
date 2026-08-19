@@ -11,7 +11,7 @@ export default function Footer() {
       <div className="grid grid-cols-1 lg:grid-cols-[65fr_35fr] w-full min-h-[360px]">
         
         {/* Lado Izquierdo: Fondo azul marino con padding responsivo fluido y centrado flexible */}
-        <div className="bg-[#111c38] text-white py-16 px-6 sm:px-12 lg:px-16 xl:px-24 flex justify-end lg:justify-center items-center">
+        <div className="bg-[#16275d] text-white py-16 px-6 sm:px-12 lg:px-16 xl:px-24 flex justify-end lg:justify-center items-center">
           <div className="w-full max-w-md flex flex-col items-center lg:items-start text-center lg:text-left space-y-5">
             
             {/* Logotipo limpio sin fondo */}
@@ -65,7 +65,7 @@ export default function Footer() {
         </div>
 
         {/* Lado Derecho: Fondo celeste claro */}
-        <div className="bg-[#78b7e6] text-[#111c38] py-16 px-6 hidden lg:flex justify-start">
+        <div className="bg-[#6eb5ec] text-[#111c38] py-16 px-6 hidden lg:flex justify-start">
           {/* Espacio reservado para mantener la proporción de la rejilla */}
         </div>
 
@@ -110,7 +110,7 @@ export default function Footer() {
       </div>
 
       {/* Versión móvil de la tarjeta enlazada */}
-      <div className="flex lg:hidden bg-[#78b7e6] py-10 px-6 justify-center">
+      <div className="flex lg:hidden bg-[#6eb5ec] py-10 px-6 justify-center">
         <a 
           href="https://goo.gl/maps/ahsmdcemEqraWJQE6" 
           target="_blank" 

@@ -1,13 +1,51 @@
 @import "tailwindcss";
 
-/* Definición de la fuente Open Sans para que esté disponible */
+/* ==========================================
+   Configuración Base y Fuentes
+   ========================================== */
 @layer base {
   body {
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Open Sans', 'Noto Sans JP', sans-serif;
   }
 }
 
-/* Opcional: si prefieres una clase de utilidad limpia para usar donde la necesites */
 .font-opensans {
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Open Sans', 'Noto Sans JP', sans-serif;
+}
+
+/* ==========================================
+   Scrollbar Oculta Automáticamente y Minimalista (#16275d)
+   ========================================== */
+
+/* 1. Para Firefox */
+* {
+  scrollbar-width: none; /* Oculta por defecto en Firefox */
+}
+*:hover {
+  scrollbar-width: thin; /* Aparece delgada al pasar el cursor */
+  scrollbar-color: #16275d transparent;
+}
+
+/* 2. Para Webkit (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* El thumb es totalmente transparente (invisible) por defecto */
+::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  background-clip: content-box;
+  transition: background-color 0.3s ease;
+}
+
+/* Al hacer hover sobre la ventana/documento o el scrollbar, toma el color institucional #16275d */
+:hover::-webkit-scrollbar-thumb {
+  background-color: #16275d;
 }

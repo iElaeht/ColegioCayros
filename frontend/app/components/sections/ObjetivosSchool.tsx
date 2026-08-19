@@ -2,19 +2,8 @@
 
 import { useState, useCallback } from "react";
 
-/**
- * ObjetivosSection
- * Sección institucional de objetivos, con marcador de color por tarjeta
- * y una micro-interacción de foco/hover para reforzar jerarquía visual.
- *
- * Colores de marcador tomados de la identidad institucional:
- * - accent-red:    #C0392B
- * - accent-blue:   #6FA8DC
- * - accent-yellow: #F1C40F
- * - ink (título):  #1B2A4A
- */
-
 type Accent = "red" | "blue" | "yellow";
+type TabType = "mision" | "vision" | "objetivos";
 
 interface Objetivo {
   id: string;
@@ -102,36 +91,140 @@ function ObjetivoCard({
   );
 }
 
-export default function ObjetivosSection() {
+export default function MisionVisionObjetivosSection() {
+  const [activeTab, setActiveTab] = useState<TabType>("mision");
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const handleFocus = useCallback((id: string) => setActiveId(id), []);
   const handleBlur = useCallback(() => setActiveId(null), []);
 
   return (
-    <section className="w-full bg-white px-6 py-40 sm:px-10 lg:px-16">
+    <section className="w-full bg-white px-6 py-28 sm:px-10 lg:px-16">
       <div className="mx-auto max-w-5xl">
-        <div className="mb-14 flex items-center gap-3">
-          <span
-            aria-hidden="true"
-            className="h-3.5 w-3.5 flex-shrink-0 rounded-[2px] bg-yellow-400"
-          />
-          <h2 className="text-2xl font-bold tracking-tight text-[#1B2A4A] sm:text-3xl">
-            Objetivos
+        
+        {/* Encabezado Principal */}
+        <div className="mb-10 text-center">
+          <span className="text-xs font-bold tracking-[0.2em] text-[#78b7e6] uppercase">
+            Nuestra Identidad
+          </span>
+          <h2 className="mt-2 text-2xl font-bold tracking-tight text-[#1B2A4A] sm:text-3xl">
+            Misión, Visión y Objetivos
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 gap-x-16 gap-y-12 md:grid-cols-2">
-          {OBJETIVOS.map((objetivo) => (
-            <ObjetivoCard
-              key={objetivo.id}
-              objetivo={objetivo}
-              isActive={activeId === objetivo.id}
-              onFocus={() => handleFocus(objetivo.id)}
-              onBlur={handleBlur}
-            />
-          ))}
+        {/* Sistema de Pestañas Minimalista con Línea Inferior (Opción 2) */}
+        <div className="mb-12 flex justify-center">
+          <div className="inline-flex rounded-2xl bg-slate-100 p-1.5 shadow-inner">
+            
+            <button
+              onClick={() => setActiveTab("mision")}
+              className={`relative px-8 py-3 text-sm font-bold uppercase tracking-wider transition-colors duration-200 rounded-xl ${
+                activeTab === "mision"
+                  ? "text-[#1B2A4A] bg-white shadow-sm"
+                  : "text-slate-500 hover:text-[#1B2A4A]"
+              }`}
+            >
+              Misión
+              {activeTab === "mision" && (
+                <span className="absolute bottom-0 left-3 right-3 h-[3px] bg-[#1B2A4A] rounded-full" />
+              )}
+            </button>
+
+            <button
+              onClick={() => setActiveTab("vision")}
+              className={`relative px-8 py-3 text-sm font-bold uppercase tracking-wider transition-colors duration-200 rounded-xl ${
+                activeTab === "vision"
+                  ? "text-[#1B2A4A] bg-white shadow-sm"
+                  : "text-slate-500 hover:text-[#1B2A4A]"
+              }`}
+            >
+              Visión
+              {activeTab === "vision" && (
+                <span className="absolute bottom-0 left-3 right-3 h-[3px] bg-[#1B2A4A] rounded-full" />
+              )}
+            </button>
+
+            <button
+              onClick={() => setActiveTab("objetivos")}
+              className={`relative px-8 py-3 text-sm font-bold uppercase tracking-wider transition-colors duration-200 rounded-xl ${
+                activeTab === "objetivos"
+                  ? "text-[#1B2A4A] bg-white shadow-sm"
+                  : "text-slate-500 hover:text-[#1B2A4A]"
+              }`}
+            >
+              Objetivos
+              {activeTab === "objetivos" && (
+                <span className="absolute bottom-0 left-3 right-3 h-[3px] bg-[#1B2A4A] rounded-full" />
+              )}
+            </button>
+
+          </div>
         </div>
+
+        {/* Contenido Dinámico según la pestaña seleccionada */}
+        <div className="rounded-3xl border border-slate-100 bg-slate-50/50 p-8 sm:p-12 shadow-sm transition-all duration-300">
+          
+          {/* 1. MISIÓN */}
+          {activeTab === "mision" && (
+            <div className="max-w-3xl mx-auto text-center space-y-4 animate-fadeIn">
+              <span
+                aria-hidden="true"
+                className="mx-auto block h-3.5 w-3.5 rounded-[2px] bg-yellow-400"
+              />
+              <h3 className="text-xl font-bold text-[#1B2A4A] sm:text-2xl">
+                Nuestra Misión
+              </h3>
+              <p className="text-base leading-relaxed text-slate-700 sm:text-lg">
+                Brindar una educación integral de alta calidad, promoviendo valores éticos, cristianos y ambientales, formando personas íntegras, críticas y competitivas capaces de aportar positivamente a la sociedad con liderazgo y vocación de servicio.
+              </p>
+            </div>
+          )}
+
+          {/* 2. VISIÓN */}
+          {activeTab === "vision" && (
+            <div className="max-w-3xl mx-auto text-center space-y-4 animate-fadeIn">
+              <span
+                aria-hidden="true"
+                className="mx-auto block h-3.5 w-3.5 rounded-[2px] bg-yellow-400"
+              />
+              <h3 className="text-xl font-bold text-[#1B2A4A] sm:text-2xl">
+                Nuestra Visión
+              </h3>
+              <p className="text-base leading-relaxed text-slate-700 sm:text-lg">
+                Ser una institución educativa líder en la región Ica, reconocida por su excelencia académica, innovación pedagógica y su firme compromiso con la sostenibilidad ambiental y la formación en valores de nuestra comunidad estudiantil.
+              </p>
+            </div>
+          )}
+
+          {/* 3. OBJETIVOS */}
+          {activeTab === "objetivos" && (
+            <div className="space-y-8 animate-fadeIn">
+              <div className="flex items-center gap-3">
+                <span
+                  aria-hidden="true"
+                  className="h-3.5 w-3.5 flex-shrink-0 rounded-[2px] bg-yellow-400"
+                />
+                <h3 className="text-xl font-bold tracking-tight text-[#1B2A4A] sm:text-2xl">
+                  Objetivos Institucionales
+                </h3>
+              </div>
+
+              <div className="grid grid-cols-1 gap-x-16 gap-y-12 md:grid-cols-2">
+                {OBJETIVOS.map((objetivo) => (
+                  <ObjetivoCard
+                    key={objetivo.id}
+                    objetivo={objetivo}
+                    isActive={activeId === objetivo.id}
+                    onFocus={() => handleFocus(objetivo.id)}
+                    onBlur={handleBlur}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+        </div>
+
       </div>
     </section>
   );

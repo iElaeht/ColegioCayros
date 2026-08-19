@@ -7,15 +7,15 @@ const levels = [
   {
     id: "inicial",
     title: "INICIAL",
-    bgColor: "bg-[#FACC15]",
-    textColor: "text-white",
+    bgColor: "bg-[#f8de32]",
+    textColor: "text-[#16275d]", // Ajustado para contraste
     image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=800&auto=format&fit=crop",
     videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
   },
   {
     id: "primaria",
     title: "PRIMARIA",
-    bgColor: "bg-[#60A5FA]",
+    bgColor: "bg-[#6eb5ec]",
     textColor: "text-white",
     image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=800&auto=format&fit=crop",
     videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
@@ -23,7 +23,7 @@ const levels = [
   {
     id: "secundaria",
     title: "SECUNDARIA",
-    bgColor: "bg-[#111c38]",
+    bgColor: "bg-[#16275d]",
     textColor: "text-white",
     image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
     videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
@@ -37,11 +37,11 @@ export default function EducationalLevels() {
     <section id="Levels" className="w-full bg-white px-6 py-44 sm:px-10 lg:px-16">
       <div className="mx-auto max-w-5xl">
         
-        {/* Cabecera alineada y ajustada */}
+        {/* Cabecera */}
         <div className="mb-16 flex flex-col items-start">
           <div className="flex items-center gap-3 mb-3">
-            <span aria-hidden="true" className="h-3.5 w-3.5 flex-shrink-0 rounded-[2px] bg-yellow-400" />
-            <h2 className="text-2xl font-bold tracking-tight text-[#111c38] sm:text-3xl">
+            <span aria-hidden="true" className="h-3.5 w-3.5 flex-shrink-0 rounded-[2px] bg-[#f8de32]" />
+            <h2 className="text-2xl font-bold tracking-tight text-[#16275d] sm:text-3xl">
               Niveles Educativos
             </h2>
           </div>
@@ -82,7 +82,7 @@ export default function EducationalLevels() {
                   <svg xmlns="http://www.w3.org/2000/svg" width="13" height="15" viewBox="0 0 15 17" fill="none">
                     <path 
                       d="M15 8.55909L0.450607 16.5774L0.450608 0.540815L15 8.55909Z" 
-                      fill="#34498B"
+                      fill="#16275d"
                       className="opacity-40 transition-opacity duration-300 group-hover:opacity-100"
                     />
                   </svg>
@@ -100,7 +100,7 @@ export default function EducationalLevels() {
           <div className="relative w-full max-w-4xl bg-black rounded-xl overflow-hidden shadow-2xl border border-white/10 aspect-video">
             <button
               onClick={() => setActiveVideo(null)}
-              className="absolute top-4 right-4 z-50 bg-black/60 hover:bg-yellow-400 hover:text-black text-white w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer font-bold shadow"
+              className="absolute top-4 right-4 z-50 bg-black/60 hover:bg-[#f8de32] hover:text-[#16275d] text-white w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer font-bold shadow"
               aria-label="Cerrar video"
             >
               ✕
