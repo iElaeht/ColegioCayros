@@ -1,0 +1,41 @@
+// ==========================================
+// CONFIGURACIÓN DE PRISMA Y BASE DE DATOS
+// ==========================================
+
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ==========================================
+// MODELOS / TABLAS DE PRUEBA
+// ==========================================
+
+model MensajeContacto {
+  id        String   @id @default(uuid())
+  dni       String
+  nombre    String
+  telefono  String
+  asunto    String
+  fecha     DateTime @default(now())
+}
+
+
+// ==========================================
+// 💡 COMANDOS ÚTILES DE PRISMA (REFERENCIA)
+// ==========================================
+// 
+// 1. Crear y aplicar una migración (cada vez que cambies el schema):
+//    npx prisma migrate dev --name nombre_de_la_migracion
+//
+// 2. Abrir Prisma Studio (interfaz gráfica web para ver tus datos en local):
+//    npx prisma studio
+//
+// 3. Sincronizar la base de datos sin crear archivos de migración (solo desarrollo rápido):
+//    npx prisma db push
+//
+// 4. Regenerar el cliente de Prisma (si actualizas el schema y Node da error de tipos):
+//    npx prisma generate
