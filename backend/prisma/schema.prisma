@@ -11,18 +11,34 @@ generator client {
 }
 
 // ==========================================
-// MODELOS / TABLAS DE PRUEBA
+// MODELOS / TABLAS
 // ==========================================
 
 model MensajeContacto {
-  id        String   @id @default(uuid())
-  dni       String
-  nombre    String
-  telefono  String
-  asunto    String
-  fecha     DateTime @default(now())
+  id       String   @id @default(uuid())
+  dni      String
+  nombre   String
+  telefono String
+  asunto   String
+  fecha    DateTime @default(now())
 }
 
+model Usuario {
+  id       Int    @id @default(autoincrement())
+  usuario  String
+  password String
+  dni      String @unique
+}
+
+model Galeria {
+  id        Int      @id @default(autoincrement())
+  src       String   @db.Text
+  alt       String   
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("galeria")
+}
 
 // ==========================================
 // 💡 COMANDOS ÚTILES DE PRISMA (REFERENCIA)

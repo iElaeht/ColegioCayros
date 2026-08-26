@@ -1,5 +1,53 @@
-node_modules
-# Keep environment variables out of version control
-.env
+# =================( DEPENDENCIAS )=================
+node_modules/
+jspm_packages/
 
-/generated/prisma
+# =================( VARIABLES DE ENTORNO )=================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# =================( ARCHIVOS MULTIMEDIA / UPLOADS )=================
+# Evita subir las imágenes que los usuarios suben al servidor
+uploads/
+
+# =================( COMPILACIÓN Y BUILD )=================
+dist/
+build/
+*.tsbuildinfo
+
+# =================( PRISMA )=================
+/generated/prisma/
+# Nota: Si decides usar 'prisma db push' y no quieres versionar las migraciones locales, 
+# puedes descomentar la siguiente línea:
+# prisma/migrations/
+
+# =================( LOGS Y TEMPORALES )=================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.npm
+.eslintcache
+
+# =================( SISTEMA OPERATIVO )=================
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# =================( EDITORES E IDEs / IA )=================
+.vscode/
+.idea/
+*.suo
+*.swp
+*.swo
+
+# Carpetas de herramientas de IA / asistentes visibles en tu estructura
+.claude/
+.windsurf/
+.agents/
