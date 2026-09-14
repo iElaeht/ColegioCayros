@@ -1,34 +1,183 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import useEmblaCarousel from "embla-carousel-react";
-import { ChevronLeft, ChevronRight, Play, X, ExternalLink } from "lucide-react";
+import Image from "next/image";
+import { ChevronLeft, ChevronRight, Play, X, ExternalLink, Video as VideoIcon, Music2 } from "lucide-react";
 
-// Lista con los videos restantes
-const videoList = [
-  "FBkVZYphD9A",
-  "QusCmzU7PRA",
-  "OZ9rEkyb47I",
-  "cS9HV5MAhA4",
-  "CnY3kYtgfnQ",
-  "eAtwz9gUKWc",
-  "fJlHGsfwS8o",
-  "4NN8Q6_hCyI",
-  "vRj48gQiU0U"
-].map((id, index) => ({
-  id: index + 1,
-  videoId: id,
-  thumbnail: `https://img.youtube.com/vi/${id}/hq720.jpg`,
-  fallbackThumbnail: `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
-  videoUrl: `https://www.youtube.com/embed/${id}`
-}));
+interface VideoItem {
+  id: number;
+  src: string;
+  alt: string;
+  isActive: boolean;
+  isFeatured?: boolean;
+  createdAt?: string;
+}
+
+const tiktokThumbnailCache: Record<string, string> = {};
+
+function VideoCard({ video, onSelectVideo }: { video: VideoItem; onSelectVideo: (data: { src: string; isEmbed: boolean; isTikTok: boolean }) => void }) {
+  const isHttp = video.src.startsWith("http");
+  const fullUrl = isHttp ? video.src : `http://localhost:4000${video.src}`;
+  const isTikTok = video.src.includes("tiktok.com");
+
+  let initialThumbnail = "";
+  let embedUrl = fullUrl;
+  let isEmbed = true;
+
+  if (isTikTok) {
+    initialThumbnail = tiktokThumbnailCache[fullUrl] || "";
+  } else if (video.src.includes("youtube.com") || video.src.includes("youtu.be")) {
+    let videoId = "";
+    if (video.src.includes("youtu.be/")) {
+      videoId = video.src.split("youtu.be/")[1]?.split("?")[0];
+    } else if (video.src.includes("watch?v=")) {
+      videoId = video.src.split("watch?v=")[1]?.split("&")[0];
+    } else if (video.src.includes("embed/")) {
+      videoId = video.src.split("embed/")[1]?.split("?")[0];
+    }
+
+    if (videoId) {
+      initialThumbnail = `https://img.youtube.com/vi/${videoId}/hq720.jpg`;
+      embedUrl = `https://www.youtube.com/embed/${videoId}`;
+    }
+  } else if (!isHttp && video.src.match(/\.(mp4|webm|ogg|mov)$/i)) {
+    isEmbed = false;
+  }
+
+  const [tiktokThumb, setTiktokThumb] = useState(initialThumbnail);
+
+  useEffect(() => {
+    if (isTikTok && !tiktokThumb && !tiktokThumbnailCache[fullUrl]) {
+      fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(fullUrl)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.thumbnail_url) {
+            tiktokThumbnailCache[fullUrl] = data.thumbnail_url;
+            setTiktokThumb(data.thumbnail_url);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [isTikTok, fullUrl, tiktokThumb]);
+
+  const activeThumb = tiktokThumb || initialThumbnail;
+
+  return (
+    <div className="flex-[0_0_100%] sm:flex-[0_0_50%] md:flex-[0_0_33.333%] min-w-0 pl-6">
+      <div 
+        onClick={() => onSelectVideo({ src: embedUrl, isEmbed, isTikTok })}
+        className="relative aspect-[16/10] w-full rounded-xl overflow-hidden bg-slate-900 cursor-pointer group/item shadow-sm hover:shadow-lg transition-all flex items-center justify-center border border-slate-100"
+      >
+        {activeThumb ? (
+          <Image 
+            src={activeThumb} 
+            alt={video.alt || "Video institucional"} 
+            fill
+            unoptimized
+            className="object-cover" 
+          />
+        ) : isTikTok ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black text-white p-4 text-center">
+            <Music2 className="w-10 h-10 text-pink-500 mb-1.5 shrink-0 animate-pulse" />
+            <span className="text-xs font-bold text-white line-clamp-2">{video.alt || "TikTok Video"}</span>
+          </div>
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 text-slate-300 p-4 text-center">
+            <VideoIcon className="w-10 h-10 text-yellow-400 mb-1.5 shrink-0" />
+            <span className="text-xs font-semibold text-slate-200 line-clamp-2">{video.alt || "Enlace Externo"}</span>
+          </div>
+        )}
+
+        <div className="absolute inset-0 bg-[#1B2A4A]/40 opacity-0 group-hover/item:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+            <Play className="w-12 h-12 text-white fill-current drop-shadow-md" />
+        </div>
+      </div>
+      <p className="text-xs font-semibold text-slate-700 mt-2 truncate px-1">{video.alt}</p>
+    </div>
+  );
+}
+
+function TikTokPlayer({ url }: { url: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    if (containerRef.current) {
+      containerRef.current.innerHTML = "";
+    }
+
+    const blockquote = document.createElement("blockquote");
+    blockquote.className = "tiktok-embed";
+    blockquote.setAttribute("cite", url);
+    blockquote.setAttribute("data-video-id", url.split("/video/")[1]?.split("?")[0] || "");
+    blockquote.style.width = "100%";
+    blockquote.style.maxWidth = "325px";
+    blockquote.style.minWidth = "250px";
+    blockquote.style.height = "100%";
+    blockquote.style.margin = "0 auto";
+
+    const section = document.createElement("section");
+    const a = document.createElement("a");
+    a.target = "_blank";
+    a.href = url;
+    section.appendChild(a);
+    blockquote.appendChild(section);
+
+    if (containerRef.current && isMounted) {
+      containerRef.current.appendChild(blockquote);
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://www.tiktok.com/embed.js";
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      isMounted = false;
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+    };
+  }, [url]);
+
+  return (
+    <div className="relative w-full max-w-[325px] h-[75vh] max-h-[600px] min-h-[450px] overflow-y-auto overflow-x-hidden rounded-2xl flex justify-center bg-transparent">
+      <div ref={containerRef} className="w-full h-full flex justify-center" />
+    </div>
+  );
+}
 
 export default function SchoolVideos() {
+  const [videos, setVideos] = useState<VideoItem[]>([]);
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false, align: 'start' });
-  const [selectedVideo, setSelectedVideo] = useState<{ videoUrl: string } | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<{ src: string; isEmbed: boolean; isTikTok: boolean } | null>(null);
 
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchPublicVideos = async () => {
+      try {
+        const res = await fetch("http://localhost:4000/api/videos?soloActivas=true&soloDestacadas=true");
+        if (!res.ok) throw new Error("Error al obtener los videos públicos");
+        const data = await res.json();
+        
+        if (isMounted && Array.isArray(data)) {
+          setVideos(data);
+        }
+      } catch (error) {
+        console.error("Error al cargar los videos para la web:", error);
+      }
+    };
+
+    fetchPublicVideos();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi]);
   const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi]);
@@ -68,75 +217,91 @@ export default function SchoolVideos() {
           </p>
         </div>
 
-        <div className="w-full relative group">
-          <button
-            onClick={scrollPrev}
-            disabled={!canScrollPrev}
-            className="absolute -left-12 top-1/2 -translate-y-1/2 z-20 bg-[#1B2A4A] hover:bg-yellow-400 text-white p-2.5 rounded-full shadow-lg transition-all duration-300 opacity-0 group-hover:opacity-100 disabled:opacity-0 disabled:cursor-default"
-          >
-            <ChevronLeft className="w-5 h-5 stroke-[3]" />
-          </button>
+        {videos.length === 0 ? (
+          <div className="w-full rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-12 text-center flex flex-col items-center justify-center">
+            <div className="w-14 h-14 rounded-full bg-[#1B2A4A] flex items-center justify-center text-white mb-4 shadow-sm">
+              <VideoIcon className="w-7 h-7" />
+            </div>
+            <h3 className="text-lg font-bold text-[#1B2A4A] mb-1">Sección de Videos</h3>
+            <p className="text-sm text-slate-500 max-w-sm mx-auto">
+              Próximamente contenido disponible.
+            </p>
+          </div>
+        ) : (
+          <div className="w-full relative group">
+            <button
+              onClick={scrollPrev}
+              disabled={!canScrollPrev}
+              className="absolute -left-12 top-1/2 -translate-y-1/2 z-20 bg-[#1B2A4A] hover:bg-yellow-400 text-white p-2.5 rounded-full shadow-lg transition-all duration-300 opacity-0 group-hover:opacity-100 disabled:opacity-0 disabled:cursor-default"
+            >
+              <ChevronLeft className="w-5 h-5 stroke-[3]" />
+            </button>
 
-          <div className="overflow-hidden cursor-grab" ref={emblaRef}>
-            <div className="flex -ml-6">
-              {videoList.map((video) => (
-                <div className="flex-[0_0_100%] sm:flex-[0_0_50%] md:flex-[0_0_33.333%] min-w-0 pl-6" key={video.id}>
-                  <div 
-                    onClick={() => setSelectedVideo({ videoUrl: video.videoUrl })}
-                    className="relative aspect-[16/10] w-full rounded-xl overflow-hidden bg-slate-100 cursor-pointer group/item shadow-sm hover:shadow-lg transition-all"
+            <div className="overflow-hidden cursor-grab" ref={emblaRef}>
+              <div className="flex -ml-6">
+                {videos.map((video) => (
+                  <VideoCard key={video.id} video={video} onSelectVideo={setSelectedVideo} />
+                ))}
+
+                <div className="flex-[0_0_100%] sm:flex-[0_0_50%] md:flex-[0_0_33.333%] min-w-0 pl-6">
+                  <a
+                    href="https://www.youtube.com/@ColegioCayrosOficial"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group/card relative aspect-[16/10] w-full rounded-xl overflow-hidden bg-[#16275d] border-2 border-dashed border-[#16275d]/20 hover:border-yellow-400 p-6 flex flex-col items-center justify-center text-center transition-all duration-300 shadow-sm"
                   >
-                    <img src={video.thumbnail} alt="Video" className="absolute inset-0 w-full h-full object-cover" onError={(e) => (e.target as HTMLImageElement).src = video.fallbackThumbnail} />
-                    <div className="absolute inset-0 bg-[#1B2A4A]/40 opacity-0 group-hover/item:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                        <Play className="w-12 h-12 text-white fill-current drop-shadow-md" />
+                    <div className="w-12 h-12 rounded-full bg-white/10 group-hover/card:bg-yellow-400 flex items-center justify-center text-white group-hover/card:text-[#16275d] transition-all duration-300 mb-3">
+                      <ExternalLink className="w-6 h-6" />
                     </div>
-                  </div>
+                    <h3 className="text-base font-bold text-white mb-1">Más videos</h3>
+                    <p className="text-xs text-white/70 max-w-[200px]">Visita nuestro canal oficial de YouTube.</p>
+                  </a>
                 </div>
-              ))}
-
-              <div className="flex-[0_0_100%] sm:flex-[0_0_50%] md:flex-[0_0_33.333%] min-w-0 pl-6">
-                <a
-                  href="https://www.youtube.com/@ColegioCayrosOficial"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group/card relative aspect-[16/10] w-full rounded-xl overflow-hidden bg-[#16275d] border-2 border-dashed border-[#16275d]/20 hover:border-yellow-400 p-6 flex flex-col items-center justify-center text-center transition-all duration-300"
-                >
-                  <div className="w-12 h-12 rounded-full bg-white/10 group-hover/card:bg-yellow-400 flex items-center justify-center text-white group-hover/card:text-[#16275d] transition-all duration-300 mb-3">
-                    <ExternalLink className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-base font-bold text-white mb-1">Más videos</h3>
-                  <p className="text-xs text-white/70 max-w-[200px]">Visita nuestro canal oficial de YouTube.</p>
-                </a>
               </div>
             </div>
-          </div>
 
-          <button
-            onClick={scrollNext}
-            disabled={!canScrollNext}
-            className="absolute -right-12 top-1/2 -translate-y-1/2 z-20 bg-[#1B2A4A] hover:bg-yellow-400 text-white p-2.5 rounded-full shadow-lg transition-all duration-300 opacity-0 group-hover:opacity-100 disabled:opacity-0 disabled:cursor-default"
-          >
-            <ChevronRight className="w-5 h-5 stroke-[3]" />
-          </button>
-        </div>
+            <button
+              onClick={scrollNext}
+              disabled={!canScrollNext}
+              className="absolute -right-12 top-1/2 -translate-y-1/2 z-20 bg-[#1B2A4A] hover:bg-yellow-400 text-white p-2.5 rounded-full shadow-lg transition-all duration-300 opacity-0 group-hover:opacity-100 disabled:opacity-0 disabled:cursor-default"
+            >
+              <ChevronRight className="w-5 h-5 stroke-[3]" />
+            </button>
+          </div>
+        )}
       </div>
 
       {selectedVideo && (
-        <div onClick={() => setSelectedVideo(null)} className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-6 cursor-pointer">
-          <div onClick={(e) => e.stopPropagation()} className="relative w-full max-w-5xl cursor-default">
+        <div onClick={() => setSelectedVideo(null)} className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-3 sm:p-4 cursor-pointer overflow-y-auto">
+          <div onClick={(e) => e.stopPropagation()} className="relative cursor-default flex items-center justify-center w-full max-w-4xl my-auto">
             <button 
                 onClick={() => setSelectedVideo(null)} 
-                className="absolute -top-12 right-0 text-white hover:text-yellow-400 transition-colors"
+                className="absolute -top-10 sm:-top-12 right-0 z-50 text-white/70 hover:text-white transition-colors cursor-pointer p-1"
             >
-              <X className="w-8 h-8 stroke-[2]" />
+              <X className="w-7 h-7 stroke-[2.5]" />
             </button>
-            <div className="w-full aspect-video rounded-xl overflow-hidden shadow-2xl bg-black">
-              <iframe 
-                src={`${selectedVideo.videoUrl}?autoplay=1&rel=0&modestbranding=1`} 
-                className="w-full h-full" 
-                allow="autoplay; encrypted-media" 
-                allowFullScreen 
-              />
-            </div>
+
+            {selectedVideo.isTikTok ? (
+              <TikTokPlayer url={selectedVideo.src} />
+            ) : (
+              <div className="w-full aspect-video max-h-[80vh] rounded-2xl overflow-hidden shadow-2xl bg-black flex items-center justify-center">
+                {selectedVideo.isEmbed ? (
+                  <iframe 
+                    src={`${selectedVideo.src}${selectedVideo.src.includes('?') ? '&' : '?'}autoplay=1&rel=0&modestbranding=1`} 
+                    className="w-full h-full border-0" 
+                    allow="autoplay; encrypted-media; picture-in-picture" 
+                    allowFullScreen 
+                  />
+                ) : (
+                  <video 
+                    src={selectedVideo.src} 
+                    className="w-full h-full object-contain" 
+                    controls 
+                    autoPlay 
+                  />
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

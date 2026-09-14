@@ -1,4 +1,3 @@
-// backend/routes/galeria.routes.ts
 import { Router, Request, Response } from "express";
 import { prisma } from "../db";
 import multer from "multer";
@@ -7,13 +6,11 @@ import fs from "fs";
 
 const router = Router();
 
-// Asegurar que la carpeta física 'uploads' exista en la raíz del backend
-const uploadDir = path.join(__dirname, '../uploads/galeria');
+const uploadDir = path.join(__dirname, "../uploads/galeria");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Función auxiliar para limpiar el texto y convertirlo en formato seguro (slug)
 const slugify = (text: string) => {
   return text
     .toString()
@@ -26,7 +23,6 @@ const slugify = (text: string) => {
     .substring(0, 30);
 };
 
-// Función auxiliar para eliminar un archivo físico del servidor de forma segura
 const deletePhysicalFile = (srcPath: string) => {
   if (srcPath && srcPath.startsWith("/api/galeria/image/")) {
     const filename = path.basename(srcPath);
@@ -34,7 +30,6 @@ const deletePhysicalFile = (srcPath: string) => {
     if (fs.existsSync(filePath)) {
       try {
         fs.unlinkSync(filePath);
-        console.log(`Archivo físico eliminado: ${filename}`);
       } catch (err) {
         console.error(`Error al eliminar archivo físico ${filename}:`, err);
       }
@@ -42,7 +37,6 @@ const deletePhysicalFile = (srcPath: string) => {
   }
 };
 
-// Configuración de Multer: Estructura [Titulo] - [Fecha actual de subida] - [Random]
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadDir);
@@ -50,15 +44,10 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => {
     const rawAlt = req.body.alt ? req.body.alt.trim() : "";
     const cleanAlt = rawAlt ? slugify(rawAlt) : "sin-titulo";
-
-    // Fecha actual del servidor (Ej: 20260825)
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
     const ext = path.extname(file.originalname).toLowerCase();
-
-    // Estructura limpia sin la palabra "galeria" al inicio
     const filename = `${cleanAlt}-${dateStr}-${randomSuffix}${ext}`;
-
     cb(null, filename);
   },
 });
@@ -68,23 +57,34 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|webp|avif/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const extname = allowedTypes.test(
+      path.extname(file.originalname).toLowerCase(),
+    );
     const mimetype = allowedTypes.test(file.mimetype);
     if (extname && mimetype) {
       return cb(null, true);
     }
-    cb(new Error("Solo se permiten archivos de imagen válidos (png, jpg, jpeg, webp)"));
+    cb(
+      new Error(
+        "Solo se permiten archivos de imagen válidos (png, jpg, jpeg, webp)",
+      ),
+    );
   },
 });
 
-// 1. GET: Listar imágenes
 router.get("/", async (req: Request, res: Response) => {
   try {
-    const { soloActivas } = req.query;
+    const { soloActivas, soloDestacadas, limit } = req.query;
+
     const images = await prisma.galeria.findMany({
-      where: soloActivas === "true" ? { isActive: true } : undefined,
-      orderBy: { id: "desc" },
+      where: {
+        ...(soloActivas === "true" && { isActive: true }),
+        ...(soloDestacadas === "true" && { isFeatured: true }),
+      },
+      orderBy: soloDestacadas === "true" ? { order: "asc" } : { id: "desc" },
+      ...(limit ? { take: Number(limit) } : {}),
     });
+
     res.json(images);
   } catch (error) {
     console.error("Error al obtener galería:", error);
@@ -92,7 +92,6 @@ router.get("/", async (req: Request, res: Response) => {
   }
 });
 
-// 2. GET: Servir la imagen
 router.get("/image/:filename", (req: Request, res: Response) => {
   const filename = req.params.filename as string;
   const filePath = path.join(uploadDir, filename);
@@ -103,119 +102,182 @@ router.get("/image/:filename", (req: Request, res: Response) => {
   }
 });
 
-// 3. POST: Crear nueva imagen
-router.post("/", upload.single("imageFile"), async (req: Request, res: Response) => {
+router.post(
+  "/",
+  upload.single("imageFile"),
+  async (req: Request, res: Response) => {
+    try {
+      const rawAlt = req.body.alt;
+      const rawImageUrl = req.body.imageUrl;
+
+      const alt = rawAlt ? rawAlt.trim() : "";
+      const imageUrl = rawImageUrl ? rawImageUrl.trim() : "";
+
+      let finalSrc = "";
+
+      if (req.file) {
+        finalSrc = `/api/galeria/image/${req.file.filename}`;
+      } else if (imageUrl) {
+        finalSrc = imageUrl;
+      } else {
+        return res
+          .status(400)
+          .json({
+            error: "Debe subir un archivo de imagen o proporcionar una URL",
+          });
+      }
+
+      if (!alt) {
+        return res
+          .status(400)
+          .json({ error: "El título o descripción (alt) es obligatorio" });
+      }
+
+      const newImage = await prisma.galeria.create({
+        data: {
+          src: finalSrc,
+          alt,
+          isActive: true,
+          isFeatured:
+            req.body.isFeatured === "true" || req.body.isFeatured === true,
+          order: req.body.order ? Number(req.body.order) : 0,
+        },
+      });
+
+      res.status(201).json(newImage);
+    } catch (error: any) {
+      console.error("Error al registrar imagen:", error);
+      res
+        .status(500)
+        .json({ error: error.message || "Error al registrar la imagen" });
+    }
+  },
+);
+
+router.put("/featured", async (req: Request, res: Response) => {
   try {
-    const rawAlt = req.body.alt;
-    const rawImageUrl = req.body.imageUrl;
+    const { featuredIds } = req.body;
 
-    // CORRECCIÓN: Limpiamos espacios con .trim()
-    const alt = rawAlt ? rawAlt.trim() : "";
-    const imageUrl = rawImageUrl ? rawImageUrl.trim() : "";
-    
-    let finalSrc = "";
-
-    if (req.file) {
-      finalSrc = `/api/galeria/image/${req.file.filename}`;
-    } else if (imageUrl) {
-      finalSrc = imageUrl;
-    } else {
-      return res.status(400).json({ error: "Debe subir un archivo de imagen o proporcionar una URL" });
+    if (!Array.isArray(featuredIds)) {
+      return res
+        .status(400)
+        .json({ error: "El formato de featuredIds debe ser un arreglo" });
     }
 
-    if (!alt) {
-      return res.status(400).json({ error: "El título o descripción (alt) es obligatorio" });
-    }
-
-    const newImage = await prisma.galeria.create({
-      data: {
-        src: finalSrc,
-        alt,
-        isActive: true,
-      },
+    await prisma.galeria.updateMany({
+      data: { isFeatured: false, order: 0 },
     });
 
-    res.status(201).json(newImage);
-  } catch (error: any) {
-    console.error("Error al registrar imagen:", error);
-    res.status(500).json({ error: error.message || "Error al registrar la imagen" });
-  }
-});
+    if (featuredIds.length > 0) {
+      for (let i = 0; i < featuredIds.length; i++) {
+        const id = Number(featuredIds[i]);
+        const position = i + 1;
 
-// 4. PUT: Actualizar imagen
-router.put("/:id", upload.single("imageFile"), async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    
-    // CORRECCIÓN: Limpiamos espacios con .trim()
-    const alt = req.body.alt !== undefined ? req.body.alt.trim() : undefined;
-    const imageUrl = req.body.imageUrl !== undefined ? req.body.imageUrl.trim() : undefined;
-    const { isActive } = req.body;
-
-    const existingImage = await prisma.galeria.findUnique({
-      where: { id: Number(id) },
-    });
-
-    if (!existingImage) {
-      return res.status(404).json({ error: "Imagen no encontrada" });
-    }
-
-    let newSrc = existingImage.src;
-
-    if (req.file) {
-      newSrc = `/api/galeria/image/${req.file.filename}`;
-      deletePhysicalFile(existingImage.src);
-    } else if (imageUrl && imageUrl !== existingImage.src) {
-      newSrc = imageUrl;
-      deletePhysicalFile(existingImage.src);
-    } else if (alt && alt !== existingImage.alt && existingImage.src.startsWith("/api/galeria/image/")) {
-      const oldFilename = path.basename(existingImage.src);
-      const oldPath = path.join(uploadDir, oldFilename);
-
-      if (fs.existsSync(oldPath)) {
-        const cleanAlt = slugify(alt);
-        const ext = path.extname(oldFilename);
-        
-        const parts = oldFilename.split("-");
-        const dateStr = parts[parts.length - 2] || new Date().toISOString().slice(0, 10).replace(/-/g, "");
-        const randomSuffix = parts[parts.length - 1]?.split(".")[0] || Math.floor(1000 + Math.random() * 9000);
-
-        // CORRECCIÓN: Estructura limpia sin la palabra "galeria-" extra al renombrar
-        const newFilename = cleanAlt 
-          ? `${cleanAlt}-${dateStr}-${randomSuffix}${ext}`
-          : `sin-titulo-${dateStr}-${randomSuffix}${ext}`;
-
-        const newPath = path.join(uploadDir, newFilename);
-
-        try {
-          fs.renameSync(oldPath, newPath);
-          newSrc = `/api/galeria/image/${newFilename}`;
-          console.log(`Archivo físico renombrado de ${oldFilename} a ${newFilename}`);
-        } catch (err) {
-          console.error("Error al renombrar el archivo físico:", err);
-        }
+        await prisma.galeria.update({
+          where: { id },
+          data: {
+            isFeatured: true,
+            order: position,
+          },
+        });
       }
     }
 
-    const updatedImage = await prisma.galeria.update({
-      where: { id: Number(id) },
-      data: {
-        src: newSrc,
-        ...(alt !== undefined && { alt }),
-        ...(isActive !== undefined && { 
-          isActive: isActive === "true" || isActive === true 
-        }),
-      },
-    });
-
-    res.json(updatedImage);
+    res.json({ message: "Imágenes destacadas y orden actualizados con éxito" });
   } catch (error) {
-    console.error("Error al actualizar imagen:", error);
-    res.status(500).json({ error: "Error al actualizar la imagen" });
+    console.error("Error al actualizar imágenes destacadas:", error);
+    res
+      .status(500)
+      .json({ error: "Error al actualizar las imágenes destacadas" });
   }
 });
 
-// 5. DELETE: Eliminar imagen
+router.put(
+  "/:id",
+  upload.single("imageFile"),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+
+      const alt = req.body.alt !== undefined ? req.body.alt.trim() : undefined;
+      const imageUrl =
+        req.body.imageUrl !== undefined ? req.body.imageUrl.trim() : undefined;
+      const { isActive, isFeatured, order } = req.body;
+
+      const existingImage = await prisma.galeria.findUnique({
+        where: { id: Number(id) },
+      });
+
+      if (!existingImage) {
+        return res.status(404).json({ error: "Imagen no encontrada" });
+      }
+
+      let newSrc = existingImage.src;
+
+      if (req.file) {
+        newSrc = `/api/galeria/image/${req.file.filename}`;
+        deletePhysicalFile(existingImage.src);
+      } else if (imageUrl && imageUrl !== existingImage.src) {
+        newSrc = imageUrl;
+        deletePhysicalFile(existingImage.src);
+      } else if (
+        alt &&
+        alt !== existingImage.alt &&
+        existingImage.src.startsWith("/api/galeria/image/")
+      ) {
+        const oldFilename = path.basename(existingImage.src);
+        const oldPath = path.join(uploadDir, oldFilename);
+
+        if (fs.existsSync(oldPath)) {
+          const cleanAlt = slugify(alt);
+          const ext = path.extname(oldFilename);
+
+          const parts = oldFilename.split("-");
+          const dateStr =
+            parts[parts.length - 2] ||
+            new Date().toISOString().slice(0, 10).replace(/-/g, "");
+          const randomSuffix =
+            parts[parts.length - 1]?.split(".")[0] ||
+            Math.floor(1000 + Math.random() * 9000);
+
+          const newFilename = cleanAlt
+            ? `${cleanAlt}-${dateStr}-${randomSuffix}${ext}`
+            : `sin-titulo-${dateStr}-${randomSuffix}${ext}`;
+
+          const newPath = path.join(uploadDir, newFilename);
+
+          try {
+            fs.renameSync(oldPath, newPath);
+            newSrc = `/api/galeria/image/${newFilename}`;
+          } catch (err) {
+            console.error("Error al renombrar el archivo físico:", err);
+          }
+        }
+      }
+
+      const updatedImage = await prisma.galeria.update({
+        where: { id: Number(id) },
+        data: {
+          src: newSrc,
+          ...(alt !== undefined && { alt }),
+          ...(isActive !== undefined && {
+            isActive: isActive === "true" || isActive === true,
+          }),
+          ...(isFeatured !== undefined && {
+            isFeatured: isFeatured === "true" || isFeatured === true,
+          }),
+          ...(order !== undefined && { order: Number(order) }),
+        },
+      });
+
+      res.json(updatedImage);
+    } catch (error) {
+      console.error("Error al actualizar imagen:", error);
+      res.status(500).json({ error: "Error al actualizar la imagen" });
+    }
+  },
+);
+
 router.delete("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;

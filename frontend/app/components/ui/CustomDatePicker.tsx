@@ -1,3 +1,4 @@
+// frontend/app/syspanel/(protected)/galeria/components/home-config/CustomDatePicker.tsx
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
@@ -14,13 +15,10 @@ export default function CustomDatePicker({ selectedDate, onChange }: CustomDateP
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Fecha actual para el calendario
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  
   const [viewMode, setViewMode] = useState<ViewMode>("days");
   const [yearPageStart, setYearPageStart] = useState(2020);
 
-  // Cerrar al hacer clic fuera
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -92,28 +90,29 @@ export default function CustomDatePicker({ selectedDate, onChange }: CustomDateP
   };
 
   return (
-    <div className="relative" ref={containerRef}>
-      {/* Botón Principal del Selector */}
+    <div className="relative w-full sm:w-auto" ref={containerRef}>
       <button
         type="button"
         onClick={() => {
           setIsOpen(!isOpen);
           setViewMode("days");
         }}
-        className={`flex items-center gap-2.5 pl-3.5 pr-3 py-2 border rounded-xl text-sm transition-all cursor-pointer shadow-sm focus:outline-none focus:ring-2 focus:ring-[#6eb5ec]/20 ${
+        className={`w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2.5 pl-3.5 pr-3 py-2 border rounded-xl text-xs sm:text-sm transition-all cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-[#6eb5ec]/20 ${
           selectedDate
             ? "bg-[#6eb5ec]/10 border-[#6eb5ec]/40 text-[#16275d]"
             : "bg-slate-50/80 hover:bg-slate-50 border-slate-200/90 text-slate-500"
         }`}
       >
-        <Calendar className={`w-4 h-4 ${selectedDate ? "text-[#6eb5ec]" : "text-slate-400"}`} />
-        <span className={`font-medium whitespace-nowrap ${selectedDate ? "text-[#16275d]" : "text-slate-500"}`}>
-          {formatDisplayDate(selectedDate)}
-        </span>
+        <div className="flex items-center gap-2.5 truncate">
+          <Calendar className={`w-4 h-4 shrink-0 ${selectedDate ? "text-[#6eb5ec]" : "text-slate-400"}`} />
+          <span className={`font-medium truncate ${selectedDate ? "text-[#16275d]" : "text-slate-500"}`}>
+            {formatDisplayDate(selectedDate)}
+          </span>
+        </div>
         {selectedDate && (
           <span
             onClick={handleClear}
-            className="p-0.5 hover:bg-slate-200/60 rounded-full text-[#6eb5ec] hover:text-[#16275d] transition-colors ml-1"
+            className="p-0.5 hover:bg-slate-200/60 rounded-full text-[#6eb5ec] hover:text-[#16275d] transition-colors ml-1 shrink-0"
             title="Limpiar fecha"
           >
             <X className="w-3.5 h-3.5" />
@@ -121,11 +120,9 @@ export default function CustomDatePicker({ selectedDate, onChange }: CustomDateP
         )}
       </button>
 
-      {/* Ventana Flotante del Calendario */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-72 bg-white border-2 border-slate-200 rounded-2xl shadow-2xl z-50 p-4 animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute right-0 sm:left-0 sm:right-auto mt-2 w-full sm:w-72 bg-white border-2 border-slate-200 rounded-2xl shadow-2xl z-50 p-4 animate-in fade-in zoom-in-95 duration-150">
           
-          {/* Cabecera Interactiva */}
           <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
             <div className="flex items-center gap-1">
               {viewMode === "days" && (
@@ -164,7 +161,6 @@ export default function CustomDatePicker({ selectedDate, onChange }: CustomDateP
               )}
             </div>
 
-            {/* Botones de Navegación */}
             <div className="flex items-center gap-1">
               <button
                 type="button"
@@ -183,7 +179,6 @@ export default function CustomDatePicker({ selectedDate, onChange }: CustomDateP
             </div>
           </div>
 
-          {/* VISTA 1: DÍAS */}
           {viewMode === "days" && (
             <>
               <div className="grid grid-cols-7 gap-1 text-center mb-2">
@@ -225,7 +220,6 @@ export default function CustomDatePicker({ selectedDate, onChange }: CustomDateP
             </>
           )}
 
-          {/* VISTA 2: MESES */}
           {viewMode === "months" && (
             <div className="grid grid-cols-3 gap-2 py-2">
               {monthsNames.map((mName, idx) => (
@@ -248,7 +242,6 @@ export default function CustomDatePicker({ selectedDate, onChange }: CustomDateP
             </div>
           )}
 
-          {/* VISTA 3: AÑOS */}
           {viewMode === "years" && (
             <div className="grid grid-cols-3 gap-2 py-2">
               {Array.from({ length: 12 }).map((_, i) => {
@@ -274,7 +267,6 @@ export default function CustomDatePicker({ selectedDate, onChange }: CustomDateP
             </div>
           )}
 
-          {/* Pie de página para limpiar */}
           {selectedDate && (
             <div className="mt-3 pt-3 border-t border-slate-100 text-center">
               <button

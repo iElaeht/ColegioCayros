@@ -9,18 +9,18 @@ export default function SysPanelLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Estado para controlar si el sidebar está expandido (true) o comprimido (false)
   const [isExpanded, setIsExpanded] = useState(true);
 
   return (
-    <div className="min-h-screen bg-white flex font-['Poppins',sans-serif]">
-      {/* Pasamos las props de control al Sidebar */}
+    <div className="min-h-screen bg-white flex flex-col lg:flex-row font-['Poppins',sans-serif]">
+      {/* Sidebar / Navbar móvil y de escritorio */}
       <Sidebar isExpanded={isExpanded} setIsExpanded={setIsExpanded} />
 
-      {/* Margen dinámico: ml-64 si está abierto, ml-20 si está comprimido */}
+      {/* Contenedor principal: sin margen izquierdo en móvil (w-full), y margen dinámico en escritorio (lg:ml-64 o lg:ml-20). 
+          Se añade pt-20 en móvil para compensar la altura del navbar fijo superior (h-16 + padding). */}
       <main 
-        className={`flex-1 transition-all duration-300 ease-in-out p-8 text-slate-900 min-h-screen bg-slate-50 ${
-          isExpanded ? "ml-64" : "ml-20"
+        className={`flex-1 transition-all duration-300 ease-in-out p-4 md:p-8 text-slate-900 min-h-screen bg-slate-50 pt-20 lg:pt-8 w-full overflow-x-hidden ${
+          isExpanded ? "lg:ml-64" : "lg:ml-20"
         }`}
       >
         {children}

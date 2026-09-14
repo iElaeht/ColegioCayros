@@ -14,15 +14,12 @@
 }
 
 /* ==========================================
-   Scrollbar Oculta Automáticamente y Minimalista (#16275d)
+   Scrollbar Discreto y Siempre Visible (#16275d)
    ========================================== */
 
 /* 1. Para Firefox */
 * {
-  scrollbar-width: none; /* Oculta por defecto en Firefox */
-}
-*:hover {
-  scrollbar-width: thin; /* Aparece delgada al pasar el cursor */
+  scrollbar-width: thin;
   scrollbar-color: #16275d transparent;
 }
 
@@ -36,16 +33,13 @@
   background: transparent;
 }
 
-/* El thumb es totalmente transparente (invisible) por defecto */
 ::-webkit-scrollbar-thumb {
-  background-color: transparent;
+  background-color: #16275d;
   border-radius: 9999px;
   border: 1px solid transparent;
   background-clip: content-box;
-  transition: background-color 0.3s ease;
 }
 
-/* Al hacer hover sobre la ventana/documento o el scrollbar, toma el color institucional #16275d */
-:hover::-webkit-scrollbar-thumb {
-  background-color: #16275d;
+::-webkit-scrollbar-thumb:hover {
+  background-color: #233a7d;
 }
