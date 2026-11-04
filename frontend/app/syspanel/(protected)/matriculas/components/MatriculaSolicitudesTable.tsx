@@ -2,15 +2,17 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Trash2, Mail, Phone, Calendar, User, BookOpen } from "lucide-react";
+import { Trash2, FileText, Mail, Phone, Calendar, User, BookOpen, X, Building, ShieldCheck } from "lucide-react";
 import ToastAlertMatricula from "./ToastAlertMatricula";
 import MatriculaFilter from "./MatriculaFilter";
 import Pagination from "./Pagination";
 
 export interface SolicitudMatricula {
   id: number;
+  sede: string;
   nombresEstudiante: string;
   apellidosEstudiante: string;
+  dniEstudiante: string;
   nivel: string;
   grado: string;
   nombresApoderado: string;
@@ -39,6 +41,9 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
 
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+
+  // Estado para el Modal de Detalle
+  const [selectedSolicitud, setSelectedSolicitud] = useState<SolicitudMatricula | null>(null);
 
   const fetchSolicitudes = async () => {
     setLoading(true);
@@ -91,6 +96,8 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
     const matchesSearch =
       fullName.includes(q) ||
       item.nombresApoderado.toLowerCase().includes(q) ||
+      item.dniEstudiante.includes(q) ||
+      item.sede.toLowerCase().includes(q) ||
       item.telefono.includes(q);
 
     let matchesDate = true;
@@ -176,7 +183,7 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
                     <th className="py-3.5 px-4 w-[22%] text-center">Apoderado</th>
                     <th className="py-3.5 px-4 w-36 text-center">Contacto</th>
                     <th className="py-3.5 px-4 w-32 text-center">Fecha</th>
-                    <th className="py-3.5 px-4 w-20 text-center"></th>
+                    <th className="py-3.5 px-4 w-28 text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
@@ -235,8 +242,16 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
                           </div>
                         </td>
 
+                        {/* ACCIONES: Botón de detalle (papel) y Botón de eliminar (papelera) */}
                         <td className="py-4 px-4 text-center">
-                          <div className="flex items-center justify-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              onClick={() => setSelectedSolicitud(item)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                              title="Ver detalle completo"
+                            >
+                              <FileText className="w-4 h-4" />
+                            </button>
                             <button
                               onClick={() => handleDelete(item.id)}
                               disabled={deletingId === item.id}
@@ -266,6 +281,142 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
           </>
         )}
       </div>
+
+      {/* MODAL DE DETALLE DE LA SOLICITUD */}
+      {selectedSolicitud && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-fadeIn">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden">
+            
+            {/* Cabecera del Modal */}
+            <div className="bg-[#16275D] text-white px-6 py-5 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-amber-400">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold">Detalle de Pre-Inscripción</h3>
+                  <p className="text-xs text-slate-300">ID Solicitud #{selectedSolicitud.id}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedSolicitud(null)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Contenido del Modal */}
+            <div className="p-6 sm:p-8 space-y-6 max-h-[75vh] overflow-y-auto">
+              
+              {/* Sede y Fecha */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                <div className="flex items-center gap-2.5">
+                  <Building className="w-4 h-4 text-amber-600" />
+                  <div>
+                    <span className="block text-[10px] uppercase font-bold text-slate-400">Sede</span>
+                    <span className="text-xs font-bold text-slate-800">{selectedSolicitud.sede}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <Calendar className="w-4 h-4 text-blue-900" />
+                  <div>
+                    <span className="block text-[10px] uppercase font-bold text-slate-400">Fecha de Registro</span>
+                    <span className="text-xs font-bold text-slate-800">
+                      {new Date(selectedSolicitud.createdAt).toLocaleString("es-PE", {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Datos del Estudiante */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-[#16275D] flex items-center gap-2 border-b border-slate-100 pb-2">
+                  <User className="w-4 h-4 text-amber-500" />
+                  Datos del Estudiante
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <span className="text-slate-400 block font-medium">Nombres y Apellidos</span>
+                    <span className="font-bold text-slate-900">{selectedSolicitud.nombresEstudiante} {selectedSolicitud.apellidosEstudiante}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block font-medium">DNI del Estudiante</span>
+                    <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                      {selectedSolicitud.dniEstudiante}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block font-medium">Nivel Educativo</span>
+                    <span className="font-bold text-slate-900">{selectedSolicitud.nivel}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block font-medium">Grado al que postula</span>
+                    <span className="inline-block bg-amber-50 text-amber-900 font-bold px-2.5 py-0.5 rounded-md border border-amber-200/60 mt-0.5">
+                      {selectedSolicitud.grado}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Datos del Apoderado y Contacto */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-[#16275D] flex items-center gap-2 border-b border-slate-100 pb-2">
+                  <Phone className="w-4 h-4 text-blue-900" />
+                  Apoderado y Contacto
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                  <div className="sm:col-span-2">
+                    <span className="text-slate-400 block font-medium">Nombre del Apoderado</span>
+                    <span className="font-bold text-slate-900">{selectedSolicitud.nombresApoderado}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block font-medium">Teléfono / Celular</span>
+                    <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                      <Phone className="w-3.5 h-3.5 text-slate-400" />
+                      {selectedSolicitud.telefono}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block font-medium">Correo Electrónico</span>
+                    <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                      <Mail className="w-3.5 h-3.5 text-slate-400" />
+                      {selectedSolicitud.email || "No especificado"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mensaje o Comentarios Adicionales */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-[#16275D] flex items-center gap-2 border-b border-slate-100 pb-2">
+                  Mensaje / Comentarios
+                </h4>
+                <p className="text-xs text-slate-600 bg-slate-50 p-3.5 rounded-xl border border-slate-200/60 italic">
+                  {selectedSolicitud.mensaje || "Sin comentarios adicionales registrados en la solicitud."}
+                </p>
+              </div>
+
+            </div>
+
+            {/* Pie del Modal */}
+            <div className="bg-slate-50 px-6 py-4 border-t border-slate-100 flex justify-end">
+              <button
+                onClick={() => setSelectedSolicitud(null)}
+                className="px-5 py-2.5 rounded-xl bg-[#16275D] hover:bg-blue-900 text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
+              >
+                Cerrar Detalle
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

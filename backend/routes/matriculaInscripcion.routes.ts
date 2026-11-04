@@ -8,8 +8,10 @@ const router = Router();
 router.post("/", async (req: Request, res: Response) => {
   try {
     const {
+      sede,
       nombresEstudiante,
       apellidosEstudiante,
+      dniEstudiante,
       nivel,
       grado,
       nombresApoderado,
@@ -18,14 +20,26 @@ router.post("/", async (req: Request, res: Response) => {
       mensaje,
     } = req.body;
 
-    if (!nombresEstudiante || !apellidosEstudiante || !nivel || !grado || !nombresApoderado || !telefono) {
+    // Validación de campos obligatorios incluyendo sede y dniEstudiante
+    if (
+      !sede ||
+      !nombresEstudiante ||
+      !apellidosEstudiante ||
+      !dniEstudiante ||
+      !nivel ||
+      !grado ||
+      !nombresApoderado ||
+      !telefono
+    ) {
       return res.status(400).json({ error: "Faltan campos obligatorios para la inscripción." });
     }
 
     const nuevaInscripcion = await prisma.matriculaInscripcion.create({
       data: {
+        sede: sede.trim(),
         nombresEstudiante: nombresEstudiante.trim(),
         apellidosEstudiante: apellidosEstudiante.trim(),
+        dniEstudiante: dniEstudiante.trim(),
         nivel,
         grado,
         nombresApoderado: nombresApoderado.trim(),

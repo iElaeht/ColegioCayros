@@ -97,17 +97,20 @@ model AdmisionConfig {
 }
 
 model MatriculaInscripcion {
-  id          Int      @id @default(autoincrement())
-  nombresEstudiante String
+  id                  Int      @id @default(autoincrement())
+  sede                String   @default("Colegio Cayros") // Colegio Cayros / Cayros School
+  nombresEstudiante   String
   apellidosEstudiante String
-  nivel       String   // Inicial, Primaria, Secundaria
-  grado       String
-  nombresApoderado String
-  telefono    String
-  email       String?
-  mensaje     String?
-  createdAt   DateTime @default(now())
+  dniEstudiante       String   // DNI del estudiante (8 dígitos)
+  nivel               String   // Inicial, Primaria, Secundaria
+  grado               String   // Ej: 3 Años, 1er Grado, etc.
+  nombresApoderado    String
+  telefono            String   // Celular(9 dígitos)
+  email               String?
+  mensaje             String?
+  createdAt           DateTime @default(now())
 }
+
 model MatriculaGaleria {
   id        Int      @id @default(autoincrement())
   imageUrl  String
