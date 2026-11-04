@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { MessageSquare } from "lucide-react";
-import ContactFilter from "./ContactFilter";
-import ContactGrid from "./ContactGrid";
-import Pagination from "./Pagination";
+  import ContactFilter from "./components/ContactFilter";
+import ContactGrid from "./components/ContactGrid";
+import Pagination from "./components/Pagination";
 
 export interface Mensaje {
   id: number | string;

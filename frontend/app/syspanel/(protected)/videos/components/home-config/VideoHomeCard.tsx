@@ -1,15 +1,17 @@
-// frontend/app/syspanel/(protected)/videos/components/home-config/VideoCard.tsx
+// frontend/app/syspanel/(protected)/videos/components/home-config/VideoHomeCard.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Video, Calendar, Music2, Globe } from "lucide-react";
+import { Calendar, Music2, Globe, Star } from "lucide-react";
 
 interface VideoItem {
   id: number;
   src: string;
   alt: string;
   isActive: boolean;
+  isFeatured?: boolean;
+  order?: number;
   createdAt?: string;
 }
 
@@ -34,29 +36,23 @@ export default function VideoCard({
 }: VideoCardProps) {
   const [, setIsHovered] = useState(false);
 
-  if (!item || !item.src) {
-    return (
-      <div className="rounded-xl border border-slate-100 bg-slate-50 aspect-[16/10] w-full flex items-center justify-center text-xs text-slate-400">
-        Cargando...
-      </div>
-    );
-  }
-
-  const isHttpUrl = item.src.startsWith('http://') || item.src.startsWith('https://');
-  const fullUrl = isHttpUrl ? item.src : `http://localhost:4000${item.src}`;
-  const isYouTube = isHttpUrl && (item.src.includes('youtube.com') || item.src.includes('youtu.be'));
-  const isTikTok = isHttpUrl && item.src.includes('tiktok.com');
+  // 1. Extraemos las propiedades de manera segura por si item es undefined
+  const itemSrc = item?.src || "";
+  const isHttpUrl = itemSrc.startsWith('http://') || itemSrc.startsWith('https://');
+  const fullUrl = isHttpUrl ? itemSrc : `http://localhost:4000${itemSrc}`;
+  const isYouTube = isHttpUrl && (itemSrc.includes('youtube.com') || itemSrc.includes('youtu.be'));
+  const isTikTok = isHttpUrl && itemSrc.includes('tiktok.com');
 
   // Lógica para extraer la miniatura inicial si es YouTube
   let initialThumbnail = "";
   if (isYouTube) {
     let videoId = "";
-    if (item.src.includes("youtu.be/")) {
-      videoId = item.src.split("youtu.be/")[1]?.split("?")[0];
-    } else if (item.src.includes("watch?v=")) {
-      videoId = item.src.split("watch?v=")[1]?.split("&")[0];
-    } else if (item.src.includes("embed/")) {
-      videoId = item.src.split("embed/")[1]?.split("?")[0];
+    if (itemSrc.includes("youtu.be/")) {
+      videoId = itemSrc.split("youtu.be/")[1]?.split("?")[0];
+    } else if (itemSrc.includes("watch?v=")) {
+      videoId = itemSrc.split("watch?v=")[1]?.split("&")[0];
+    } else if (itemSrc.includes("embed/")) {
+      videoId = itemSrc.split("embed/")[1]?.split("?")[0];
     }
     if (videoId) {
       initialThumbnail = `https://img.youtube.com/vi/${videoId}/hq720.jpg`;
@@ -65,6 +61,7 @@ export default function VideoCard({
     initialThumbnail = tiktokThumbnailCache[fullUrl] || "";
   }
 
+  // 2. Todos los Hooks se llaman siempre incondicionalmente al nivel superior
   const [tiktokThumb, setTiktokThumb] = useState(initialThumbnail);
 
   // Obtener miniatura de TikTok de forma asíncrona vía oEmbed
@@ -81,6 +78,15 @@ export default function VideoCard({
         .catch(() => {});
     }
   }, [isTikTok, fullUrl, tiktokThumb]);
+
+  // 3. La validación de carga se realiza DESPUÉS de declarar los Hooks
+  if (!item || !item.src) {
+    return (
+      <div className="rounded-xl border border-slate-100 bg-slate-50 aspect-[16/10] w-full flex items-center justify-center text-xs text-slate-400">
+        Cargando...
+      </div>
+    );
+  }
 
   const activeThumb = tiktokThumb || initialThumbnail;
 
@@ -106,11 +112,11 @@ export default function VideoCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={onClick}
-      className={`group bg-white rounded-xl transition-all duration-300 flex flex-col cursor-pointer border border-slate-100 hover:border-slate-200 shadow-xs hover:shadow-md ${
+      className={`group bg-white rounded-xl transition-colors duration-200 flex flex-col cursor-pointer border border-slate-100 hover:border-slate-200 shadow-xs hover:shadow-md transform-gpu ${
         hideDetails ? "p-1 gap-0" : "p-2 gap-2.5"
       }`}
     >
-      <div className={`relative w-full rounded-lg bg-slate-900 overflow-hidden isolate flex items-center justify-center ${
+      <div className={`relative w-full rounded-lg bg-slate-900 overflow-hidden isolate transform-gpu flex items-center justify-center ${
         hideDetails ? "aspect-[4/3] rounded-lg" : "aspect-[16/10]"
       }`}>
         {activeThumb ? (
@@ -118,8 +124,9 @@ export default function VideoCard({
             src={activeThumb} 
             alt={titleText} 
             fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             unoptimized
-            className="object-cover transition-transform duration-500 group-hover:scale-105" 
+            className="object-cover transition-transform duration-300 transform-gpu group-hover:scale-105" 
           />
         ) : isTikTok ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black text-white p-2 text-center">
@@ -139,19 +146,25 @@ export default function VideoCard({
         ) : (
           <video 
             src={fullUrl}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-300 transform-gpu group-hover:scale-105"
             preload="metadata"
             muted
           />
         )}
 
-        <div className="absolute inset-0 bg-slate-950/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+        <div className="absolute inset-0 bg-slate-950/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none" />
 
-        {isInteractive && isSelected && selectionNumber !== null && (
-          <div className="absolute top-2.5 right-2.5 z-30">
+        {/* Indicador de Slot / Destacado o Número de Selección (Espejo exacto del Hero) */}
+        {isInteractive && isSelected && selectionNumber !== null ? (
+          <div className="absolute top-2.5 right-2.5 z-30 transform-gpu">
             <div className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-[11px] font-bold shadow-md shadow-amber-500/40">
               {selectionNumber}
             </div>
+          </div>
+        ) : (
+          <div className="absolute top-2 left-2 z-20 flex items-center gap-1 bg-slate-900/70 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm transform-gpu">
+            <Star className={`w-3 h-3 ${item.isFeatured ? "text-amber-400 fill-amber-400" : "text-slate-400"}`} />
+            <span>{item.isFeatured && item.order ? `#${item.order}` : "Libre"}</span>
           </div>
         )}
       </div>
@@ -160,7 +173,7 @@ export default function VideoCard({
         <div className="flex flex-col gap-1 px-1 pb-0.5">
           <h3 
             title={titleText}
-            className="text-xs font-medium text-slate-600 tracking-tight truncate group-hover:text-amber-600 transition-colors"
+            className="text-xs font-medium text-slate-600 tracking-tight truncate group-hover:text-amber-600 transition-colors duration-200"
           >
             {titleText}
           </h3>

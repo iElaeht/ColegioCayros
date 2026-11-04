@@ -3,13 +3,15 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Edit, Eye, EyeOff, Calendar, Video as VideoIcon, Globe, Music2 } from "lucide-react";
+import { Edit, Eye, EyeOff, Calendar, Video as VideoIcon, Globe, Music2, Star } from "lucide-react";
 
 interface VideoItem {
   id: number;
   src: string;
   alt: string;
   isActive: boolean;
+  isFeatured?: boolean;
+  order?: number;
   createdAt?: string;
 }
 
@@ -92,8 +94,13 @@ export default function VideoCard({ item, onToggleStatus, onOpenEdit }: VideoCar
       }`}
     >
       {/* Contenedor Superior (Vista previa de Video o Miniatura Extraída) */}
-      <div className="relative aspect-[16/10] w-full bg-slate-900 overflow-hidden cursor-pointer flex items-center justify-center" onClick={() => onOpenEdit(item)}>
-        
+      <div 
+        className="relative aspect-[16/10] w-full bg-slate-900 overflow-hidden cursor-pointer flex items-center justify-center" 
+        onClick={(e) => {
+          e.currentTarget.blur();
+          onOpenEdit(item);
+        }}
+      >
         {activeThumb ? (
           <Image 
             src={activeThumb} 
@@ -136,12 +143,26 @@ export default function VideoCard({ item, onToggleStatus, onOpenEdit }: VideoCar
           </div>
         </div>
 
-        {/* Badge miniatura de tipo */}
+        {/* Badge superior izquierdo: Estado de Destacado / Slot (Estilo Hero) */}
         <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-md text-[10px] font-medium text-white flex items-center gap-1 shadow-sm">
+          {item.isFeatured ? (
+            <>
+              <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+              <span>Slot #{item.order || "Destacado"}</span>
+            </>
+          ) : (
+            <>
+              <Star className="w-3 h-3 text-slate-400" />
+              <span className="text-slate-300">No asignado</span>
+            </>
+          )}
+        </div>
+
+        {/* Badge superior derecho: Tipo (URL / Archivo) movido a la derecha */}
+        <div className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-md text-[10px] font-medium text-white flex items-center gap-1 shadow-sm">
           {isHttpUrl ? <Globe className="w-3 h-3 text-amber-400" /> : <VideoIcon className="w-3 h-3 text-emerald-400" />}
           <span>{isHttpUrl ? "URL" : "Archivo"}</span>
         </div>
-
       </div>
 
       {/* Contenido Inferior */}
@@ -168,22 +189,23 @@ export default function VideoCard({ item, onToggleStatus, onOpenEdit }: VideoCar
 
         <hr className="border-slate-100 my-0.5" />
 
-        {/* Botón inferior */}
-        <div className="flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => onToggleStatus(item.id)}
-            className={`w-full sm:w-auto px-3 py-1.5 rounded-xl text-[10px] sm:text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-              item.isActive 
-                ? "bg-amber-50 text-amber-700 hover:bg-amber-100/80" 
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-            }`}
-            title={item.isActive ? "Ocultar video" : "Mostrar video"}
-          >
-            {item.isActive ? <EyeOff className="w-3.5 h-3.5 shrink-0" /> : <Eye className="w-3.5 h-3.5 shrink-0" />}
-            <span>{item.isActive ? "Desactivar" : "Activar"}</span>
-          </button>
-        </div>
+        {/* Botón inferior unificado a ancho completo con blur de seguridad */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.currentTarget.blur();
+            onToggleStatus(item.id);
+          }}
+          className={`w-full px-3 py-1.5 rounded-xl text-[10px] sm:text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/40 active:scale-[0.98] ${
+            item.isActive 
+              ? "bg-amber-50 text-amber-700 hover:bg-amber-100/80" 
+              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+          }`}
+          title={item.isActive ? "Ocultar video" : "Mostrar video"}
+        >
+          {item.isActive ? <EyeOff className="w-3.5 h-3.5 shrink-0" /> : <Eye className="w-3.5 h-3.5 shrink-0" />}
+          <span className="truncate">{item.isActive ? "Desactivar" : "Activar"}</span>
+        </button>
 
       </div>
     </div>

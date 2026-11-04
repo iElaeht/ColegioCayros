@@ -1,4 +1,6 @@
 // frontend/app/syspanel/videos/components/VideoGrid.tsx
+"use client";
+
 import { Video as VideoIcon, Plus } from "lucide-react";
 import VideoCard from "./VideoCard";
 import VideoFilters, { SortOption } from "./VideoFilters";
@@ -16,7 +18,7 @@ interface VideoGridProps {
   videos: VideoItem[];
   onToggleStatus: (id: number) => void;
   onOpenEdit: (item: VideoItem) => void;
-  onDelete: (id: number) => void;
+  onDelete?: (id: number) => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
   selectedDate: string;
@@ -49,10 +51,10 @@ export default function VideoGrid({
   itemsPerPage,
 }: VideoGridProps) {
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-xs space-y-6 w-full">
+    <div className="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-6 shadow-xs space-y-6 w-full transform-gpu">
       {/* Barra superior unificada: Filtros + Botón Nuevo Video */}
       <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3 w-full">
-        <div className="flex-1 w-full">
+        <div className="flex-1 w-full min-w-0">
           <VideoFilters
             searchQuery={searchQuery}
             onSearchChange={onSearchChange}
@@ -63,12 +65,15 @@ export default function VideoGrid({
           />
         </div>
 
-        {/* Botón de Nuevo Video */}
+        {/* Botón de Nuevo Video optimizado con blur para evitar retención de eventos fantasma */}
         <button
           type="button"
-          onClick={onOpenCreate}
+          onClick={(e) => {
+            e.currentTarget.blur();
+            onOpenCreate();
+          }}
           style={{ borderColor: "#F8DE32" }}
-          className="w-full xl:w-auto inline-flex items-center justify-center gap-2 bg-white hover:bg-[#F8DE32] text-slate-900 text-xs font-bold px-5 py-3 rounded-xl border-2 shadow-xs transition-all cursor-pointer shrink-0 group truncate"
+          className="w-full xl:w-auto inline-flex items-center justify-center gap-2 bg-white hover:bg-[#F8DE32] text-slate-900 text-xs font-bold px-5 py-3 rounded-xl border-2 shadow-xs transition-colors duration-200 cursor-pointer shrink-0 group truncate focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60 active:scale-[0.98]"
         >
           <Plus className="w-4 h-4 text-slate-900 stroke-[2.5] shrink-0" />
           <span className="truncate">Nuevo Video</span>

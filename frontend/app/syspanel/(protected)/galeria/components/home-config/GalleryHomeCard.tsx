@@ -1,15 +1,17 @@
-// frontend/app/syspanel/(protected)/galeria/components/home-config/GalleryCard.tsx
+// frontend/app/syspanel/(protected)/galeria/components/home-config/GalleryHomeCard.tsx
 "use client";
 
 import { useState } from "react";
 import Image from "next/image";
-import { Calendar } from "lucide-react";
+import { Calendar, Star } from "lucide-react";
 
 interface GalleryItem {
   id: number;
   src: string;
   alt: string;
   isActive: boolean;
+  isFeatured?: boolean;
+  order?: number;
   createdAt?: string;
 }
 
@@ -34,7 +36,7 @@ export default function GalleryCard({
 
   if (!item || !item.src) {
     return (
-      <div className="rounded-xl border border-slate-100 bg-slate-50 aspect-[16/10] w-full flex items-center justify-center text-xs text-slate-400">
+      <div className="rounded-xl border border-slate-100 bg-slate-50 aspect-[16/10] w-full flex items-center justify-center text-xs text-slate-400 transform-gpu">
         Cargando...
       </div>
     );
@@ -66,11 +68,11 @@ export default function GalleryCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={onClick}
-      className={`group bg-white rounded-xl transition-all duration-300 flex flex-col cursor-pointer border border-slate-100 hover:border-slate-200 shadow-xs hover:shadow-md ${
+      className={`group bg-white rounded-xl transition-colors duration-200 flex flex-col cursor-pointer border border-slate-100 hover:border-slate-200 shadow-xs hover:shadow-md transform-gpu ${
         hideDetails ? "p-1 gap-0" : "p-2 gap-2.5"
       }`}
     >
-      <div className={`relative w-full rounded-lg bg-slate-100 overflow-hidden isolate ${
+      <div className={`relative w-full rounded-lg bg-slate-100 overflow-hidden isolate transform-gpu ${
         hideDetails ? "aspect-[4/3] rounded-lg" : "aspect-[16/10]"
       }`}>
         <Image 
@@ -78,17 +80,23 @@ export default function GalleryCard({
           alt={titleText} 
           fill 
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          className="object-cover transition-transform duration-500 group-hover:scale-105" 
+          className="object-cover transition-transform duration-300 transform-gpu group-hover:scale-105" 
           unoptimized
         />
 
-        <div className="absolute inset-0 bg-slate-950/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+        <div className="absolute inset-0 bg-slate-950/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none" />
 
-        {isInteractive && isSelected && selectionNumber !== null && (
-          <div className="absolute top-2.5 right-2.5 z-30">
+        {/* Indicador de Slot / Destacado o Número de Selección */}
+        {isInteractive && isSelected && selectionNumber !== null ? (
+          <div className="absolute top-2.5 right-2.5 z-30 transform-gpu">
             <div className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-[11px] font-bold shadow-md shadow-amber-500/40">
               {selectionNumber}
             </div>
+          </div>
+        ) : (
+          <div className="absolute top-2 left-2 z-20 flex items-center gap-1 bg-slate-900/70 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm transform-gpu">
+            <Star className={`w-3 h-3 ${item.isFeatured ? "text-amber-400 fill-amber-400" : "text-slate-400"}`} />
+            <span>{item.isFeatured && item.order ? `#${item.order}` : "Libre"}</span>
           </div>
         )}
       </div>
@@ -97,7 +105,7 @@ export default function GalleryCard({
         <div className="flex flex-col gap-1 px-1 pb-0.5">
           <h3 
             title={titleText}
-            className="text-xs font-medium text-slate-600 tracking-tight truncate group-hover:text-amber-600 transition-colors"
+            className="text-xs font-medium text-slate-600 tracking-tight truncate group-hover:text-amber-600 transition-colors duration-200"
           >
             {titleText}
           </h3>

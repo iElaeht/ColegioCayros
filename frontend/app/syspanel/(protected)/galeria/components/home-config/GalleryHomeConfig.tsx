@@ -4,7 +4,6 @@
 import { useState, useEffect } from "react";
 import GalleryHomeGrid from "./GalleryHomeGrid";
 import GalleryModalHome from "./GalleryModalHome";
-import GalleryHomeAlert from "./GalleryHomeAlert";
 import { Pencil, Save } from "lucide-react";
 
 interface GalleryItem {
@@ -19,7 +18,7 @@ interface GalleryItem {
 
 interface GalleryHomeConfigProps {
   allImages: GalleryItem[];
-  showToast: (type: "success" | "error", message: string) => void;
+  showToast: (type: "success" | "error" | "warning", message: string) => void;
 }
 
 export default function GalleryHomeConfig({
@@ -28,7 +27,7 @@ export default function GalleryHomeConfig({
 }: GalleryHomeConfigProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [showAlert, setShowAlert] = useState(false);
+  const [initialSelectedIds, setInitialSelectedIds] = useState<number[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
   const HOME_LIMIT = 8;
@@ -41,20 +40,27 @@ export default function GalleryHomeConfig({
       }
     });
 
-    const initialFeatured: number[] = [];
+    let computedFeatured: number[] = [];
     slots.forEach((id) => {
-      if (id !== null) initialFeatured.push(id);
+      if (id !== null) computedFeatured.push(id);
     });
 
-    if (initialFeatured.length === 0) {
-      const fallbackFeatured = allImages
+    if (computedFeatured.length === 0) {
+      computedFeatured = allImages
         .filter((img) => img.isFeatured)
         .map((img) => img.id);
-      setSelectedIds(fallbackFeatured);
     } else {
-      setSelectedIds(slots.filter((id): id is number => id !== null));
+      computedFeatured = slots.filter((id): id is number => id !== null);
     }
+
+    setSelectedIds(computedFeatured);
+    setInitialSelectedIds(computedFeatured);
   }, [allImages]);
+
+  // Comparamos si hay cambios reales (orden o IDs seleccionados)
+  const hasChanges =
+    selectedIds.length !== initialSelectedIds.length ||
+    selectedIds.some((id, index) => id !== initialSelectedIds[index]);
 
   const handleSaveChanges = async () => {
     setIsSaving(true);
@@ -70,8 +76,10 @@ export default function GalleryHomeConfig({
       if (res.ok) {
         showToast(
           "success",
-          "¡Imágenes destacadas actualizadas correctamente!",
+          "¡Imágenes destacadas actualizadas correctamente!"
         );
+        // Actualizamos el estado inicial para reflejar que ya están guardados los cambios actuales
+        setInitialSelectedIds([...selectedIds]);
       } else {
         showToast("error", "Error al guardar los cambios en el servidor.");
       }
@@ -84,62 +92,64 @@ export default function GalleryHomeConfig({
   };
 
   return (
-    <>
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-xs space-y-4 w-full">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
-              Configuración de Imágenes
-            </h2>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Selecciona hasta {HOME_LIMIT} imágenes para mostrar en la sección
-              principal del sitio web.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 sm:flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
-            <button
-              type="button"
-              onClick={() => setIsModalOpen(true)}
-              className="flex items-center justify-center gap-2 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-xs truncate"
-            >
-              <Pencil className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">Editar ({selectedIds.length}/{HOME_LIMIT})</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleSaveChanges}
-              disabled={isSaving}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-xs truncate"
-            >
-              <Save className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">{isSaving ? "Guardando..." : "Guardar"}</span>
-            </button>
-          </div>
+    <div className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-6 shadow-xs space-y-4 w-full">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+            Configuración de Imágenes
+          </h2>
+          <p className="text-xs text-slate-500 leading-relaxed">
+            Selecciona hasta {HOME_LIMIT} imágenes para mostrar en la sección
+            principal del sitio web.
+          </p>
         </div>
 
-        <GalleryHomeGrid
-          allImages={allImages}
-          selectedIds={selectedIds}
-          onOpenModal={() => setIsModalOpen(true)}
-        />
+        <div className="grid grid-cols-2 sm:flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+          {/* Botón Editar optimizado */}
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center justify-center gap-2 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-xs truncate focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/50 active:scale-[0.98]"
+          >
+            <Pencil className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Editar ({selectedIds.length}/{HOME_LIMIT})</span>
+          </button>
 
-        <GalleryModalHome
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          allImages={allImages}
-          selectedIds={selectedIds}
-          onSaveSelections={(newIds) => setSelectedIds(newIds)}
-          homeLimit={HOME_LIMIT}
-        />
+          {/* Botón Guardar optimizado */}
+          <button
+            type="button"
+            onClick={handleSaveChanges}
+            disabled={isSaving || !hasChanges}
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-xs truncate focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/50 active:scale-[0.98]"
+          >
+            <Save className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">
+              {isSaving ? "Guardando..." : "Guardar"}
+            </span>
+          </button>
+        </div>
       </div>
 
-      <GalleryHomeAlert
-        isOpen={showAlert}
-        onClose={() => setShowAlert(false)}
-        limit={HOME_LIMIT}
+      <GalleryHomeGrid
+        allImages={allImages}
+        selectedIds={selectedIds}
+        onOpenModal={() => setIsModalOpen(true)}
       />
-    </>
+
+      <GalleryModalHome
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        allImages={allImages}
+        selectedIds={selectedIds}
+        onSaveSelections={(newIds) => setSelectedIds(newIds)}
+        homeLimit={HOME_LIMIT}
+        onLimitReached={() => {
+          showToast(
+            "warning",
+            `Límite de ${HOME_LIMIT} imágenes alcanzado. Desmarca una para seleccionar otra.`
+          );
+        }}
+      />
+    </div>
   );
 }

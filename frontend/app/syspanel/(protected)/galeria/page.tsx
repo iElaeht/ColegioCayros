@@ -7,9 +7,8 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import GalleryGrid from "./components/grid/GalleryGrid";
 import GalleryModal from "./components/modal/GalleryModal";
 import GalleryHomeConfig from "./components/home-config/GalleryHomeConfig";
-// Corregir la ruta de importación según la ubicación real de tu archivo GalleryFilters
+import ToastAlertGallery from "./components/home-config/ToastAlertGallery"; // <-- Importamos el componente correcto
 import { SortOption } from "./components/grid/GalleryFilters"; 
-import { CheckCircle2, AlertCircle } from "lucide-react";
 
 interface GalleryItem {
   id: number;
@@ -29,17 +28,20 @@ export default function AdminGaleriaPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingImage, setEditingImage] = useState<GalleryItem | null>(null);
 
-  const [toast, setToast] = useState<{
-    type: "success" | "error";
+  // Estado del Toast unificado con soporte para success, error y warning (igual que Hero)
+  const [toastState, setToastState] = useState<{
+    visible: boolean;
+    type: "success" | "error" | "warning";
     message: string;
-  } | null>(null);
+  }>({
+    visible: false,
+    type: "success",
+    message: "",
+  });
 
   const showToast = useCallback(
-    (type: "success" | "error", message: string) => {
-      setToast({ type, message });
-      setTimeout(() => {
-        setToast(null);
-      }, 3500);
+    (type: "success" | "error" | "warning", message: string) => {
+      setToastState({ visible: true, type, message });
     },
     [],
   );
@@ -88,7 +90,7 @@ export default function AdminGaleriaPage() {
   );
 
   useEffect(() => {
-    document.title = "Gestión de Photos | Colegio Cayros";
+    document.title = "Gestión de Galería | Colegio Cayros";
   }, []);
 
   useEffect(() => {
@@ -300,6 +302,7 @@ export default function AdminGaleriaPage() {
 
       <div className="h-[1px] w-full bg-slate-200/90 my-2" />
 
+      {/* Configuración de Galería con soporte de notificaciones extendido */}
       <GalleryHomeConfig allImages={images} showToast={showToast} />
 
       <GalleryGrid
@@ -335,17 +338,18 @@ export default function AdminGaleriaPage() {
         editingImage={editingImage}
       />
 
-      {toast &&
+      {/* Renderizamos el ToastAlertGallery unificado mediante Portal */}
+      {toastState.visible &&
         typeof window !== "undefined" &&
         createPortal(
-          <div className="fixed top-6 right-6 z-[99999] flex items-center gap-2.5 px-4 py-3 bg-slate-900/95 text-white text-xs font-medium rounded-xl shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-3 duration-200 border border-slate-700">
-            {toast.type === "success" ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            ) : (
-              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-            )}
-            <span>{toast.message}</span>
-          </div>,
+          <ToastAlertGallery
+            show={toastState.visible}
+            message={toastState.message}
+            type={toastState.type}
+            onClose={() =>
+              setToastState((prev) => ({ ...prev, visible: false }))
+            }
+          />,
           document.body,
         )}
     </div>

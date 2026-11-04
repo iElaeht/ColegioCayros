@@ -2,13 +2,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { createPortal } from "react-dom";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import VideoGrid from "./components/grid/VideoGrid";
 import VideoModal from "./components/modal/VideoModal";
 import VideoHomeConfig from "./components/home-config/VideoHomeConfig";
+import ToastAlertVideo from "./components/home-config/ToastAlertVideo";
 import { SortOption } from "./components/grid/VideoFilters"; 
-import { CheckCircle2, AlertCircle } from "lucide-react";
 
 interface VideoItem {
   id: number;
@@ -28,17 +27,20 @@ export default function AdminVideosPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingVideo, setEditingVideo] = useState<VideoItem | null>(null);
 
-  const [toast, setToast] = useState<{
-    type: "success" | "error";
+  // Estado del Toast unificado con soporte para success, error y warning
+  const [toastState, setToastState] = useState<{
+    visible: boolean;
+    type: "success" | "error" | "warning";
     message: string;
-  } | null>(null);
+  }>({
+    visible: false,
+    type: "success",
+    message: "",
+  });
 
   const showToast = useCallback(
-    (type: "success" | "error", message: string) => {
-      setToast({ type, message });
-      setTimeout(() => {
-        setToast(null);
-      }, 3500);
+    (type: "success" | "error" | "warning", message: string) => {
+      setToastState({ visible: true, type, message });
     },
     [],
   );
@@ -334,19 +336,13 @@ export default function AdminVideosPage() {
         editingVideo={editingVideo}
       />
 
-      {toast &&
-        typeof window !== "undefined" &&
-        createPortal(
-          <div className="fixed top-6 right-6 z-[99999] flex items-center gap-2.5 px-4 py-3 bg-slate-900/95 text-white text-xs font-medium rounded-xl shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-3 duration-200 border border-slate-700">
-            {toast.type === "success" ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            ) : (
-              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-            )}
-            <span>{toast.message}</span>
-          </div>,
-          document.body,
-        )}
+      {/* Componente Toast unificado para Videos */}
+      <ToastAlertVideo
+        show={toastState.visible}
+        type={toastState.type}
+        message={toastState.message}
+        onClose={() => setToastState((prev) => ({ ...prev, visible: false }))}
+      />
     </div>
   );
 }

@@ -49,13 +49,13 @@ export default function GalleryFilters({
     <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 w-full">
       {/* Buscador por título */}
       <div className="relative flex-1">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 shrink-0" />
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 shrink-0 pointer-events-none" />
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Buscar por título..."
-          className="w-full bg-white text-slate-800 text-xs pl-10 pr-4 py-3 rounded-xl border border-slate-200/90 focus:border-[#6eb5ec] focus:ring-2 focus:ring-[#6eb5ec]/10 outline-none transition-all font-medium shadow-xs"
+          className="w-full bg-white text-slate-800 text-xs pl-10 pr-4 py-3 rounded-xl border border-slate-200/90 focus:border-[#6eb5ec] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6eb5ec]/30 transition-all font-medium shadow-xs"
         />
       </div>
 
@@ -73,9 +73,9 @@ export default function GalleryFilters({
           <button
             type="button"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className={`w-full sm:w-auto flex items-center justify-between sm:justify-start gap-3 px-3.5 py-3 border rounded-xl text-xs font-semibold transition-all cursor-pointer shadow-xs bg-white ${
+            className={`w-full sm:w-auto flex items-center justify-between sm:justify-start gap-3 px-3.5 py-3 border rounded-xl text-xs font-semibold transition-all cursor-pointer shadow-xs bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6eb5ec]/30 ${
               isDropdownOpen
-                ? "border-[#6eb5ec] text-[#16275d] ring-2 ring-[#6eb5ec]/10"
+                ? "border-[#6eb5ec] text-[#16275d]"
                 : "border-slate-200/90 hover:bg-slate-50 text-slate-700"
             }`}
           >
@@ -90,7 +90,7 @@ export default function GalleryFilters({
             />
           </button>
 
-          {/* Ventana Flotante de Opciones (Mantiene el texto completo aquí para claridad al elegir) */}
+          {/* Ventana Flotante de Opciones */}
           {isDropdownOpen && (
             <div className="absolute right-0 sm:right-0 left-0 sm:left-auto mt-2 w-full sm:w-56 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-1.5 animate-in fade-in zoom-in-95 duration-150">
               {(
@@ -110,7 +110,7 @@ export default function GalleryFilters({
                       onSortChange(option.id);
                       setIsDropdownOpen(false);
                     }}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-colors cursor-pointer focus:outline-none ${
                       isSelected
                         ? "text-[#6eb5ec] bg-[#6eb5ec]/10 font-bold"
                         : "text-slate-700 hover:bg-slate-50"

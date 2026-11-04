@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { Search, ArrowUpDown, X, ChevronDown, Check } from "lucide-react";
-import CustomDatePicker from "./CustomDatePicker"; // <-- Aquí llamamos tu componente personalizado
+import CustomDatePicker from "../../../../components/ui/CustomDatePicker";
 
 interface ContactFilterProps {
   searchTerm: string;

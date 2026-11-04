@@ -72,21 +72,41 @@ model Video {
 }
 
 
-model HeroSlide {
-  id          Int      @id @default(autoincrement())
-  badgeText   String?  @map("badge_text")
-  title       String   @db.Text
-  subtitle    String?  @db.Text
-  quote       String?  @db.Text
-  description String?  @db.Text
-  buttonText  String?  @default("CONTÁCTANOS") @map("button_text")
-  buttonUrl   String?  @default("#contacto") @map("button_url")
-  imageUrl    String   @db.Text @map("image_url")
-  isActive    Boolean  @default(true) @map("is_active")
-  order       Int      @default(0) @map("order")
-  createdAt   DateTime @default(now()) @map("created_at")
+model Hero {
+  id           Int      @id @default(autoincrement())
+  title        String?  @db.Text // Título de referencia interna (opcional)
+  imageUrl     String   @db.Text @map("image_url")
+  isActive     Boolean  @default(true) @map("is_active")
+  isFeatured   Boolean  @default(false) @map("is_featured")
+  order        Int      @default(0) @map("order")
+  createdAt    DateTime @default(now()) @map("created_at")
 
-  @@map("hero_slides")
+  @@map("hero")
+}
+
+model AdmisionConfig {
+  id          String   @id @default(uuid())
+  year        String   // Ej: "2026", "2027", etc. Administrable en el Panel
+  badgeText   String   @default("MATRICULAS")
+  title       String   @default("MATRICULAS ABIERTAS")
+  description String   @default("Quiero empezar la matricula y conocer los requisitos del proceso.")
+  buttonText  String   @default("Ver pasos y requisitos")
+  linkUrl     String   @default("/matricula")
+  isActive    Boolean  @default(true)
+  updatedAt   DateTime @updatedAt
+}
+
+model MatriculaInscripcion {
+  id          Int      @id @default(autoincrement())
+  nombresEstudiante String
+  apellidosEstudiante String
+  nivel       String   // Inicial, Primaria, Secundaria
+  grado       String
+  nombresApoderado String
+  telefono    String
+  email       String?
+  mensaje     String?
+  createdAt   DateTime @default(now())
 }
 
 
@@ -114,3 +134,4 @@ model ConfiguracionHome {
 //
 // 4. Regenerar el cliente de Prisma (si actualizas el schema y Node da error de tipos):
 //    npx prisma generate
+//    npx prisma db seed

@@ -1,7 +1,7 @@
 // frontend/app/syspanel/videos/components/VideoFilters.tsx
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Search, ArrowUpDown, Check, ChevronDown } from "lucide-react";
 import CustomDatePicker from "../../../../../components/ui/CustomDatePicker";
 
@@ -27,15 +27,35 @@ export default function VideoFilters({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Cierre seguro encapsulado
+  const closeDropdown = useCallback(() => {
+    setIsDropdownOpen(false);
+  }, []);
+
+  // Manejo de clics fuera y tecla ESC limpia
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
+        closeDropdown();
       }
     };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isDropdownOpen) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeDropdown();
+      }
+    };
+
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    window.addEventListener("keydown", handleKeyDown, { capture: true });
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("keydown", handleKeyDown, { capture: true });
+    };
+  }, [isDropdownOpen, closeDropdown]);
 
   const sortLabels: Record<SortOption, string> = {
     oldest: "Antiguos",
@@ -48,7 +68,7 @@ export default function VideoFilters({
     <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 w-full">
       {/* Buscador por título */}
       <div className="relative flex-1">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 shrink-0" />
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 shrink-0 pointer-events-none" />
         <input
           type="text"
           value={searchQuery}
@@ -71,8 +91,15 @@ export default function VideoFilters({
         <div className="relative w-full sm:w-auto" ref={dropdownRef}>
           <button
             type="button"
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className={`w-full sm:w-auto flex items-center justify-between sm:justify-start gap-3 px-3.5 py-3 border rounded-xl text-xs font-semibold transition-all cursor-pointer shadow-xs bg-white ${
+            onClick={(e) => {
+              if (isDropdownOpen) {
+                e.currentTarget.blur();
+                closeDropdown();
+              } else {
+                setIsDropdownOpen(true);
+              }
+            }}
+            className={`w-full sm:w-auto flex items-center justify-between sm:justify-start gap-3 px-3.5 py-3 border rounded-xl text-xs font-semibold transition-colors duration-200 cursor-pointer shadow-xs bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6eb5ec]/40 active:scale-[0.98] ${
               isDropdownOpen
                 ? "border-[#6eb5ec] text-[#16275d] ring-2 ring-[#6eb5ec]/10"
                 : "border-slate-200/90 hover:bg-slate-50 text-slate-700"
@@ -89,9 +116,9 @@ export default function VideoFilters({
             />
           </button>
 
-          {/* Ventana Flotante de Opciones */}
+          {/* Ventana Flotante con z-index extremadamente alto */}
           {isDropdownOpen && (
-            <div className="absolute right-0 sm:right-0 left-0 sm:left-auto mt-2 w-full sm:w-56 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-1.5 animate-in fade-in zoom-in-95 duration-150">
+            <div className="absolute right-0 sm:right-0 mt-2 w-full sm:w-56 bg-white border border-slate-200 rounded-2xl shadow-2xl z-[99999] p-1.5 animate-in fade-in zoom-in-95 duration-150">
               {(
                 [
                   { id: "oldest", label: "Más antiguos primero" },
@@ -105,9 +132,10 @@ export default function VideoFilters({
                   <button
                     key={option.id}
                     type="button"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.currentTarget.blur();
                       onSortChange(option.id);
-                      setIsDropdownOpen(false);
+                      closeDropdown();
                     }}
                     className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
                       isSelected

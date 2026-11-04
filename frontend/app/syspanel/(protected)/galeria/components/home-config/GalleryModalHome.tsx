@@ -1,8 +1,8 @@
 // frontend/app/syspanel/(protected)/galeria/components/home-config/GalleryModalHome.tsx
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import GalleryCard from "./GalleryCard";
+import { useState, useMemo, useEffect, useRef } from "react";
+import GalleryHomeCard from "./GalleryHomeCard";
 import GalleryFilterHome from "./GalleryFilterHome";
 import { Save, X } from "lucide-react";
 
@@ -22,6 +22,7 @@ interface GalleryModalHomeProps {
   selectedIds?: number[];
   onSaveSelections: (newSelectedIds: number[]) => void;
   homeLimit: number;
+  onLimitReached?: () => void;
 }
 
 export default function GalleryModalHome({
@@ -31,6 +32,7 @@ export default function GalleryModalHome({
   selectedIds = [],
   onSaveSelections,
   homeLimit,
+  onLimitReached,
 }: GalleryModalHomeProps) {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [activeTab, setActiveTab] = useState<"all" | "selected">("all");
@@ -39,42 +41,53 @@ export default function GalleryModalHome({
   const [visibleLimit, setVisibleLimit] = useState<number>(ITEMS_PER_PAGE);
 
   const [tempSlots, setTempSlots] = useState<(number | null)[]>([]);
+  
+  // Referencia para el contenedor de scroll inteligente
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [hasScroll, setHasScroll] = useState<boolean>(false);
 
+  // Efecto para el bloqueo de scroll y la escucha de la tecla ESC
   useEffect(() => {
-    if (isOpen) {
-      const initialSlots: (number | null)[] = Array(homeLimit).fill(null);
-      if (Array.isArray(selectedIds)) {
-        selectedIds.forEach((id, index) => {
-          if (index < homeLimit) {
-            initialSlots[index] = id;
-          }
-        });
-      }
-      setTempSlots(initialSlots);
+    if (!isOpen) return;
 
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-      document.body.style.overflow = "hidden";
-      document.body.style.position = "fixed";
-      document.body.style.width = "100%";
-      if (scrollbarWidth > 0) {
-        document.body.style.paddingRight = `${scrollbarWidth}px`;
-      }
-      setSearchTerm("");
-      setActiveTab("all");
-      setVisibleLimit(ITEMS_PER_PAGE);
-    } else {
-      document.body.style.overflow = "unset";
-      document.body.style.position = "static";
-      document.body.style.width = "auto";
-      document.body.style.paddingRight = "0px";
+    const initialSlots: (number | null)[] = Array(homeLimit).fill(null);
+    if (Array.isArray(selectedIds)) {
+      selectedIds.forEach((id, index) => {
+        if (index < homeLimit) {
+          initialSlots[index] = id;
+        }
+      });
     }
+    setTempSlots(initialSlots);
+
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.width = "100%";
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+    setSearchTerm("");
+    setActiveTab("all");
+    setVisibleLimit(ITEMS_PER_PAGE);
+
+    // Manejador para cerrar con la tecla ESC
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
     return () => {
+      window.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "unset";
       document.body.style.position = "static";
       document.body.style.width = "auto";
       document.body.style.paddingRight = "0px";
     };
-  }, [isOpen, selectedIds, homeLimit]);
+  }, [isOpen, selectedIds, homeLimit, onClose]);
 
   const handleToggleTempSelect = (id: number) => {
     setTempSlots((prev) => {
@@ -86,7 +99,10 @@ export default function GalleryModalHome({
         return newSlots;
       } else {
         const firstEmptyIndex = prev.indexOf(null);
-        if (firstEmptyIndex === -1) return prev; 
+        if (firstEmptyIndex === -1) {
+          if (onLimitReached) onLimitReached();
+          return prev; 
+        }
 
         const newSlots = [...prev];
         newSlots[firstEmptyIndex] = id;
@@ -95,7 +111,18 @@ export default function GalleryModalHome({
     });
   };
 
+  // DETECCIÓN INTELIGENTE DE CAMBIOS
+  const hasChanges = useMemo(() => {
+    const cleanOriginal = (selectedIds || []).filter((id): id is number => id !== null);
+    const cleanCurrent = tempSlots.filter((id): id is number => id !== null);
+
+    if (cleanOriginal.length !== cleanCurrent.length) return true;
+
+    return cleanOriginal.some((id, index) => id !== cleanCurrent[index]);
+  }, [selectedIds, tempSlots]);
+
   const handleConfirmSave = () => {
+    if (!hasChanges) return;
     const finalCleanIds = tempSlots.filter((id): id is number => id !== null);
     onSaveSelections(finalCleanIds);
     onClose();
@@ -128,6 +155,20 @@ export default function GalleryModalHome({
     return filteredImages.slice(0, visibleLimit);
   }, [filteredImages, visibleLimit]);
 
+  // Chequeo de scroll inteligente: verifica si el contenido excede la altura visible
+  useEffect(() => {
+    const checkScroll = () => {
+      if (scrollContainerRef.current) {
+        const { scrollHeight, clientHeight } = scrollContainerRef.current;
+        setHasScroll(scrollHeight > clientHeight);
+      }
+    };
+
+    checkScroll();
+    const timer = setTimeout(checkScroll, 50);
+    return () => clearTimeout(timer);
+  }, [paginatedImages, visibleLimit]);
+
   const handleLoadMore = () => {
     setVisibleLimit((prev) => prev + ITEMS_PER_PAGE);
   };
@@ -139,8 +180,8 @@ export default function GalleryModalHome({
   const safeTotalCount = Array.isArray(allImages) ? allImages.length : 0;
 
   return (
-    <div className="fixed inset-0 w-screen h-screen z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-4xl h-[92vh] sm:h-[85vh] max-h-[92vh] rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+    <div className="fixed inset-0 w-screen h-screen z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-200 transform-gpu">
+      <div className="bg-white w-full max-w-4xl h-[92vh] sm:h-[85vh] max-h-[92vh] rounded-xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col transform-gpu">
         
         <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col gap-3 bg-slate-50 shrink-0">
           <div className="flex items-center justify-between gap-2">
@@ -150,19 +191,20 @@ export default function GalleryModalHome({
               </h3>
               <p className="text-[11px] sm:text-xs text-slate-500">
                 Seleccionadas:{" "}
-                <span className="font-bold text-indigo-600">
+                <span className="font-bold text-[#16275D]">
                   {safeSelectedCount} / {homeLimit}
                 </span>
               </p>
             </div>
 
+            {/* Botón X transparente con color azul y sin fondo */}
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-200/50 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+              className="p-1 text-[#16275D] hover:text-[#101d44] bg-transparent rounded-lg transition-colors cursor-pointer shrink-0"
               title="Cerrar y descartar"
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5 stroke-[2.5]" />
             </button>
           </div>
 
@@ -178,10 +220,16 @@ export default function GalleryModalHome({
           </div>
         </div>
 
-        <div className="p-4 sm:p-6 overflow-y-auto custom-scrollbar flex-1 flex flex-col bg-white">
+        {/* Contenedor con scroll inteligente condicional */}
+        <div 
+          ref={scrollContainerRef}
+          className={`p-4 sm:p-6 flex-1 flex flex-col bg-white transform-gpu ${
+            hasScroll ? "overflow-y-auto custom-scrollbar" : "overflow-y-hidden"
+          }`}
+        >
           {paginatedImages.length > 0 ? (
             <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 transform-gpu">
                 {paginatedImages.map((img) => {
                   const currentSelectedIds = tempSlots.filter((id): id is number => id !== null);
                   const isSelected = currentSelectedIds.includes(img.id);
@@ -189,8 +237,8 @@ export default function GalleryModalHome({
                   const selectionNumber = selectionIndex !== -1 ? selectionIndex + 1 : null;
 
                   return (
-                    <div key={img.id} className="w-full">
-                      <GalleryCard
+                    <div key={img.id} className="w-full transform-gpu">
+                      <GalleryHomeCard
                         item={img}
                         isSelected={isSelected}
                         isInteractive={true}
@@ -234,10 +282,17 @@ export default function GalleryModalHome({
           >
             Cancelar
           </button>
+          
+          {/* Botón Guardar Inteligente (deshabilitado si no hay cambios) */}
           <button
             type="button"
             onClick={handleConfirmSave}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-5 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer truncate"
+            disabled={!hasChanges}
+            className={`flex items-center gap-2 text-xs font-semibold px-5 py-2.5 rounded-xl transition-all truncate ${
+              hasChanges
+                ? "bg-[#16275D] hover:bg-[#101d44] text-white shadow-sm cursor-pointer"
+                : "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
+            }`}
           >
             <Save className="w-4 h-4 shrink-0" />
             <span className="truncate">Guardar</span>
