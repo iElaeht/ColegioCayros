@@ -7,23 +7,30 @@ import Navbar from "@/app/components/layout/Navbar";
 import Footer from "@/app/components/layout/Footer";
 import { CheckCircle2, AlertCircle, ArrowRight } from "lucide-react";
 
-interface HeroSlide {
+interface MatriculaImage {
   id: number;
   imageUrl: string;
   title?: string | null;
   isActive: boolean;
-  isFeatured: boolean;
   order: number;
 }
 
+const GRADOS_POR_NIVEL: Record<string, string[]> = {
+  Inicial: ["3 Años", "4 Años", "5 Años"],
+  Primaria: ["1er Grado", "2do Grado", "3er Grado", "4to Grado", "5to Grado", "6to Grado"],
+  Secundaria: ["1er Año", "2do Año", "3er Año", "4to Año", "5to Año"],
+};
+
 export default function MatriculaPage() {
-  const [slides, setSlides] = useState<HeroSlide[]>([]);
+  const [slides, setSlides] = useState<MatriculaImage[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const [formData, setFormData] = useState({
+    sede: "",
     nombresEstudiante: "",
     apellidosEstudiante: "",
-    nivel: "Inicial",
+    dniEstudiante: "",
+    nivel: "",
     grado: "",
     nombresApoderado: "",
     telefono: "",
@@ -34,20 +41,28 @@ export default function MatriculaPage() {
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
+  // Auto-cierre del toast después de 5 segundos
   useEffect(() => {
-    fetch("http://localhost:4000/api/hero")
+    if (!toast) return;
+    const timer = setTimeout(() => {
+      setToast(null);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
+  // Cargar galería de matrículas
+  useEffect(() => {
+    fetch("http://localhost:4000/api/matricula-galeria")
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {
-          const activeSlides = data
-            .filter((item: HeroSlide) => item.isActive)
-            .slice(0, 6);
-          setSlides(activeSlides);
+          setSlides(data.slice(0, 6));
         }
       })
-      .catch((err) => console.error("Error al cargar carrusel:", err));
+      .catch((err) => console.error("Error al cargar galería de matrículas:", err));
   }, []);
 
+  // Autoplay del carrusel cada 5 segundos
   useEffect(() => {
     if (slides.length <= 1) return;
     const interval = setInterval(() => {
@@ -57,13 +72,58 @@ export default function MatriculaPage() {
   }, [slides.length]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    if (name === "sede") {
+      // Al cambiar de Sede, reiniciamos el Nivel y el Grado a blanco
+      setFormData({
+        ...formData,
+        sede: value,
+        nivel: "",
+        grado: "",
+      });
+    } else if (name === "nivel") {
+      // Al cambiar de Nivel, reiniciamos únicamente el Grado a blanco
+      setFormData({
+        ...formData,
+        nivel: value,
+        grado: "",
+      });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
+  };
+
+  // Función para permitir únicamente dígitos numéricos
+  const handleNumberInput = (e: React.FormEvent<HTMLInputElement>, maxLength: number) => {
+    const input = e.currentTarget;
+    const numericValue = input.value.replace(/\D/g, "").slice(0, maxLength);
+    setFormData({ ...formData, [input.name]: numericValue });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setToast(null);
+
+    // Validaciones previas
+    if (!formData.sede || !formData.nivel || !formData.grado) {
+      setToast({ type: "error", message: "Por favor, selecciona la Sede, Nivel y Grado al que postula." });
+      setLoading(false);
+      return;
+    }
+
+    if (!/^\d{8}$/.test(formData.dniEstudiante)) {
+      setToast({ type: "error", message: "El DNI del estudiante debe contener exactamente 8 dígitos." });
+      setLoading(false);
+      return;
+    }
+
+    if (!/^9\d{8}$/.test(formData.telefono)) {
+      setToast({ type: "error", message: "El teléfono celular debe ser un número peruano válido de 9 dígitos." });
+      setLoading(false);
+      return;
+    }
 
     try {
       const res = await fetch("http://localhost:4000/api/matricula-inscripcion", {
@@ -77,9 +137,11 @@ export default function MatriculaPage() {
       if (res.ok) {
         setToast({ type: "success", message: "¡Inscripción enviada con éxito! Nos comunicaremos contigo pronto." });
         setFormData({
+          sede: "",
           nombresEstudiante: "",
           apellidosEstudiante: "",
-          nivel: "Inicial",
+          dniEstudiante: "",
+          nivel: "",
           grado: "",
           nombresApoderado: "",
           telefono: "",
@@ -95,6 +157,10 @@ export default function MatriculaPage() {
       setLoading(false);
     }
   };
+
+  // Lógica de Niveles y Grados disponibles según las selecciones previas
+  const nivelesDisponibles = formData.sede === "Cayros School" ? ["Inicial"] : formData.sede === "Colegio Cayros" ? ["Inicial", "Primaria", "Secundaria"] : [];
+  const gradosActuales = formData.nivel ? GRADOS_POR_NIVEL[formData.nivel] || [] : [];
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 font-['Poppins',sans-serif]">
@@ -117,11 +183,11 @@ export default function MatriculaPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             
-            {/* LADO IZQUIERDO: Carrusel con diseño de marcos orgánicos y efecto mancha */}
+            {/* LADO IZQUIERDO: Carrusel */}
             <div className="lg:col-span-6 relative">
               <div className="absolute -inset-2 bg-gradient-to-tr from-amber-400/20 via-blue-600/10 to-transparent rounded-[2.5rem] blur-xl -z-10 pointer-events-none" />
 
-              <div className="relative aspect-[16/10] w-full bg-slate-900 rounded-[2rem] overflow-hidden shadow-2xl border-4 border-white">
+              <div className="relative aspect-[16/10] w-full rounded-[2rem] overflow-hidden shadow-2xl bg-white transition-transform duration-300 hover:-translate-y-1">
                 {slides.length > 0 ? (
                   slides.map((slide, index) => {
                     const resolvedImg = slide.imageUrl.startsWith("http")
@@ -136,40 +202,42 @@ export default function MatriculaPage() {
                       >
                         <Image
                           src={resolvedImg}
-                          alt={slide.title || "Colegio Cayros Instalaciones"}
+                          alt="Colegio Cayros Matrículas"
                           fill
                           unoptimized
                           className="object-cover"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent flex items-end p-6">
-                          <p className="text-white text-sm sm:text-base font-semibold drop-shadow-md">
-                            {slide.title || "Instalaciones y momentos en el Colegio Cayros"}
-                          </p>
-                        </div>
                       </div>
                     );
                   })
                 ) : (
-                  <div className="absolute inset-0 flex items-center justify-center text-slate-400 text-sm">
-                    Cargando galería institucional...
+                  <div className="absolute inset-0 bg-blue-50/40 border-2 border-dashed border-indigo-400/60 rounded-[2rem] flex flex-col items-center justify-center p-6 text-indigo-500">
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-100/80 flex items-center justify-center mb-2 shadow-sm">
+                      <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                      </svg>
+                    </div>
+                    <span className="text-sm font-semibold tracking-wide text-indigo-600">No Image</span>
                   </div>
                 )}
               </div>
 
-              <div className="flex justify-center gap-2 mt-4">
-                {slides.map((_, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setCurrentSlide(idx)}
-                    className={`h-2 rounded-full transition-all duration-300 ${
-                      idx === currentSlide ? "w-8 bg-amber-500" : "w-2 bg-slate-300"
-                    }`}
-                  />
-                ))}
-              </div>
+              {slides.length > 0 && (
+                <div className="flex justify-center gap-2 mt-4">
+                  {slides.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentSlide(idx)}
+                      className={`h-2 rounded-full transition-all duration-300 ${
+                        idx === currentSlide ? "w-8 bg-amber-500" : "w-2 bg-slate-300"
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* LADO DERECHO: Formulario limpio con barra vertical en el título */}
+            {/* LADO DERECHO: Formulario con Selectores Secuenciales Habilitados/Deshabilitados */}
             <div className="lg:col-span-6 bg-white rounded-[2rem] shadow-xl border border-slate-100 p-6 sm:p-8">
               <div className="flex items-center gap-3 mb-1">
                 <div className="w-1.5 h-6 bg-amber-500 rounded-full" />
@@ -179,18 +247,9 @@ export default function MatriculaPage() {
                 Déjanos tus datos y nos pondremos en contacto contigo a la brevedad.
               </p>
 
-              {toast && (
-                <div
-                  className={`mb-6 p-4 rounded-xl flex items-center gap-3 text-xs font-semibold ${
-                    toast.type === "success" ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-rose-50 text-rose-800 border border-rose-200"
-                  }`}
-                >
-                  {toast.type === "success" ? <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" /> : <AlertCircle className="w-5 h-5 text-rose-500 shrink-0" />}
-                  <span>{toast.message}</span>
-                </div>
-              )}
-
               <form onSubmit={handleSubmit} className="space-y-4">
+                
+                {/* 1. NOMBRES Y APELLIDOS DEL ESTUDIANTE */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Nombres del Estudiante</label>
@@ -218,6 +277,38 @@ export default function MatriculaPage() {
                   </div>
                 </div>
 
+                {/* 2. DNI Y SEDE */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">DNI del Estudiante</label>
+                    <input
+                      type="text"
+                      name="dniEstudiante"
+                      maxLength={8}
+                      value={formData.dniEstudiante}
+                      onChange={(e) => handleNumberInput(e, 8)}
+                      required
+                      placeholder="Ej. 74839201"
+                      className="w-full bg-slate-50 text-slate-800 text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/10 outline-none font-medium"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Sede de Postulación</label>
+                    <select
+                      name="sede"
+                      value={formData.sede}
+                      onChange={handleChange}
+                      required
+                      className="w-full bg-slate-50 text-slate-800 text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/10 outline-none font-medium cursor-pointer"
+                    >
+                      <option value="">Seleccionar Sede</option>
+                      <option value="Colegio Cayros">Colegio Cayros</option>
+                      <option value="Cayros School">Cayros School</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* 3. NIVEL Y GRADO DEPENDIENTES */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Nivel de Estudio</label>
@@ -225,36 +316,52 @@ export default function MatriculaPage() {
                       name="nivel"
                       value={formData.nivel}
                       onChange={handleChange}
-                      className="w-full bg-slate-50 text-slate-800 text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/10 outline-none font-medium"
+                      disabled={!formData.sede}
+                      required
+                      className={`w-full text-xs px-3.5 py-2.5 rounded-xl border outline-none font-medium transition-all ${
+                        !formData.sede
+                          ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-60"
+                          : "bg-slate-50 text-slate-800 border-slate-200 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/10 cursor-pointer"
+                      }`}
                     >
-                      <option value="Inicial">Inicial</option>
-                      <option value="Primaria">Primaria</option>
-                      <option value="Secundaria">Secundaria</option>
+                      <option value="">Seleccionar Nivel</option>
+                      {nivelesDisponibles.map((n) => (
+                        <option key={n} value={n}>{n}</option>
+                      ))}
                     </select>
                   </div>
                   <div>
                     <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Grado al que postula</label>
-                    <input
-                      type="text"
+                    <select
                       name="grado"
                       value={formData.grado}
                       onChange={handleChange}
+                      disabled={!formData.nivel}
                       required
-                      placeholder="Ej. 1er Grado"
-                      className="w-full bg-slate-50 text-slate-800 text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/10 outline-none font-medium"
-                    />
+                      className={`w-full text-xs px-3.5 py-2.5 rounded-xl border outline-none font-medium transition-all ${
+                        !formData.nivel
+                          ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-60"
+                          : "bg-slate-50 text-slate-800 border-slate-200 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/10 cursor-pointer"
+                      }`}
+                    >
+                      <option value="">Seleccionar Grado</option>
+                      {gradosActuales.map((g) => (
+                        <option key={g} value={g}>{g}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
+                {/* 4. APODERADO Y CONTACTO */}
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Nombre del Padre / Apoderado</label>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">datos Completos del Apoderado</label>
                   <input
                     type="text"
                     name="nombresApoderado"
                     value={formData.nombresApoderado}
                     onChange={handleChange}
                     required
-                    placeholder="Ej. María Gómez (Madre)"
+                    placeholder="Ej. María Gómez Martinez Muñoz"
                     className="w-full bg-slate-50 text-slate-800 text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/10 outline-none font-medium"
                   />
                 </div>
@@ -263,10 +370,11 @@ export default function MatriculaPage() {
                   <div>
                     <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Teléfono / Celular</label>
                     <input
-                      type="tel"
+                      type="text"
                       name="telefono"
+                      maxLength={9}
                       value={formData.telefono}
-                      onChange={handleChange}
+                      onChange={(e) => handleNumberInput(e, 9)}
                       required
                       placeholder="Ej. 987654321"
                       className="w-full bg-slate-50 text-slate-800 text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/10 outline-none font-medium"
@@ -279,7 +387,7 @@ export default function MatriculaPage() {
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
-                      placeholder="correo@ejemplo.com"
+                      placeholder="Ej. correo@ejemplo.com"
                       className="w-full bg-slate-50 text-slate-800 text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/10 outline-none font-medium"
                     />
                   </div>
@@ -292,7 +400,7 @@ export default function MatriculaPage() {
                     rows={2}
                     value={formData.mensaje}
                     onChange={handleChange}
-                    placeholder="¿Alguna consulta adicional sobre el proceso?"
+                    placeholder="Ej. Consulta sobre vacantes disponibles..."
                     className="w-full bg-slate-50 text-slate-800 text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/10 outline-none font-medium resize-none"
                   />
                 </div>
@@ -311,21 +419,37 @@ export default function MatriculaPage() {
                     </>
                   )}
                 </button>
+
+                {/* TOAST UBICADO DEBAJO DEL BOTÓN */}
+                {toast && (
+                  <div
+                    className={`mt-4 p-4 rounded-xl flex items-center gap-3 text-xs font-semibold animate-fadeIn transition-all duration-300 ${
+                      toast.type === "success" 
+                        ? "bg-emerald-50 text-emerald-800 border border-emerald-200" 
+                        : "bg-rose-50 text-rose-800 border border-rose-200"
+                    }`}
+                  >
+                    {toast.type === "success" ? (
+                      <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                    ) : (
+                      <AlertCircle className="w-5 h-5 text-rose-500 shrink-0" />
+                    )}
+                    <span>{toast.message}</span>
+                  </div>
+                )}
+
               </form>
             </div>
 
           </div>
 
-          {/* PARTE INFERIOR: Banner Flotante Estilo Tarjeta (Misión, Visión, Propósito, Valores) */}
+          {/* BANNER INFERIOR (Misión, Visión, Propósito, Valores) */}
           <div className="mt-20">
             <div className="bg-[#16275D] text-white rounded-[2.5rem] shadow-2xl p-8 sm:p-12 border border-slate-700/30 relative overflow-hidden">
-              
               <div className="absolute -top-24 -right-24 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
               <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-10 relative z-10">
-                
-                {/* 1. MISIÓN */}
                 <div className="flex flex-col items-start text-left">
                   <div className="w-12 h-12 mb-4 text-[#F8DE32]">
                     <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
@@ -338,7 +462,6 @@ export default function MatriculaPage() {
                   </p>
                 </div>
 
-                {/* 2. VISIÓN */}
                 <div className="flex flex-col items-start text-left">
                   <div className="w-12 h-12 mb-4 text-[#F8DE32]">
                     <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
@@ -352,7 +475,6 @@ export default function MatriculaPage() {
                   </p>
                 </div>
 
-                {/* 3. PROPÓSITO */}
                 <div className="flex flex-col items-start text-left">
                   <div className="w-12 h-12 mb-4 text-[#F8DE32]">
                     <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
@@ -365,7 +487,6 @@ export default function MatriculaPage() {
                   </p>
                 </div>
 
-                {/* 4. VALORES */}
                 <div className="flex flex-col items-start text-left">
                   <div className="w-12 h-12 mb-4 text-[#F8DE32]">
                     <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">

@@ -45,7 +45,7 @@ router.post("/", async (req: Request, res: Response) => {
   }
 });
 
-// Endpoint para listar inscripciones (útil si luego creas una vista en el panel syspanel)
+// Endpoint para listar inscripciones (para el panel syspanel)
 router.get("/", async (req: Request, res: Response) => {
   try {
     const inscripciones = await prisma.matriculaInscripcion.findMany({
@@ -55,6 +55,20 @@ router.get("/", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error al obtener inscripciones:", error);
     res.status(500).json({ error: "Error al obtener las inscripciones" });
+  }
+});
+
+// Endpoint para eliminar una solicitud de inscripción por ID (para el panel syspanel)
+router.delete("/:id", async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    await prisma.matriculaInscripcion.delete({
+      where: { id: Number(id) },
+    });
+    res.json({ message: "Solicitud eliminada con éxito" });
+  } catch (error) {
+    console.error("Error al eliminar la inscripción:", error);
+    res.status(500).json({ error: "Error al eliminar la solicitud" });
   }
 });
 

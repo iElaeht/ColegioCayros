@@ -108,6 +108,14 @@ model MatriculaInscripcion {
   mensaje     String?
   createdAt   DateTime @default(now())
 }
+model MatriculaGaleria {
+  id        Int      @id @default(autoincrement())
+  imageUrl  String
+  title     String?
+  isActive  Boolean  @default(true)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+}
 
 
 // Tabla para almacenar parámetros globales de la Home (Límites, preferencias, etc.)
