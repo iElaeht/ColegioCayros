@@ -1,3 +1,4 @@
+// frontend/components/MisionVisionObjetivosSection.tsx
 "use client";
 
 import { useState, useCallback } from "react";
@@ -12,9 +13,9 @@ interface Objetivo {
 }
 
 const ACCENT_CLASSES: Record<Accent, string> = {
-  red: "bg-red-600",
+  red: "bg-red-500",
   blue: "bg-sky-400",
-  yellow: "bg-yellow-400",
+  yellow: "bg-amber-400",
 };
 
 const OBJETIVOS: Objetivo[] = [
@@ -74,17 +75,19 @@ function ObjetivoCard({
       onMouseLeave={onBlur}
       onFocus={onFocus}
       onBlur={onBlur}
-      className={`group flex gap-3 rounded-lg p-3 -m-3 outline-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-sky-400 ${
-        isActive ? "bg-slate-50" : "bg-transparent"
+      className={`group flex items-start gap-3.5 rounded-2xl p-4 sm:p-5 outline-none transition-all duration-300 border ${
+        isActive 
+          ? "bg-white border-slate-200 shadow-md -translate-y-0.5" 
+          : "bg-white/60 border-slate-100 hover:border-slate-200 hover:bg-white shadow-sm"
       }`}
     >
       <span
         aria-hidden="true"
-        className={`mt-1.5 h-2.5 w-2.5 flex-shrink-0 rounded-[2px] transition-transform duration-200 ${
+        className={`mt-2 h-2.5 w-2.5 flex-shrink-0 rounded-full transition-transform duration-300 ${
           ACCENT_CLASSES[objetivo.accent]
-        } ${isActive ? "scale-125" : "scale-100"}`}
+        } ${isActive ? "scale-125 ring-4 ring-slate-100" : "scale-100"}`}
       />
-      <p className="text-[15px] leading-relaxed text-slate-700">
+      <p className="text-xs sm:text-sm leading-relaxed text-slate-700 font-medium">
         {objetivo.texto}
       </p>
     </div>
@@ -99,82 +102,62 @@ export default function MisionVisionObjetivosSection() {
   const handleBlur = useCallback(() => setActiveId(null), []);
 
   return (
-    <section className="w-full bg-white px-6 py-28 sm:px-10 lg:px-16">
-      <div className="mx-auto max-w-5xl">
+    <section className="w-full bg-slate-50/50 px-4 sm:px-8 py-16 sm:py-24 lg:py-32">
+      <div className="mx-auto max-w-6xl">
         
         {/* Encabezado Principal */}
-        <div className="mb-10 text-center">
-          <span className="text-xs font-bold tracking-[0.2em] text-[#78b7e6] uppercase">
+        <div className="mb-10 sm:mb-14 text-center max-w-xl mx-auto">
+          <span className="text-xs font-bold tracking-[0.2em] text-[#16275d] uppercase bg-amber-100/60 px-3 py-1 rounded-full">
             Nuestra Identidad
           </span>
-          <h2 className="mt-2 text-2xl font-bold tracking-tight text-[#1B2A4A] sm:text-3xl">
+          <h2 className="mt-3 text-2xl font-bold tracking-tight text-[#16275d] sm:text-3xl lg:text-4xl">
             Misión, Visión y Objetivos
           </h2>
         </div>
 
-        {/* Sistema de Pestañas Minimalista con Línea Inferior (Opción 2) */}
-        <div className="mb-12 flex justify-center">
-          <div className="inline-flex rounded-2xl bg-slate-100 p-1.5 shadow-inner">
+        {/* Sistema de Pestañas (Tabs) Responsivo y Minimalista */}
+        <div className="mb-10 sm:mb-12 flex justify-center px-2">
+          <div className="inline-flex flex-wrap justify-center rounded-2xl bg-slate-200/70 p-1.5 shadow-inner gap-1">
             
-            <button
-              onClick={() => setActiveTab("mision")}
-              className={`relative px-8 py-3 text-sm font-bold uppercase tracking-wider transition-colors duration-200 rounded-xl ${
-                activeTab === "mision"
-                  ? "text-[#1B2A4A] bg-white shadow-sm"
-                  : "text-slate-500 hover:text-[#1B2A4A]"
-              }`}
-            >
-              Misión
-              {activeTab === "mision" && (
-                <span className="absolute bottom-0 left-3 right-3 h-[3px] bg-[#1B2A4A] rounded-full" />
-              )}
-            </button>
+            {(["mision", "vision", "objetivos"] as TabType[]).map((tab) => {
+              const label = tab === "mision" ? "Misión" : tab === "vision" ? "Visión" : "Objetivos";
+              const isActive = activeTab === tab;
 
-            <button
-              onClick={() => setActiveTab("vision")}
-              className={`relative px-8 py-3 text-sm font-bold uppercase tracking-wider transition-colors duration-200 rounded-xl ${
-                activeTab === "vision"
-                  ? "text-[#1B2A4A] bg-white shadow-sm"
-                  : "text-slate-500 hover:text-[#1B2A4A]"
-              }`}
-            >
-              Visión
-              {activeTab === "vision" && (
-                <span className="absolute bottom-0 left-3 right-3 h-[3px] bg-[#1B2A4A] rounded-full" />
-              )}
-            </button>
-
-            <button
-              onClick={() => setActiveTab("objetivos")}
-              className={`relative px-8 py-3 text-sm font-bold uppercase tracking-wider transition-colors duration-200 rounded-xl ${
-                activeTab === "objetivos"
-                  ? "text-[#1B2A4A] bg-white shadow-sm"
-                  : "text-slate-500 hover:text-[#1B2A4A]"
-              }`}
-            >
-              Objetivos
-              {activeTab === "objetivos" && (
-                <span className="absolute bottom-0 left-3 right-3 h-[3px] bg-[#1B2A4A] rounded-full" />
-              )}
-            </button>
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`relative px-5 sm:px-8 py-2.5 sm:py-3 text-xs sm:text-sm font-bold uppercase tracking-wider transition-all duration-300 rounded-xl cursor-pointer ${
+                    isActive
+                      ? "text-[#16275d] bg-white shadow-md scale-[1.02]"
+                      : "text-slate-600 hover:text-[#16275d] hover:bg-white/40"
+                  }`}
+                >
+                  {label}
+                  {isActive && (
+                    <span className="absolute bottom-1 left-4 right-4 h-[2px] bg-[#16275d] rounded-full" />
+                  )}
+                </button>
+              );
+            })}
 
           </div>
         </div>
 
-        {/* Contenido Dinámico según la pestaña seleccionada */}
-        <div className="rounded-3xl border border-slate-100 bg-slate-50/50 p-8 sm:p-12 shadow-sm transition-all duration-300">
+        {/* Contenedor de Contenido Dinámico */}
+        <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-10 lg:p-14 shadow-xl transition-all duration-300">
           
           {/* 1. MISIÓN */}
           {activeTab === "mision" && (
-            <div className="max-w-3xl mx-auto text-center space-y-4 animate-fadeIn">
+            <div className="max-w-3xl mx-auto text-center space-y-4 animate-fadeIn py-6">
               <span
                 aria-hidden="true"
-                className="mx-auto block h-3.5 w-3.5 rounded-[2px] bg-yellow-400"
+                className="mx-auto block h-3 w-3 rounded-full bg-amber-400 shadow-sm"
               />
-              <h3 className="text-xl font-bold text-[#1B2A4A] sm:text-2xl">
+              <h3 className="text-xl font-extrabold text-[#16275d] sm:text-2xl">
                 Nuestra Misión
               </h3>
-              <p className="text-base leading-relaxed text-slate-700 sm:text-lg">
+              <p className="text-sm sm:text-base lg:text-lg leading-relaxed text-slate-600 font-normal">
                 Brindar una educación integral de alta calidad, promoviendo valores éticos, cristianos y ambientales, formando personas íntegras, críticas y competitivas capaces de aportar positivamente a la sociedad con liderazgo y vocación de servicio.
               </p>
             </div>
@@ -182,15 +165,15 @@ export default function MisionVisionObjetivosSection() {
 
           {/* 2. VISIÓN */}
           {activeTab === "vision" && (
-            <div className="max-w-3xl mx-auto text-center space-y-4 animate-fadeIn">
+            <div className="max-w-3xl mx-auto text-center space-y-4 animate-fadeIn py-6">
               <span
                 aria-hidden="true"
-                className="mx-auto block h-3.5 w-3.5 rounded-[2px] bg-yellow-400"
+                className="mx-auto block h-3 w-3 rounded-full bg-amber-400 shadow-sm"
               />
-              <h3 className="text-xl font-bold text-[#1B2A4A] sm:text-2xl">
+              <h3 className="text-xl font-extrabold text-[#16275d] sm:text-2xl">
                 Nuestra Visión
               </h3>
-              <p className="text-base leading-relaxed text-slate-700 sm:text-lg">
+              <p className="text-sm sm:text-base lg:text-lg leading-relaxed text-slate-600 font-normal">
                 Ser una institución educativa líder en la región Ica, reconocida por su excelencia académica, innovación pedagógica y su firme compromiso con la sostenibilidad ambiental y la formación en valores de nuestra comunidad estudiantil.
               </p>
             </div>
@@ -198,18 +181,18 @@ export default function MisionVisionObjetivosSection() {
 
           {/* 3. OBJETIVOS */}
           {activeTab === "objetivos" && (
-            <div className="space-y-8 animate-fadeIn">
-              <div className="flex items-center gap-3">
+            <div className="space-y-6 sm:space-y-8 animate-fadeIn">
+              <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
                 <span
                   aria-hidden="true"
-                  className="h-3.5 w-3.5 flex-shrink-0 rounded-[2px] bg-yellow-400"
+                  className="h-3 w-3 flex-shrink-0 rounded-full bg-amber-400 shadow-sm"
                 />
-                <h3 className="text-xl font-bold tracking-tight text-[#1B2A4A] sm:text-2xl">
+                <h3 className="text-lg sm:text-xl font-extrabold tracking-tight text-[#16275d]">
                   Objetivos Institucionales
                 </h3>
               </div>
 
-              <div className="grid grid-cols-1 gap-x-16 gap-y-12 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
                 {OBJETIVOS.map((objetivo) => (
                   <ObjetivoCard
                     key={objetivo.id}

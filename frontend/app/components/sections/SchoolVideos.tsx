@@ -1,3 +1,4 @@
+// frontend/components/SchoolVideos.tsx
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
@@ -64,10 +65,10 @@ function VideoCard({ video, onSelectVideo }: { video: VideoItem; onSelectVideo: 
   const activeThumb = tiktokThumb || initialThumbnail;
 
   return (
-    <div className="flex-[0_0_100%] sm:flex-[0_0_50%] md:flex-[0_0_33.333%] min-w-0 pl-6">
+    <div className="flex-[0_0_85%] sm:flex-[0_0_50%] lg:flex-[0_0_33.333%] min-w-0 pl-4 sm:pl-6">
       <div 
         onClick={() => onSelectVideo({ src: embedUrl, isEmbed, isTikTok })}
-        className="relative aspect-[16/10] w-full rounded-xl overflow-hidden bg-slate-900 cursor-pointer group/item shadow-sm hover:shadow-lg transition-all flex items-center justify-center border border-slate-100"
+        className="relative aspect-[16/10] w-full rounded-2xl overflow-hidden bg-slate-900 cursor-pointer group/item shadow-md hover:shadow-xl transition-all flex items-center justify-center border border-slate-100"
       >
         {activeThumb ? (
           <Image 
@@ -75,7 +76,7 @@ function VideoCard({ video, onSelectVideo }: { video: VideoItem; onSelectVideo: 
             alt={video.alt || "Video institucional"} 
             fill
             unoptimized
-            className="object-cover" 
+            className="object-cover transition-transform duration-700 group-hover/item:scale-105" 
           />
         ) : isTikTok ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black text-white p-4 text-center">
@@ -90,10 +91,10 @@ function VideoCard({ video, onSelectVideo }: { video: VideoItem; onSelectVideo: 
         )}
 
         <div className="absolute inset-0 bg-[#1B2A4A]/40 opacity-0 group-hover/item:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-            <Play className="w-12 h-12 text-white fill-current drop-shadow-md" />
+            <Play className="w-12 h-12 text-white fill-current drop-shadow-md transform transition-transform group-hover/item:scale-110" />
         </div>
       </div>
-      <p className="text-xs font-semibold text-slate-700 mt-2 truncate px-1">{video.alt}</p>
+      <p className="text-xs sm:text-sm font-semibold text-slate-700 mt-3 truncate px-1">{video.alt}</p>
     </div>
   );
 }
@@ -151,7 +152,7 @@ function TikTokPlayer({ url }: { url: string }) {
 
 export default function SchoolVideos() {
   const [videos, setVideos] = useState<VideoItem[]>([]);
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false, align: 'start' });
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false, align: 'start', dragFree: true });
   const [selectedVideo, setSelectedVideo] = useState<{ src: string; isEmbed: boolean; isTikTok: boolean } | null>(null);
 
   const [canScrollPrev, setCanScrollPrev] = useState(false);
@@ -204,21 +205,22 @@ export default function SchoolVideos() {
   }, [selectedVideo]);
 
   return (
-    <section id="Videos" className="w-full bg-white px-6 py-24 sm:px-10 lg:px-16 text-[#1B2A4A] select-none">
-      <div className="mx-auto max-w-5xl">
+    <section id="Videos" className="w-full bg-white px-4 sm:px-8 py-16 sm:py-24 lg:py-32 text-[#1B2A4A] select-none overflow-hidden">
+      <div className="mx-auto max-w-6xl">
         
-        <div className="mb-16 flex flex-col items-start">
+        {/* Cabecera optimizada y responsiva */}
+        <div className="mb-10 sm:mb-16 flex flex-col items-start max-w-2xl">
           <div className="flex items-center gap-3 mb-3">
             <span aria-hidden="true" className="h-3.5 w-3.5 flex-shrink-0 rounded-[2px] bg-yellow-400" />
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Videos</h2>
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl">Videos</h2>
           </div>
-          <p className="text-slate-600 text-[15px] font-normal leading-relaxed text-justify max-w-[500px]">
+          <p className="text-slate-600 text-sm sm:text-base leading-relaxed text-left">
             Explora nuestros momentos educativos a través de nuestra videoteca, mostrando nuestras actividades y el día a día en el colegio.
           </p>
         </div>
 
         {videos.length === 0 ? (
-          <div className="w-full rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-12 text-center flex flex-col items-center justify-center">
+          <div className="w-full rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-10 sm:p-14 text-center flex flex-col items-center justify-center">
             <div className="w-14 h-14 rounded-full bg-[#1B2A4A] flex items-center justify-center text-white mb-4 shadow-sm">
               <VideoIcon className="w-7 h-7" />
             </div>
@@ -229,41 +231,46 @@ export default function SchoolVideos() {
           </div>
         ) : (
           <div className="w-full relative group">
+            {/* Botón Izquierdo (Oculto en móvil, visible en sm+) */}
             <button
               onClick={scrollPrev}
               disabled={!canScrollPrev}
-              className="absolute -left-12 top-1/2 -translate-y-1/2 z-20 bg-[#1B2A4A] hover:bg-yellow-400 text-white p-2.5 rounded-full shadow-lg transition-all duration-300 opacity-0 group-hover:opacity-100 disabled:opacity-0 disabled:cursor-default"
+              className="hidden sm:flex absolute -left-5 lg:-left-6 top-[38%] -translate-y-1/2 z-20 bg-[#1B2A4A] hover:bg-yellow-400 text-white p-3 rounded-full shadow-xl transition-all duration-300 items-center justify-center opacity-0 group-hover:opacity-100 disabled:opacity-0 disabled:cursor-default"
             >
               <ChevronLeft className="w-5 h-5 stroke-[3]" />
             </button>
 
-            <div className="overflow-hidden cursor-grab" ref={emblaRef}>
-              <div className="flex -ml-6">
+            {/* Carrusel Embla */}
+            <div className="overflow-hidden cursor-grab active:cursor-grabbing px-1 py-2" ref={emblaRef}>
+              <div className="flex -ml-4 sm:-ml-6">
                 {videos.map((video) => (
                   <VideoCard key={video.id} video={video} onSelectVideo={setSelectedVideo} />
                 ))}
 
-                <div className="flex-[0_0_100%] sm:flex-[0_0_50%] md:flex-[0_0_33.333%] min-w-0 pl-6">
+                {/* Tarjeta final: Canal oficial */}
+                <div className="flex-[0_0_85%] sm:flex-[0_0_50%] lg:flex-[0_0_33.333%] min-w-0 pl-4 sm:pl-6">
                   <a
                     href="https://www.youtube.com/@ColegioCayrosOficial"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group/card relative aspect-[16/10] w-full rounded-xl overflow-hidden bg-[#16275d] border-2 border-dashed border-[#16275d]/20 hover:border-yellow-400 p-6 flex flex-col items-center justify-center text-center transition-all duration-300 shadow-sm"
+                    className="group/card relative aspect-[16/10] w-full rounded-2xl overflow-hidden bg-[#16275d] border-2 border-dashed border-[#16275d]/20 hover:border-yellow-400 p-6 flex flex-col items-center justify-center text-center transition-all duration-300 shadow-md hover:shadow-2xl"
                   >
-                    <div className="w-12 h-12 rounded-full bg-white/10 group-hover/card:bg-yellow-400 flex items-center justify-center text-white group-hover/card:text-[#16275d] transition-all duration-300 mb-3">
-                      <ExternalLink className="w-6 h-6" />
+                    <div className="w-12 h-12 rounded-full bg-white/10 group-hover/card:bg-yellow-400 flex items-center justify-center text-white group-hover/card:text-[#16275d] transition-all duration-300 mb-3 shadow-inner">
+                      <ExternalLink className="w-6 h-6 transition-transform duration-300 group-hover/card:scale-110" />
                     </div>
                     <h3 className="text-base font-bold text-white mb-1">Más videos</h3>
                     <p className="text-xs text-white/70 max-w-[200px]">Visita nuestro canal oficial de YouTube.</p>
                   </a>
+                  <p className="text-xs sm:text-sm font-semibold opacity-0 select-none mt-3">Canal Oficial</p>
                 </div>
               </div>
             </div>
 
+            {/* Botón Derecho (Oculto en móvil, visible en sm+) */}
             <button
               onClick={scrollNext}
               disabled={!canScrollNext}
-              className="absolute -right-12 top-1/2 -translate-y-1/2 z-20 bg-[#1B2A4A] hover:bg-yellow-400 text-white p-2.5 rounded-full shadow-lg transition-all duration-300 opacity-0 group-hover:opacity-100 disabled:opacity-0 disabled:cursor-default"
+              className="hidden sm:flex absolute -right-5 lg:-right-6 top-[38%] -translate-y-1/2 z-20 bg-[#1B2A4A] hover:bg-yellow-400 text-white p-3 rounded-full shadow-xl transition-all duration-300 items-center justify-center opacity-0 group-hover:opacity-100 disabled:opacity-0 disabled:cursor-default"
             >
               <ChevronRight className="w-5 h-5 stroke-[3]" />
             </button>
@@ -271,8 +278,9 @@ export default function SchoolVideos() {
         )}
       </div>
 
+      {/* Modal de Reproducción */}
       {selectedVideo && (
-        <div onClick={() => setSelectedVideo(null)} className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-3 sm:p-4 cursor-pointer overflow-y-auto">
+        <div onClick={() => setSelectedVideo(null)} className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-3 sm:p-4 cursor-pointer overflow-y-auto animate-fadeIn">
           <div onClick={(e) => e.stopPropagation()} className="relative cursor-default flex items-center justify-center w-full max-w-4xl my-auto">
             <button 
                 onClick={() => setSelectedVideo(null)} 
@@ -284,7 +292,7 @@ export default function SchoolVideos() {
             {selectedVideo.isTikTok ? (
               <TikTokPlayer url={selectedVideo.src} />
             ) : (
-              <div className="w-full aspect-video max-h-[80vh] rounded-2xl overflow-hidden shadow-2xl bg-black flex items-center justify-center">
+              <div className="w-full aspect-video max-h-[80vh] rounded-2xl overflow-hidden shadow-2xl bg-black flex items-center justify-center border border-white/20">
                 {selectedVideo.isEmbed ? (
                   <iframe 
                     src={`${selectedVideo.src}${selectedVideo.src.includes('?') ? '&' : '?'}autoplay=1&rel=0&modestbranding=1`} 

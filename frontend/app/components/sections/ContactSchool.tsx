@@ -1,3 +1,4 @@
+// frontend/app/components/ContactSchool.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -65,20 +66,22 @@ export default function ContactSchool() {
   ];
 
   return (
-    <section id="Contáctanos" className="py-40 px-6 bg-white text-[#111c38] select-none font-['Poppins',sans-serif]">
-      <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-start">
+    <section id="Contáctanos" className="py-16 sm:py-24 lg:py-32 px-4 sm:px-8 bg-white text-[#111c38] select-none font-['Poppins',sans-serif]">
+      <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start">
+        
+        {/* Información y Redes Sociales */}
         <div className="flex flex-col items-start pt-1">
-          <div className="max-w-xs">
-            <h1 className="text-lg font-extrabold uppercase tracking-wider text-[#111c38] m-0 mb-4 flex items-center space-x-2">
-              <span className="w-2 h-2 bg-yellow-400 shrink-0 inline-block"></span>
+          <div className="w-full max-w-sm">
+            <h2 className="text-xl sm:text-2xl font-extrabold uppercase tracking-wider text-[#111c38] m-0 mb-4 flex items-center space-x-2">
+              <span className="w-2.5 h-2.5 bg-amber-400 shrink-0 inline-block rounded-[2px]"></span>
               <span>CONTÁCTANOS</span>
-            </h1>
-            <p className="text-[#111c38]/70 text-sm leading-relaxed text-justify font-['Open_Sans',sans-serif] mb-6">
+            </h2>
+            <p className="text-[#111c38]/70 text-sm sm:text-base leading-relaxed text-left font-['Open_Sans',sans-serif] mb-6">
               ¿Tienes alguna consulta o deseas más información sobre nuestra institución y procesos de admisión? Escríbenos y nos pondremos en contacto contigo a la brevedad.
             </p>
             <div className="flex items-center gap-3 pt-2">
               {socialLinks.map((social) => (
-                <a key={social.name} href={social.href} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center transition-all hover:-translate-y-1 hover:bg-yellow-400">
+                <a key={social.name} href={social.href} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center transition-all hover:-translate-y-1 hover:bg-amber-400">
                   <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d={social.path}/></svg>
                 </a>
               ))}
@@ -86,34 +89,35 @@ export default function ContactSchool() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-9">
+        {/* Formulario de Contacto */}
+        <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8 bg-slate-50/50 p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-sm">
           <div className="relative group">
             <label className="block text-[11px] font-bold uppercase tracking-wider text-[#111c38]/60 mb-1">DNI</label>
-            <input type="text" name="dni" inputMode="numeric" maxLength={8} value={formData.dni} onChange={handleChange} required className="w-full bg-transparent text-sm py-2 border-b border-slate-400 outline-none" />
-            {errors.dni && <p className="text-red-600 text-[10px] mt-1">{errors.dni}</p>}
+            <input type="text" name="dni" inputMode="numeric" maxLength={8} value={formData.dni} onChange={handleChange} required className="w-full bg-transparent text-sm py-2 border-b border-slate-300 focus:border-[#111c38] outline-none transition-colors" />
+            {errors.dni && <p className="text-red-600 text-[10px] mt-1 font-semibold">{errors.dni}</p>}
           </div>
 
           <div className="relative group">
             <label className="block text-[11px] font-bold uppercase tracking-wider text-[#111c38]/60 mb-1">NOMBRES Y APELLIDOS</label>
-            <input type="text" name="nombre" placeholder="Ejem: Juan Perez" value={formData.nombre} onChange={handleChange} required className="w-full bg-transparent text-sm py-2 border-b border-slate-400 outline-none" />
+            <input type="text" name="nombre" placeholder="Ejem: Juan Perez" value={formData.nombre} onChange={handleChange} required className="w-full bg-transparent text-sm py-2 border-b border-slate-300 focus:border-[#111c38] outline-none transition-colors" />
           </div>
 
           <div className="relative group">
             <label className="block text-[11px] font-bold uppercase tracking-wider text-[#111c38]/60 mb-1">TELÉFONO / CELULAR</label>
-            <input type="tel" name="telefono" inputMode="numeric" maxLength={9} placeholder="Ejem: 999 555 000" value={formData.telefono} onChange={handleChange} required className="w-full bg-transparent text-sm py-2 border-b border-slate-400 outline-none" />
-            {errors.telefono && <p className="text-red-600 text-[10px] mt-1">{errors.telefono}</p>}
+            <input type="tel" name="telefono" inputMode="numeric" maxLength={9} placeholder="Ejem: 999 555 000" value={formData.telefono} onChange={handleChange} required className="w-full bg-transparent text-sm py-2 border-b border-slate-300 focus:border-[#111c38] outline-none transition-colors" />
+            {errors.telefono && <p className="text-red-600 text-[10px] mt-1 font-semibold">{errors.telefono}</p>}
           </div>
 
           <div className="relative group">
             <label className="block text-[11px] font-bold uppercase tracking-wider text-[#111c38]/60 mb-1">ASUNTO</label>
-            <textarea name="asunto" rows={4} placeholder="Motivo del mensaje" value={formData.asunto} onChange={handleChange} required className="w-full bg-transparent text-sm py-2 border-b border-slate-400 outline-none resize-y" />
+            <textarea name="asunto" rows={3} placeholder="Motivo del mensaje" value={formData.asunto} onChange={handleChange} required className="w-full bg-transparent text-sm py-2 border-b border-slate-300 focus:border-[#111c38] outline-none resize-none transition-colors" />
           </div>
 
           <div className="pt-2 flex flex-col items-end gap-3">
             <button 
               type="submit" 
               disabled={status === "loading" || !!errors.dni || !!errors.telefono} 
-              className="w-full md:w-auto px-8 py-3 bg-yellow-400 hover:bg-yellow-500 text-[#111c38] text-sm font-bold rounded-full transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-8 py-3 bg-amber-400 hover:bg-amber-500 text-[#111c38] text-sm font-bold rounded-full transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer shadow-md"
             >
               {status === "loading" && (
                 <svg className="animate-spin h-4 w-4 text-[#111c38]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -124,19 +128,20 @@ export default function ContactSchool() {
               {status === "loading" ? "Enviando mensaje..." : "Enviar Mensaje"}
             </button>
 
-            {/* Mensajes de estado alineados abajo del botón */}
+            {/* Mensajes de estado */}
             {status === "success" && (
-              <p className="text-green-600 text-xs font-semibold animate-pulse">
+              <p className="text-green-600 text-xs font-semibold animate-pulse text-right">
                 ¡Mensaje enviado con éxito! Nos pondremos en contacto pronto.
               </p>
             )}
             {status === "error" && (
-              <p className="text-red-600 text-xs font-semibold">
+              <p className="text-red-600 text-xs font-semibold text-right">
                 Error al enviar el mensaje. Inténtalo de nuevo.
               </p>
             )}
           </div>
         </form>
+
       </div>
     </section>
   );
