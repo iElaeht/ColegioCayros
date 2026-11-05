@@ -141,6 +141,7 @@ export default function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
               width={32} 
               height={32} 
               className="object-contain"
+              unoptimized
             />
           </div>
           <div className="truncate">
@@ -273,6 +274,7 @@ export default function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
                 width={36} 
                 height={36} 
                 className="object-contain"
+                unoptimized
               />
             </div>
             <div className={`whitespace-nowrap overflow-hidden transition-opacity duration-200 ${isExpanded ? "opacity-100" : "opacity-0 pointer-events-none hidden"}`}>
