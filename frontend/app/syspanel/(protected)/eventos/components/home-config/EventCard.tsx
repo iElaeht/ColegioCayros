@@ -34,7 +34,7 @@ export default function EventCard({
 
   if (!item || !item.src) {
     return (
-      <div className="rounded-xl border border-slate-100 bg-slate-50 aspect-[16/10] w-full flex items-center justify-center text-xs text-slate-400">
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 aspect-[16/10] w-full flex items-center justify-center text-xs font-medium text-slate-400 select-none">
         Cargando...
       </div>
     );
@@ -66,12 +66,14 @@ export default function EventCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={onClick}
-      className={`group bg-white rounded-xl transition-all duration-300 flex flex-col cursor-pointer border border-slate-100 hover:border-slate-200 shadow-xs hover:shadow-md ${
-        hideDetails ? "p-1 gap-0" : "p-2 gap-2.5"
-      }`}
+      className={`group bg-white rounded-2xl transition-all duration-300 flex flex-col cursor-pointer border shadow-xs hover:shadow-lg select-none ${
+        isSelected 
+          ? "border-[#16275d] ring-2 ring-[#16275d]/20 bg-[#16275d]/5" 
+          : "border-slate-200 hover:border-[#16275d]/40"
+      } ${hideDetails ? "p-1.5 gap-0" : "p-3 gap-3"}`}
     >
-      <div className={`relative w-full rounded-lg bg-slate-100 overflow-hidden isolate ${
-        hideDetails ? "aspect-[4/3] rounded-lg" : "aspect-[16/10]"
+      <div className={`relative w-full rounded-xl bg-slate-100 overflow-hidden isolate ${
+        hideDetails ? "aspect-[4/3] rounded-xl" : "aspect-[16/10]"
       }`}>
         <Image 
           src={imageSrc} 
@@ -82,11 +84,11 @@ export default function EventCard({
           unoptimized
         />
 
-        <div className="absolute inset-0 bg-slate-950/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+        <div className="absolute inset-0 bg-[#16275d]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
         {isInteractive && isSelected && selectionNumber !== null && (
           <div className="absolute top-2.5 right-2.5 z-30">
-            <div className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-[11px] font-bold shadow-md shadow-amber-500/40">
+            <div className="w-7 h-7 rounded-xl bg-[#16275d] text-amber-400 flex items-center justify-center text-xs font-bold shadow-md border border-white/20">
               {selectionNumber}
             </div>
           </div>
@@ -94,16 +96,16 @@ export default function EventCard({
       </div>
 
       {!hideDetails && (
-        <div className="flex flex-col gap-1 px-1 pb-0.5">
+        <div className="flex flex-col gap-1.5 px-1 pb-1">
           <h3 
             title={titleText}
-            className="text-xs font-medium text-slate-600 tracking-tight truncate group-hover:text-amber-600 transition-colors"
+            className="text-xs sm:text-sm font-bold text-[#16275d] tracking-tight truncate group-hover:text-amber-600 transition-colors"
           >
             {titleText}
           </h3>
 
-          <div className="flex items-center gap-1.5 text-slate-400 text-[11px]">
-            <Calendar className="w-3 h-3 text-amber-500/80 shrink-0" />
+          <div className="flex items-center gap-1.5 text-slate-500 text-xs font-medium">
+            <Calendar className="w-3.5 h-3.5 text-amber-500 shrink-0" />
             <span className="truncate">{formatDate(item.createdAt)}</span>
           </div>
         </div>

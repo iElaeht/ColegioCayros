@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import EventHomeGrid from "./EventHomeGrid";
 import EventModalHome from "./EventModalHome";
 import EventHomeAlert from "./EventHomeAlert";
-import { Pencil, Save } from "lucide-react";
+import { Pencil, Save, Loader2 } from "lucide-react";
 
 interface EventItem {
   id: number;
@@ -59,7 +59,8 @@ export default function EventHomeConfig({
   const handleSaveChanges = async () => {
     setIsSaving(true);
     try {
-      const res = await fetch("http://localhost:4000/api/eventos/featured", {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+      const res = await fetch(`${apiUrl}/api/eventos/featured`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -85,25 +86,26 @@ export default function EventHomeConfig({
 
   return (
     <>
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-xs space-y-4 w-full">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white rounded-3xl border border-slate-200 p-5 sm:p-8 shadow-sm space-y-6 w-full select-none">
+        
+        {/* Cabecera y Botones de Acción */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
           <div className="space-y-1">
-            <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
-              Configuración de Eventos
+            <h2 className="text-base sm:text-lg font-extrabold text-[#16275d] tracking-tight">
+              Configuración de Eventos en Inicio
             </h2>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Selecciona hasta {HOME_LIMIT} eventos para mostrar en la sección
-              principal del sitio web.
+            <p className="text-xs sm:text-sm text-slate-500 leading-relaxed font-medium">
+              Selecciona hasta {HOME_LIMIT} eventos destacados para mostrar en la landing page principal.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 sm:flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+          <div className="grid grid-cols-2 sm:flex items-center gap-2.5 sm:gap-3 w-full sm:w-auto shrink-0">
             <button
               type="button"
               onClick={() => setIsModalOpen(true)}
-              className="flex items-center justify-center gap-2 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-xs truncate"
+              className="flex items-center justify-center gap-2 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-[#16275d] text-xs sm:text-sm font-bold rounded-2xl transition-all cursor-pointer shadow-xs border border-slate-200/80 truncate"
             >
-              <Pencil className="w-3.5 h-3.5 shrink-0" />
+              <Pencil className="w-4 h-4 shrink-0" />
               <span className="truncate">Editar ({selectedIds.length}/{HOME_LIMIT})</span>
             </button>
 
@@ -111,20 +113,26 @@ export default function EventHomeConfig({
               type="button"
               onClick={handleSaveChanges}
               disabled={isSaving}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-xs truncate"
+              className="flex items-center justify-center gap-2 px-5 py-3 bg-[#16275d] hover:bg-[#111c38] disabled:bg-slate-400 text-amber-400 text-xs sm:text-sm font-bold rounded-2xl transition-all cursor-pointer shadow-md border border-[#16275d] truncate"
             >
-              <Save className="w-3.5 h-3.5 shrink-0" />
+              {isSaving ? (
+                <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4 shrink-0 text-amber-400" />
+              )}
               <span className="truncate">{isSaving ? "Guardando..." : "Guardar"}</span>
             </button>
           </div>
         </div>
 
+        {/* Grilla principal de previsualización */}
         <EventHomeGrid
           allImages={allImages}
           selectedIds={selectedIds}
           onOpenModal={() => setIsModalOpen(true)}
         />
 
+        {/* Modal de selección */}
         <EventModalHome
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}

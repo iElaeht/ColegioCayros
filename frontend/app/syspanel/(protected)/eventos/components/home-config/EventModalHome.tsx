@@ -144,17 +144,19 @@ export default function EventModalHome({
   const safeTotalCount = Array.isArray(allImages) ? allImages.length : 0;
 
   return (
-    <div className="fixed inset-0 w-screen h-screen z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-4xl h-[92vh] sm:h-[85vh] max-h-[92vh] rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
-        <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col gap-3 bg-slate-50 shrink-0">
-          <div className="flex items-center justify-between gap-2">
-            <div className="space-y-0.5">
-              <h3 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
+    <div className="fixed inset-0 w-screen h-screen z-[99999] flex items-center justify-center bg-slate-950/60 backdrop-blur-[2px] p-3 sm:p-4 animate-in fade-in duration-200 select-none">
+      <div className="bg-white w-full max-w-4xl h-[92vh] sm:h-[85vh] max-h-[92vh] rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+        
+        {/* Cabecera del Modal */}
+        <div className="p-4 sm:p-6 border-b border-slate-100 flex flex-col gap-4 bg-slate-50 shrink-0">
+          <div className="flex items-center justify-between gap-3">
+            <div className="space-y-1">
+              <h3 className="text-base sm:text-lg font-extrabold text-[#16275d] tracking-tight">
                 Seleccionar Eventos Destacados
               </h3>
-              <p className="text-[11px] sm:text-xs text-slate-500">
+              <p className="text-xs sm:text-sm text-slate-500 font-medium">
                 Seleccionados:{" "}
-                <span className="font-bold text-indigo-600">
+                <span className="font-bold text-[#16275d]">
                   {safeSelectedCount} / {homeLimit}
                 </span>
               </p>
@@ -163,7 +165,7 @@ export default function EventModalHome({
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-200/50 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+              className="w-9 h-9 rounded-2xl text-slate-400 hover:text-[#16275d] hover:bg-slate-200/60 flex items-center justify-center transition-colors cursor-pointer shrink-0 border border-slate-200/60"
               title="Cerrar y descartar"
             >
               <X className="w-5 h-5" />
@@ -182,10 +184,11 @@ export default function EventModalHome({
           </div>
         </div>
 
+        {/* Contenido de Grilla */}
         <div className="p-4 sm:p-6 overflow-y-auto custom-scrollbar flex-1 flex flex-col bg-white">
           {paginatedImages.length > 0 ? (
             <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                 {paginatedImages.map((img) => {
                   const currentSelectedIds = tempSlots.filter(
                     (id): id is number => id !== null,
@@ -214,7 +217,7 @@ export default function EventModalHome({
                   <button
                     type="button"
                     onClick={handleLoadMore}
-                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-sm truncate"
+                    className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-[#16275d] text-xs sm:text-sm font-bold rounded-2xl transition-all cursor-pointer shadow-xs border border-slate-200 truncate"
                   >
                     Cargar más eventos ({filteredImages.length - visibleLimit}{" "}
                     restantes)
@@ -223,12 +226,12 @@ export default function EventModalHome({
               )}
             </>
           ) : (
-            <div className="flex flex-col items-center justify-center py-12 text-center text-slate-400 my-auto space-y-1">
-              <p className="text-sm font-medium">
+            <div className="flex flex-col items-center justify-center py-16 text-center text-slate-400 my-auto space-y-2">
+              <p className="text-sm sm:text-base font-bold text-[#16275d]">
                 No se encontraron eventos en esta vista.
               </p>
               {searchTerm && (
-                <p className="text-xs text-slate-400">
+                <p className="text-xs sm:text-sm text-slate-500">
                   Intenta buscando con otro término o limpia el buscador.
                 </p>
               )}
@@ -236,23 +239,25 @@ export default function EventModalHome({
           )}
         </div>
 
-        <div className="p-3 sm:p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-3 shrink-0">
+        {/* Pie de Página del Modal */}
+        <div className="p-4 sm:p-5 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-3 shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold rounded-xl transition-all cursor-pointer truncate"
+            className="px-5 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs sm:text-sm font-bold rounded-2xl transition-all cursor-pointer truncate shadow-xs"
           >
             Cancelar
           </button>
           <button
             type="button"
             onClick={handleConfirmSave}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-5 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer truncate"
+            className="flex items-center gap-2 bg-[#16275d] hover:bg-[#111c38] text-amber-400 text-xs sm:text-sm font-bold px-6 py-3 rounded-2xl transition-all shadow-md cursor-pointer border border-[#16275d] truncate"
           >
-            <Save className="w-4 h-4 shrink-0" />
-            <span className="truncate">Guardar</span>
+            <Save className="w-4 h-4 shrink-0 text-amber-400" />
+            <span className="truncate">Guardar Selección</span>
           </button>
         </div>
+
       </div>
     </div>
   );

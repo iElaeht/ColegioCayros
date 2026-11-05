@@ -120,29 +120,29 @@ export default function EventModal({
     <>
       {/* Modal Principal */}
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/65 backdrop-blur-md p-4 animate-in fade-in duration-200"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/65 backdrop-blur-md p-4 animate-in fade-in duration-200 select-none"
         onClick={onClose}
       >
         <div
-          className="bg-white border border-slate-100 rounded-3xl w-full max-w-lg px-7 pt-7 pb-8 shadow-2xl relative flex flex-col max-h-[90vh] overflow-y-auto"
+          className="bg-white border border-slate-200 rounded-3xl w-full max-w-lg px-6 pt-6 pb-7 shadow-2xl relative flex flex-col max-h-[90vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Cabecera */}
           <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
             <div>
-              <h2 className="text-base font-bold text-slate-800">
+              <h2 className="text-base sm:text-lg font-extrabold text-[#16275d]">
                 {editingImage ? "Editar Evento" : "Subir Nuevo Evento"}
               </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
                 {editingImage
                   ? "Modifica los detalles o reemplaza el archivo multimedia."
-                  : "Completa los campos para añadir un nuevo evento a la vista."}
+                  : "Completa los campos para añadir un nuevo evento institucional."}
               </p>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-all cursor-pointer"
+              className="text-slate-400 hover:text-[#16275d] bg-slate-100 hover:bg-slate-200 p-2 rounded-2xl transition-all cursor-pointer border border-slate-200/60"
             >
               <X className="w-4 h-4" />
             </button>
@@ -151,7 +151,7 @@ export default function EventModal({
           <form onSubmit={handleSubmitForm} className="space-y-4">
             {/* Vista Previa */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-[#16275d]">
                 Vista Previa
               </label>
               <div
@@ -169,15 +169,15 @@ export default function EventModal({
                       onError={() => {}}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
-                    <div className="absolute inset-0 bg-slate-950/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-white text-xs font-semibold">
-                      <Eye className="w-4 h-4" />
+                    <div className="absolute inset-0 bg-[#16275d]/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-white text-xs font-semibold backdrop-blur-[2px]">
+                      <Eye className="w-4 h-4 text-amber-400" />
                       <span>Ver imagen completa</span>
                     </div>
                   </>
                 ) : (
                   <div className="flex flex-col items-center gap-1.5 text-slate-400">
-                    <ImageIcon className="w-8 h-8 stroke-[1.5] text-amber-500/70" />
-                    <span className="text-xs font-medium">
+                    <ImageIcon className="w-8 h-8 stroke-[1.5] text-amber-500" />
+                    <span className="text-xs font-semibold">
                       Sin imagen seleccionada
                     </span>
                   </div>
@@ -187,22 +187,22 @@ export default function EventModal({
 
             {/* Título / Alt */}
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                Título
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-[#16275d] mb-1.5">
+                Título del Evento
               </label>
               <input
                 type="text"
                 value={alt}
                 onChange={(e) => setAlt(e.target.value)}
-                placeholder="Ej. Conferencia anual de tecnología"
+                placeholder="Ej. Conferencia anual escolar"
                 required
-                className="w-full bg-slate-50 text-slate-800 text-xs px-4 py-3 rounded-xl border border-slate-200 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/10 outline-none transition-all font-medium"
+                className="w-full bg-white text-slate-800 text-xs sm:text-sm px-4 py-3 rounded-2xl border border-slate-200 focus:border-[#16275d] focus:ring-2 focus:ring-[#16275d]/10 outline-none transition-all font-semibold shadow-xs"
               />
             </div>
 
             {/* Descripción */}
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-[#16275d] mb-1.5">
                 Descripción detallada
               </label>
               <textarea
@@ -210,12 +210,12 @@ export default function EventModal({
                 onChange={(e) => setDescripcion(e.target.value)}
                 placeholder="Escribe una breve descripción del evento..."
                 rows={3}
-                className="w-full bg-slate-50 text-slate-800 text-xs px-4 py-3 rounded-xl border border-slate-200 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/10 outline-none transition-all font-medium resize-none custom-scrollbar"
+                className="w-full bg-white text-slate-800 text-xs sm:text-sm px-4 py-3 rounded-2xl border border-slate-200 focus:border-[#16275d] focus:ring-2 focus:ring-[#16275d]/10 outline-none transition-all font-semibold resize-none custom-scrollbar shadow-xs"
               />
             </div>
 
             {/* Selector de Pestañas */}
-            <div className="flex gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200/60">
+            <div className="flex gap-1.5 p-1 bg-slate-100 rounded-2xl border border-slate-200">
               <button
                 type="button"
                 onClick={() => {
@@ -224,13 +224,13 @@ export default function EventModal({
                   setImageFile(null);
                   setPreviewUrl("");
                 }}
-                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 ${
                   inputType === "file"
-                    ? "bg-white text-slate-900 shadow-sm border border-slate-200/50"
-                    : "text-slate-500 hover:text-slate-900"
+                    ? "bg-[#16275d] text-amber-400 shadow-sm"
+                    : "text-slate-600 hover:text-[#16275d]"
                 }`}
               >
-                <Upload className="w-3.5 h-3.5 text-amber-600" />
+                <Upload className="w-4 h-4 shrink-0" />
                 <span>
                   {editingImage ? "Reemplazar Archivo" : "Subir Archivo"}
                 </span>
@@ -242,13 +242,13 @@ export default function EventModal({
                   setImageFile(null);
                   setPreviewUrl(imageUrl);
                 }}
-                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 ${
                   inputType === "url"
-                    ? "bg-white text-slate-900 shadow-sm border border-slate-200/50"
-                    : "text-slate-500 hover:text-slate-900"
+                    ? "bg-[#16275d] text-amber-400 shadow-sm"
+                    : "text-slate-600 hover:text-[#16275d]"
                 }`}
               >
-                <LinkIcon className="w-3.5 h-3.5 text-amber-600" />
+                <LinkIcon className="w-4 h-4 shrink-0" />
                 <span>Enlace URL</span>
               </button>
             </div>
@@ -256,7 +256,7 @@ export default function EventModal({
             {/* Input Condicional */}
             {inputType === "file" ? (
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#16275d] mb-1.5">
                   {isLocalFileEditing
                     ? "Nuevo archivo de imagen (Opcional)"
                     : "Seleccionar Archivo (Max 5MB)"}
@@ -267,35 +267,35 @@ export default function EventModal({
                   accept="image/png, image/jpeg, image/webp, image/avif, image/gif, image/svg+xml"
                   onChange={handleFileChange}
                   required={!editingImage && inputType === "file"}
-                  className="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100 cursor-pointer border border-slate-200 rounded-xl bg-slate-50 p-1 transition-all"
+                  className="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#16275d]/10 file:text-[#16275d] hover:file:bg-[#16275d]/20 cursor-pointer border border-slate-200 rounded-2xl bg-slate-50 p-1 transition-all"
                 />
               </div>
             ) : (
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#16275d] mb-1.5">
                   URL de la Imagen Externa
                 </label>
                 <input
                   type="url"
                   value={imageUrl}
                   onChange={(e) => handleUrlChange(e.target.value)}
-                  placeholder="https://scontent... pega aquí el enlace de la imagen"
+                  placeholder="https://... pega aquí el enlace de la imagen"
                   required={inputType === "url"}
-                  className="w-full bg-slate-50 text-slate-800 text-xs px-4 py-3 rounded-xl border border-slate-200 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/10 outline-none transition-all font-medium"
+                  className="w-full bg-white text-slate-800 text-xs sm:text-sm px-4 py-3 rounded-2xl border border-slate-200 focus:border-[#16275d] focus:ring-2 focus:ring-[#16275d]/10 outline-none transition-all font-semibold shadow-xs"
                 />
               </div>
             )}
 
             {/* Botones de Acción y Eliminar */}
-            <div className="flex items-center justify-between pt-4 border-t border-slate-100 mt-2">
+            <div className="flex items-center justify-between pt-4 border-t border-slate-100 mt-3">
               {editingImage && onDelete ? (
                 <button
                   type="button"
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer flex items-center gap-1.5 border border-rose-100"
+                  className="px-4 py-2.5 rounded-2xl text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer flex items-center gap-2 border border-rose-200"
                   title="Eliminar evento"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-4 h-4 shrink-0" />
                   <span>Eliminar</span>
                 </button>
               ) : (
@@ -306,13 +306,13 @@ export default function EventModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                  className="px-4 py-2.5 rounded-2xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20 transition-all cursor-pointer"
+                  className="px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold bg-[#16275d] hover:bg-[#111c38] text-amber-400 shadow-md border border-[#16275d] transition-all cursor-pointer"
                 >
                   {editingImage ? "Guardar Cambios" : "Subir Evento"}
                 </button>
@@ -324,22 +324,22 @@ export default function EventModal({
 
       {/* Sub-Modal: Confirmación de Eliminación */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-          <div className="bg-white border border-slate-100 rounded-3xl w-full max-w-sm p-6 shadow-2xl flex flex-col text-center">
-            <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto mb-4">
-              <Trash2 className="w-6 h-6" />
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4 animate-in fade-in duration-150 select-none">
+          <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-sm p-6 shadow-2xl flex flex-col text-center">
+            <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 border border-rose-200 flex items-center justify-center mx-auto mb-4 shadow-xs">
+              <Trash2 className="w-7 h-7 stroke-[2]" />
             </div>
-            <h3 className="text-sm font-bold text-slate-800 mb-1">
+            <h3 className="text-base font-bold text-[#16275d] mb-1">
               ¿Eliminar este evento?
             </h3>
-            <p className="text-xs text-slate-400 mb-6">
-              Esta acción es irreversible y se removerá de los eventos permanentemente.
+            <p className="text-xs text-slate-500 font-medium mb-6">
+              Esta acción es irreversible y el evento se removerá del sistema permanentemente.
             </p>
-            <div className="flex gap-2.5">
+            <div className="flex gap-3">
               <button
                 type="button"
                 onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
+                className="flex-1 py-3 rounded-2xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer border border-slate-200"
               >
                 Cancelar
               </button>
@@ -349,7 +349,7 @@ export default function EventModal({
                   setShowDeleteConfirm(false);
                   onDelete?.();
                 }}
-                className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-600/20 transition-colors cursor-pointer"
+                className="flex-1 py-3 rounded-2xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-md transition-colors cursor-pointer"
               >
                 Sí, eliminar
               </button>
@@ -371,7 +371,7 @@ export default function EventModal({
             <button
               type="button"
               onClick={() => setShowLightbox(false)}
-              className="absolute -top-12 right-0 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-full transition-all cursor-pointer"
+              className="absolute -top-12 right-0 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-2.5 rounded-2xl transition-all cursor-pointer border border-white/10"
             >
               <X className="w-5 h-5" />
             </button>
@@ -379,7 +379,7 @@ export default function EventModal({
             <img
               src={previewUrl}
               alt="Vista detallada"
-              className="max-h-[85vh] max-w-full object-contain rounded-2xl shadow-2xl border border-white/10"
+              className="max-h-[85vh] max-w-full object-contain rounded-3xl shadow-2xl border border-white/10"
             />
           </div>
         </div>

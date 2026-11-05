@@ -95,7 +95,8 @@ export default function AdminEventosPage() {
 
     const loadEvents = async () => {
       try {
-        const res = await fetch("http://localhost:4000/api/eventos");
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+        const res = await fetch(`${apiUrl}/api/eventos`);
         if (!res.ok)
           throw new Error("Error al obtener los registros del servidor");
 
@@ -155,7 +156,8 @@ export default function AdminEventosPage() {
       const formData = new FormData();
       formData.append("isActive", String(!target.isActive));
 
-      const res = await fetch(`http://localhost:4000/api/eventos/${id}`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+      const res = await fetch(`${apiUrl}/api/eventos/${id}`, {
         method: "PUT",
         body: formData,
       });
@@ -175,7 +177,8 @@ export default function AdminEventosPage() {
 
   const handleDelete = async (id: number) => {
     try {
-      const res = await fetch(`http://localhost:4000/api/eventos/${id}`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+      const res = await fetch(`${apiUrl}/api/eventos/${id}`, {
         method: "DELETE",
       });
 
@@ -219,9 +222,10 @@ export default function AdminEventosPage() {
         formData.append("imageUrl", imageUrl);
       }
 
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
       const url = editingEvent
-        ? `http://localhost:4000/api/eventos/${editingEvent.id}`
-        : "http://localhost:4000/api/eventos";
+        ? `${apiUrl}/api/eventos/${editingEvent.id}`
+        : `${apiUrl}/api/eventos`;
 
       const method = editingEvent ? "PUT" : "POST";
 
@@ -299,21 +303,24 @@ export default function AdminEventosPage() {
   );
 
   return (
-    <div className="p-4 sm:p-6 md:p-10 max-w-7xl mx-auto w-full font-['Poppins',sans-serif] space-y-6 overflow-x-hidden">
+    <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto w-full space-y-6 overflow-x-hidden select-none">
+      
+      {/* Cabecera del Módulo */}
       <div className="space-y-1">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[#16275d] tracking-tight">
           Gestión de Eventos
         </h1>
         <p className="text-slate-500 text-xs md:text-sm font-medium">
-          Sube, edita, activa o deshabilita los eventos del Colegio &quot; I.E.P
-          Cayros &quot;
+          Administra, edita, activa o deshabilita los eventos institucionales de la I.E.P. Colegio Cayros.
         </p>
       </div>
 
-      <div className="h-[1px] w-full bg-slate-200/90 my-2" />
+      <div className="h-[1px] w-full bg-slate-200 my-2" />
 
+      {/* Configuración de Destacados en Inicio */}
       <EventHomeConfig allImages={events} showToast={showToast} />
 
+      {/* Grilla General de Eventos */}
       <EventGrid
         images={paginatedEvents}
         onToggleStatus={toggleStatus}
@@ -333,6 +340,7 @@ export default function AdminEventosPage() {
         itemsPerPage={itemsPerPage}
       />
 
+      {/* Modal de Creación / Edición */}
       <EventModal
         key={editingEvent ? `edit-${editingEvent.id}` : "create-new"}
         isOpen={isModalOpen}
@@ -347,14 +355,15 @@ export default function AdminEventosPage() {
         editingImage={editingEvent}
       />
 
+      {/* Sistema de Notificaciones Toast */}
       {toast &&
         typeof window !== "undefined" &&
         createPortal(
-          <div className="fixed top-6 right-6 z-[99999] flex items-center gap-2.5 px-4 py-3 bg-slate-900/95 text-white text-xs font-medium rounded-xl shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-3 duration-200 border border-slate-700">
+          <div className="fixed top-6 right-6 z-[99999] flex items-center gap-3 px-5 py-3.5 bg-[#16275d] text-white text-xs sm:text-sm font-bold rounded-2xl shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-3 duration-200 border border-[#16275d]/60">
             {toast.type === "success" ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <CheckCircle2 className="w-5 h-5 text-amber-400 shrink-0" />
             ) : (
-              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+              <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
             )}
             <span>{toast.message}</span>
           </div>,
