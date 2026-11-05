@@ -24,6 +24,7 @@ const GRADOS_POR_NIVEL: Record<string, string[]> = {
 export default function MatriculaPage() {
   const [slides, setSlides] = useState<MatriculaImage[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [progress, setProgress] = useState(0); // Control de barra de progreso sincronizada (0 a 100)
 
   const [formData, setFormData] = useState({
     sede: "",
@@ -50,32 +51,51 @@ export default function MatriculaPage() {
     return () => clearTimeout(timer);
   }, [toast]);
 
-  // Cargar galería de matrículas
+  // Cargar galería de matrículas (solo activas)
   useEffect(() => {
     fetch("http://localhost:4000/api/matricula-galeria")
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {
-          setSlides(data.slice(0, 6));
+          const activas = data.filter((item: MatriculaImage) => item.isActive);
+          setSlides(activas.slice(0, 8));
         }
       })
       .catch((err) => console.error("Error al cargar galería de matrículas:", err));
   }, []);
 
-  // Autoplay del carrusel cada 5 segundos
+  // Temporizador blindado y fluido para la barra de carga y el carrusel (5 segundos por slide)
   useEffect(() => {
     if (slides.length <= 1) return;
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 5000);
-    return () => clearInterval(interval);
+
+    const intervalTime = 50; // Intervalo de actualización en ms
+    const totalDuration = 5000; // Duración total por imagen (5 segundos)
+    const increment = (intervalTime / totalDuration) * 100;
+
+    const timer = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 100) {
+          // Cambiar al siguiente slide y reiniciar progreso
+          setCurrentSlide((curr) => (curr + 1) % slides.length);
+          return 0;
+        }
+        return prev + increment;
+      });
+    }, intervalTime);
+
+    return () => clearInterval(timer);
   }, [slides.length]);
+
+  // Cambio manual de slide al hacer clic en un dot (resetea el progreso de inmediato)
+  const handleSelectSlide = (index: number) => {
+    setCurrentSlide(index);
+    setProgress(0);
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
 
     if (name === "sede") {
-      // Al cambiar de Sede, reiniciamos el Nivel y el Grado a blanco
       setFormData({
         ...formData,
         sede: value,
@@ -83,7 +103,6 @@ export default function MatriculaPage() {
         grado: "",
       });
     } else if (name === "nivel") {
-      // Al cambiar de Nivel, reiniciamos únicamente el Grado a blanco
       setFormData({
         ...formData,
         nivel: value,
@@ -94,7 +113,6 @@ export default function MatriculaPage() {
     }
   };
 
-  // Función para permitir únicamente dígitos numéricos
   const handleNumberInput = (e: React.FormEvent<HTMLInputElement>, maxLength: number) => {
     const input = e.currentTarget;
     const numericValue = input.value.replace(/\D/g, "").slice(0, maxLength);
@@ -106,7 +124,6 @@ export default function MatriculaPage() {
     setLoading(true);
     setToast(null);
 
-    // Validaciones previas
     if (!formData.sede || !formData.nivel || !formData.grado) {
       setToast({ type: "error", message: "Por favor, selecciona la Sede, Nivel y Grado al que postula." });
       setLoading(false);
@@ -158,7 +175,6 @@ export default function MatriculaPage() {
     }
   };
 
-  // Lógica de Niveles y Grados disponibles según las selecciones previas
   const nivelesDisponibles = formData.sede === "Cayros School" ? ["Inicial"] : formData.sede === "Colegio Cayros" ? ["Inicial", "Primaria", "Secundaria"] : [];
   const gradosActuales = formData.nivel ? GRADOS_POR_NIVEL[formData.nivel] || [] : [];
 
@@ -183,7 +199,7 @@ export default function MatriculaPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             
-            {/* LADO IZQUIERDO: Carrusel */}
+            {/* LADO IZQUIERDO: Carrusel con Animación Fade y Barra de Progreso Sincronizada */}
             <div className="lg:col-span-6 relative">
               <div className="absolute -inset-2 bg-gradient-to-tr from-amber-400/20 via-blue-600/10 to-transparent rounded-[2.5rem] blur-xl -z-10 pointer-events-none" />
 
@@ -202,7 +218,7 @@ export default function MatriculaPage() {
                       >
                         <Image
                           src={resolvedImg}
-                          alt="Colegio Cayros Matrículas"
+                          alt={slide.title || "Colegio Cayros Matrículas"}
                           fill
                           unoptimized
                           className="object-cover"
@@ -217,27 +233,36 @@ export default function MatriculaPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                       </svg>
                     </div>
-                    <span className="text-sm font-semibold tracking-wide text-indigo-600">No Image</span>
+                    <span className="text-sm font-semibold tracking-wide text-indigo-600">No hay imágenes activas</span>
                   </div>
                 )}
               </div>
 
+              {/* Indicadores (Dots) con barra de progreso fluida */}
               {slides.length > 0 && (
-                <div className="flex justify-center gap-2 mt-4">
+                <div className="flex justify-center items-center gap-2.5 mt-4">
                   {slides.map((_, idx) => (
                     <button
                       key={idx}
-                      onClick={() => setCurrentSlide(idx)}
-                      className={`h-2 rounded-full transition-all duration-300 ${
-                        idx === currentSlide ? "w-8 bg-amber-500" : "w-2 bg-slate-300"
+                      onClick={() => handleSelectSlide(idx)}
+                      className={`h-2 rounded-full overflow-hidden bg-slate-300 transition-all duration-300 cursor-pointer relative ${
+                        idx === currentSlide ? "w-10" : "w-2 hover:bg-slate-400"
                       }`}
-                    />
+                      title={`Ir a imagen ${idx + 1}`}
+                    >
+                      {idx === currentSlide && (
+                        <div 
+                          className="absolute top-0 left-0 bottom-0 bg-amber-500 transition-all duration-75 ease-linear"
+                          style={{ width: `${progress}%` }}
+                        />
+                      )}
+                    </button>
                   ))}
                 </div>
               )}
             </div>
 
-            {/* LADO DERECHO: Formulario con Selectores Secuenciales Habilitados/Deshabilitados */}
+            {/* LADO DERECHO: Formulario de Pre-Inscripción */}
             <div className="lg:col-span-6 bg-white rounded-[2rem] shadow-xl border border-slate-100 p-6 sm:p-8">
               <div className="flex items-center gap-3 mb-1">
                 <div className="w-1.5 h-6 bg-amber-500 rounded-full" />
@@ -249,7 +274,6 @@ export default function MatriculaPage() {
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 
-                {/* 1. NOMBRES Y APELLIDOS DEL ESTUDIANTE */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Nombres del Estudiante</label>
@@ -277,7 +301,6 @@ export default function MatriculaPage() {
                   </div>
                 </div>
 
-                {/* 2. DNI Y SEDE */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">DNI del Estudiante</label>
@@ -308,7 +331,6 @@ export default function MatriculaPage() {
                   </div>
                 </div>
 
-                {/* 3. NIVEL Y GRADO DEPENDIENTES */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Nivel de Estudio</label>
@@ -352,9 +374,8 @@ export default function MatriculaPage() {
                   </div>
                 </div>
 
-                {/* 4. APODERADO Y CONTACTO */}
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">datos Completos del Apoderado</label>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Datos Completos del Apoderado</label>
                   <input
                     type="text"
                     name="nombresApoderado"
@@ -420,7 +441,6 @@ export default function MatriculaPage() {
                   )}
                 </button>
 
-                {/* TOAST UBICADO DEBAJO DEL BOTÓN */}
                 {toast && (
                   <div
                     className={`mt-4 p-4 rounded-xl flex items-center gap-3 text-xs font-semibold animate-fadeIn transition-all duration-300 ${
@@ -443,7 +463,7 @@ export default function MatriculaPage() {
 
           </div>
 
-          {/* BANNER INFERIOR (Misión, Visión, Propósito, Valores) */}
+          {/* BANNER INFERIOR */}
           <div className="mt-20">
             <div className="bg-[#16275D] text-white rounded-[2.5rem] shadow-2xl p-8 sm:p-12 border border-slate-700/30 relative overflow-hidden">
               <div className="absolute -top-24 -right-24 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />

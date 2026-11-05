@@ -57,10 +57,9 @@ router.post("/", upload.single("imageFile"), async (req: Request, res: Response)
     }
 
     const count = await prisma.matriculaGaleria.count();
-    if (count >= 6) {
-      // Si ya hay 6 imágenes, eliminamos el archivo subido para no saturar disco
-      fs.unlinkSync(req.file.path);
-      return res.status(400).json({ error: "Límite alcanzado: solo se permiten hasta 6 imágenes en el carrusel." });
+    if (count >= 8) {
+      if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      return res.status(400).json({ error: "Límite alcanzado: solo se permiten hasta 8 imágenes en el carrusel." });
     }
 
     // Ajusta esta ruta base según cómo registres tu router en server.ts
