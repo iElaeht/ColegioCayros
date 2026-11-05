@@ -90,56 +90,56 @@ export default function CustomDatePicker({ selectedDate, onChange }: CustomDateP
   };
 
   return (
-    <div className="relative w-full sm:w-auto" ref={containerRef}>
+    <div className="relative w-full sm:w-auto select-none" ref={containerRef}>
       <button
         type="button"
         onClick={() => {
           setIsOpen(!isOpen);
           setViewMode("days");
         }}
-        className={`w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2.5 pl-3.5 pr-3 py-2 border rounded-xl text-xs sm:text-sm transition-all cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-[#6eb5ec]/20 ${
+        className={`w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2.5 pl-3.5 pr-3 py-2.5 border rounded-2xl text-xs sm:text-sm transition-all cursor-pointer shadow-sm focus:outline-none focus:ring-2 focus:ring-[#16275d]/20 ${
           selectedDate
-            ? "bg-[#6eb5ec]/10 border-[#6eb5ec]/40 text-[#16275d]"
-            : "bg-slate-50/80 hover:bg-slate-50 border-slate-200/90 text-slate-500"
+            ? "bg-[#16275d]/5 border-[#16275d]/30 text-[#16275d]"
+            : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
         }`}
       >
         <div className="flex items-center gap-2.5 truncate">
-          <Calendar className={`w-4 h-4 shrink-0 ${selectedDate ? "text-[#6eb5ec]" : "text-slate-400"}`} />
-          <span className={`font-medium truncate ${selectedDate ? "text-[#16275d]" : "text-slate-500"}`}>
+          <Calendar className={`w-4 h-4 shrink-0 ${selectedDate ? "text-[#16275d]" : "text-slate-400"}`} />
+          <span className={`font-semibold truncate ${selectedDate ? "text-[#16275d]" : "text-slate-600"}`}>
             {formatDisplayDate(selectedDate)}
           </span>
         </div>
         {selectedDate && (
           <span
             onClick={handleClear}
-            className="p-0.5 hover:bg-slate-200/60 rounded-full text-[#6eb5ec] hover:text-[#16275d] transition-colors ml-1 shrink-0"
+            className="p-1 hover:bg-slate-200/80 rounded-full text-[#16275d] transition-colors ml-1 shrink-0 cursor-pointer"
             title="Limpiar fecha"
           >
-            <X className="w-3.5 h-3.5" />
+            <X className="w-3.5 h-3.5 stroke-[2.5]" />
           </span>
         )}
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 sm:left-0 sm:right-auto mt-2 w-full sm:w-72 bg-white border-2 border-slate-200 rounded-2xl shadow-2xl z-50 p-4 animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute right-0 sm:left-0 sm:right-auto mt-2 w-full sm:w-72 bg-white border border-slate-200 rounded-3xl shadow-2xl z-50 p-4 animate-in fade-in zoom-in-95 duration-150">
           
-          <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
             <div className="flex items-center gap-1">
               {viewMode === "days" && (
                 <>
                   <button
                     type="button"
                     onClick={() => setViewMode("months")}
-                    className="text-xs font-bold text-slate-800 hover:text-[#6eb5ec] transition-colors flex items-center gap-1 px-1.5 py-1 rounded-lg hover:bg-slate-100 cursor-pointer uppercase"
+                    className="text-xs font-bold text-[#16275d] hover:bg-slate-100 transition-colors flex items-center gap-1 px-2 py-1.5 rounded-xl cursor-pointer uppercase tracking-wider"
                   >
-                    {monthsNames[month]} <ChevronDown className="w-3.5 h-3.5" />
+                    {monthsNames[month]} <ChevronDown className="w-3.5 h-3.5 stroke-[2.5]" />
                   </button>
                   <button
                     type="button"
                     onClick={openYearsView}
-                    className="text-xs font-bold text-slate-800 hover:text-[#6eb5ec] transition-colors flex items-center gap-1 px-1.5 py-1 rounded-lg hover:bg-slate-100 cursor-pointer"
+                    className="text-xs font-bold text-[#16275d] hover:bg-slate-100 transition-colors flex items-center gap-1 px-2 py-1.5 rounded-xl cursor-pointer"
                   >
-                    {year} <ChevronDown className="w-3.5 h-3.5" />
+                    {year} <ChevronDown className="w-3.5 h-3.5 stroke-[2.5]" />
                   </button>
                 </>
               )}
@@ -148,14 +148,14 @@ export default function CustomDatePicker({ selectedDate, onChange }: CustomDateP
                 <button
                   type="button"
                   onClick={openYearsView}
-                  className="text-xs font-bold text-slate-800 hover:text-[#6eb5ec] transition-colors flex items-center gap-1 px-1.5 py-1 rounded-lg hover:bg-slate-100 cursor-pointer"
+                  className="text-xs font-bold text-[#16275d] hover:bg-slate-100 transition-colors flex items-center gap-1 px-2 py-1.5 rounded-xl cursor-pointer"
                 >
-                  Año: {year} <ChevronDown className="w-3.5 h-3.5" />
+                  Año: {year} <ChevronDown className="w-3.5 h-3.5 stroke-[2.5]" />
                 </button>
               )}
 
               {viewMode === "years" && (
-                <span className="text-xs font-bold text-slate-800 px-1.5 py-1 uppercase">
+                <span className="text-xs font-bold text-[#16275d] px-2 py-1.5 uppercase tracking-wider">
                   Selecciona un año
                 </span>
               )}
@@ -165,16 +165,16 @@ export default function CustomDatePicker({ selectedDate, onChange }: CustomDateP
               <button
                 type="button"
                 onClick={handlePrev}
-                className="p-1.5 hover:bg-slate-100 text-slate-600 rounded-lg transition-colors cursor-pointer border border-slate-200/60"
+                className="p-2 hover:bg-slate-100 text-slate-700 rounded-xl transition-colors cursor-pointer border border-slate-200/80 shadow-xs"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
               </button>
               <button
                 type="button"
                 onClick={handleNext}
-                className="p-1.5 hover:bg-slate-100 text-slate-600 rounded-lg transition-colors cursor-pointer border border-slate-200/60"
+                className="p-2 hover:bg-slate-100 text-slate-700 rounded-xl transition-colors cursor-pointer border border-slate-200/80 shadow-xs"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-4 h-4 stroke-[2.5]" />
               </button>
             </div>
           </div>
@@ -183,7 +183,7 @@ export default function CustomDatePicker({ selectedDate, onChange }: CustomDateP
             <>
               <div className="grid grid-cols-7 gap-1 text-center mb-2">
                 {["Lu", "Ma", "Mi", "Ju", "Vi", "Sá", "Do"].map((d) => (
-                  <span key={d} className="text-[11px] font-semibold text-slate-400">
+                  <span key={d} className="text-[11px] font-bold text-slate-400 uppercase">
                     {d}
                   </span>
                 ))}
@@ -206,9 +206,9 @@ export default function CustomDatePicker({ selectedDate, onChange }: CustomDateP
                       key={day}
                       type="button"
                       onClick={() => handleSelectDay(day)}
-                      className={`h-8 w-8 mx-auto flex items-center justify-center text-xs rounded-xl font-medium transition-all cursor-pointer ${
+                      className={`h-8 w-8 mx-auto flex items-center justify-center text-xs rounded-xl font-semibold transition-all cursor-pointer ${
                         isSelected
-                          ? "bg-[#6eb5ec] text-white shadow-sm font-bold"
+                          ? "bg-[#16275d] text-amber-400 shadow-md font-bold scale-105"
                           : "text-slate-700 hover:bg-slate-100"
                       }`}
                     >
@@ -230,9 +230,9 @@ export default function CustomDatePicker({ selectedDate, onChange }: CustomDateP
                     setCurrentMonth(new Date(year, idx, 1));
                     setViewMode("days");
                   }}
-                  className={`py-2.5 text-xs rounded-xl font-medium transition-all cursor-pointer ${
+                  className={`py-3 text-xs rounded-xl font-semibold transition-all cursor-pointer ${
                     month === idx
-                      ? "bg-[#6eb5ec] text-white font-bold shadow-sm"
+                      ? "bg-[#16275d] text-amber-400 font-bold shadow-md"
                       : "text-slate-700 hover:bg-slate-100"
                   }`}
                 >
@@ -254,9 +254,9 @@ export default function CustomDatePicker({ selectedDate, onChange }: CustomDateP
                       setCurrentMonth(new Date(targetYear, month, 1));
                       setViewMode("months");
                     }}
-                    className={`py-2.5 text-xs rounded-xl font-medium transition-all cursor-pointer ${
+                    className={`py-3 text-xs rounded-xl font-semibold transition-all cursor-pointer ${
                       year === targetYear
-                        ? "bg-[#6eb5ec] text-white font-bold shadow-sm"
+                        ? "bg-[#16275d] text-amber-400 font-bold shadow-md"
                         : "text-slate-700 hover:bg-slate-100"
                     }`}
                   >
@@ -268,7 +268,7 @@ export default function CustomDatePicker({ selectedDate, onChange }: CustomDateP
           )}
 
           {selectedDate && (
-            <div className="mt-3 pt-3 border-t border-slate-100 text-center">
+            <div className="mt-4 pt-3 border-t border-slate-100 text-center">
               <button
                 type="button"
                 onClick={() => {
@@ -276,7 +276,7 @@ export default function CustomDatePicker({ selectedDate, onChange }: CustomDateP
                   setIsOpen(false);
                   setViewMode("days");
                 }}
-                className="text-xs text-rose-500 hover:text-rose-600 font-semibold transition-colors cursor-pointer"
+                className="text-xs text-rose-600 hover:text-rose-700 font-bold transition-colors cursor-pointer"
               >
                 Quitar filtro de fecha
               </button>

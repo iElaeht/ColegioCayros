@@ -1,3 +1,6 @@
+// frontend/components/ui/LogoCayros.tsx
+"use client";
+
 import React from 'react';
 
 interface LogoProps {
@@ -5,14 +8,17 @@ interface LogoProps {
   size?: number;
 }
 
-export default function LogoCayros({ className = "w-32 h-32", size = 150 }: LogoProps) {
+export default function LogoCayros({ className = "w-12 h-12", size }: LogoProps) {
   return (
-    <div className={`relative flex items-center justify-center ${className}`}>
+    <div 
+      className={`relative flex items-center justify-center shrink-0 ${className}`}
+      style={size ? { width: `${size}px`, height: `${size}px` } : undefined}
+    >
       <svg 
         viewBox="0 0 300 360" 
         width="100%" 
         height="100%" 
-        className="drop-shadow-xl"
+        className="drop-shadow-md select-none"
         xmlns="http://www.w3.org/2000/svg"
       >
         {/* Fondo del Escudo (Forma de Escudo Tradicional) */}
