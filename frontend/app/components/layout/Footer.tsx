@@ -13,8 +13,8 @@ export default function Footer() {
       {/* Contenedor principal de fondo partido responsivo (65% azul oscuro / 35% celeste) */}
       <div className="grid grid-cols-1 lg:grid-cols-[65fr_35fr] w-full min-h-[360px]">
         
-        {/* Lado Izquierdo: Fondo azul marino */}
-        <div className="bg-[#16275d] text-white py-12 sm:py-16 px-6 sm:px-12 lg:px-16 xl:px-24 flex justify-center lg:justify-end items-center">
+        {/* Lado Izquierdo: Fondo azul marino (Alineado a la izquierda con lg:justify-start) */}
+        <div className="bg-[#16275d] text-white py-12 sm:py-16 px-6 sm:px-12 lg:px-16 xl:px-24 flex justify-center lg:justify-start items-center">
           <div className="w-full max-w-md flex flex-col items-center lg:items-start text-center lg:text-left space-y-5">
             
             {/* Logotipo institucional */}

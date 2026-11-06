@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Calendar, Star } from "lucide-react";
+import { Calendar } from "lucide-react";
 
 interface GalleryItem {
   id: number;
@@ -88,17 +88,12 @@ export default function GalleryHomeCard({
 
         <div className="absolute inset-0 bg-[#16275d]/25 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
-        {/* Indicador de Slot / Destacado o Número de Selección */}
-        {isInteractive && isSelected && selectionNumber !== null ? (
+        {/* Únicamente mostramos el número de orden de selección cuando está activo en modo interactivo */}
+        {isInteractive && isSelected && selectionNumber !== null && (
           <div className="absolute top-2.5 right-2.5 z-30 transform-gpu">
             <div className="w-7 h-7 rounded-xl bg-[#16275d] text-amber-400 flex items-center justify-center text-xs font-bold shadow-md border border-white/20">
               {selectionNumber}
             </div>
-          </div>
-        ) : (
-          <div className="absolute top-2.5 left-2.5 z-20 flex items-center gap-1.5 bg-[#16275d]/85 backdrop-blur-md text-white text-[10px] sm:text-xs font-bold px-2.5 py-1 rounded-full shadow-md border border-white/10 transform-gpu">
-            <Star className={`w-3.5 h-3.5 ${item.isFeatured ? "text-amber-400 fill-amber-400" : "text-slate-400"}`} />
-            <span>{item.isFeatured && item.order ? `#${item.order}` : "Libre"}</span>
           </div>
         )}
       </div>
