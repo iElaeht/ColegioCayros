@@ -1,3 +1,5 @@
+// frontend/app/page.tsx
+import type { Metadata } from "next";
 import Navbar from "@/app/components/layout/Navbar";
 import HeroSection from "@/app/components/home/HeroSection";
 import EducationalLevels from "@/app/components/sections/EducationalLevels";
@@ -8,6 +10,11 @@ import EventsSection from "./components/sections/EventosSchool";
 import ContactSchool from "./components/sections/ContactSchool";
 import Ubicanos from "./components/sections/Ubicacion";
 import Footer from "./components/layout/Footer";
+
+export const metadata: Metadata = {
+  title: "I.E.P | Colegio Cayros",
+  description: "Página oficial de la I.E.P. Colegio Cayros. Educación de calidad, inicial, primaria y secundaria en Chincha Alta.",
+};
 
 export default function Home() {
   return (
