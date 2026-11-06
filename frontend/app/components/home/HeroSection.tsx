@@ -166,9 +166,9 @@ export default function HeroSection() {
         </>
       )}
 
-      {/* CARTEL DE ADMISIÓN MINIMALISTA Y RESPONSIVO */}
+      {/* CARTEL DE ADMISIÓN MINIMALISTA Y RESPONSIVO (Ajustado más abajo en PC) */}
       {matriculaConfig && matriculaConfig.isActive && (
-        <div className="absolute inset-x-4 sm:inset-x-auto sm:left-8 lg:left-16 xl:left-24 bottom-10 sm:top-1/2 sm:bottom-auto sm:-translate-y-1/2 z-30 flex justify-center sm:justify-start">
+        <div className="absolute inset-x-4 sm:inset-x-auto sm:left-8 lg:left-16 xl:left-24 bottom-6 sm:bottom-12 z-30 flex justify-center sm:justify-start">
           <Link 
             href={matriculaConfig.linkUrl || "/matricula"}
             className="w-full max-w-[320px] sm:max-w-[360px] lg:max-w-[400px] bg-white/90 hover:bg-white text-[#16275D] border border-white/50 backdrop-blur-md p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-xl transition-all duration-300 transform hover:-translate-y-1 group cursor-pointer"
@@ -188,7 +188,7 @@ export default function HeroSection() {
               {matriculaConfig.title}
             </h3>
             
-            {/* Descripción (Oculta o ultra-corta en móvil pequeño) */}
+            {/* Descripción */}
             <p className="text-[11px] sm:text-xs text-slate-600 font-medium leading-relaxed mb-3 line-clamp-2">
               {matriculaConfig.description}
             </p>
