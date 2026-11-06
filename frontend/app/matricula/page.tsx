@@ -186,14 +186,11 @@ export default function MatriculaPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <div className="text-center max-w-3xl mx-auto mb-12">
-            <span className="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-              Admisión Abierta 2027
-            </span>
             <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mt-3 tracking-tight">
               Proceso de Matrícula Institucional
             </h1>
             <p className="text-slate-600 text-sm sm:text-base mt-2">
-              Forma parte de la gran familia del Colegio I.E.P Cayros. Completa tus datos o conoce nuestra propuesta formativa.
+              Forma parte de la gran familia de la I.E.P Colegio Cayros. Completa tus datos o conoce nuestra propuesta formativa.
             </p>
           </div>
 
