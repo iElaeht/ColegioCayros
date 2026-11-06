@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Trash2, FileText, Mail, Phone, Calendar, User, BookOpen, X, Building, ShieldCheck } from "lucide-react";
+import { Trash2, FileText, Mail, Phone, Calendar, User, BookOpen, X, Building, ShieldCheck, AlertTriangle } from "lucide-react";
 import ToastAlertMatricula from "./ToastAlertMatricula";
 import MatriculaFilter from "./MatriculaFilter";
 import Pagination from "./Pagination";
@@ -42,8 +42,9 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
-  // Estado para el Modal de Detalle
+  // Estado para el Modal de Detalle y Modal de Confirmación de Eliminación
   const [selectedSolicitud, setSelectedSolicitud] = useState<SolicitudMatricula | null>(null);
+  const [solicitudToDelete, setSolicitudToDelete] = useState<SolicitudMatricula | null>(null);
 
   const fetchSolicitudes = useCallback(async () => {
     setLoading(true);
@@ -66,9 +67,9 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
     fetchSolicitudes();
   }, [fetchSolicitudes]);
 
-  // Manejo de bloqueo de scroll seguro y tecla ESC en el modal
+  // Manejo de bloqueo de scroll seguro y tecla ESC en los modales
   useEffect(() => {
-    if (!selectedSolicitud) return;
+    if (!selectedSolicitud && !solicitudToDelete) return;
 
     const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
     document.body.style.overflow = "hidden";
@@ -81,6 +82,7 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
         e.preventDefault();
         e.stopPropagation();
         setSelectedSolicitud(null);
+        setSolicitudToDelete(null);
       }
     };
 
@@ -91,12 +93,13 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
       document.body.style.overflow = "unset";
       document.body.style.paddingRight = "0px";
     };
-  }, [selectedSolicitud]);
+  }, [selectedSolicitud, solicitudToDelete]);
 
-  const handleDelete = async (e: React.MouseEvent<HTMLButtonElement>, id: number) => {
-    e.currentTarget.blur();
-    if (!confirm("¿Estás seguro de eliminar esta solicitud de pre-inscripción?")) return;
+  const confirmDelete = async () => {
+    if (!solicitudToDelete) return;
+    const id = solicitudToDelete.id;
     setDeletingId(id);
+
     try {
       const res = await fetch(`http://localhost:4000/api/matricula-inscripcion/${id}`, {
         method: "DELETE",
@@ -106,6 +109,7 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
         setSolicitudes(updated);
         if (onCountChange) onCountChange(updated.length);
         setToast({ message: "Solicitud eliminada con éxito.", type: "success" });
+        setSolicitudToDelete(null);
       } else {
         setToast({ message: "No se pudo eliminar la solicitud.", type: "error" });
       }
@@ -227,7 +231,7 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
                           </div>
                         </td>
 
-                        <td className="py-4 px-4 truncate" title={`${item.nivel} - ${item.grado}`}>
+                        <td className="py-4 px-4 truncate">
                           <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-900 font-bold px-2.5 py-1 rounded-lg border border-amber-200/60 truncate">
                             <BookOpen className="w-3 h-3 text-amber-600 shrink-0" />
                             <span className="truncate">{item.nivel} - {item.grado}</span>
@@ -278,9 +282,12 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
                             </button>
                             <button
                               type="button"
-                              onClick={(e) => handleDelete(e, item.id)}
+                              onClick={(e) => {
+                                e.currentTarget.blur();
+                                setSolicitudToDelete(item); // Abre el modal minimalista de confirmación
+                              }}
                               disabled={deletingId === item.id}
-                              className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer outline-none"
+                              className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer outline-none disabled:opacity-50"
                               title="Eliminar solicitud"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -443,6 +450,76 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
                 className="px-5 py-2.5 rounded-xl bg-[#16275d] hover:bg-[#111c38] text-amber-400 text-xs font-bold transition-all shadow-sm cursor-pointer outline-none border border-[#16275d]"
               >
                 Cerrar Detalle
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* MODAL MINIMALISTA DE CONFIRMACIÓN DE ELIMINACIÓN */}
+      {solicitudToDelete && (
+        <div className="fixed inset-0 z-[99999] overflow-y-auto bg-slate-950/65 backdrop-blur-md flex min-h-full items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden my-auto flex flex-col">
+            
+            {/* Cabecera del Modal */}
+            <div className="bg-rose-600 text-white px-6 py-4.5 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold tracking-tight">Confirmar Eliminación</h3>
+                  <p className="text-xs text-rose-100 font-medium">Esta acción no se puede deshacer</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.currentTarget.blur();
+                  setSolicitudToDelete(null);
+                }}
+                className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors cursor-pointer outline-none"
+              >
+                <X className="w-4 h-4 stroke-[2.5]" />
+              </button>
+            </div>
+
+            {/* Contenido del Modal */}
+            <div className="p-6 sm:p-7 space-y-4">
+              <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
+                ¿Estás seguro de eliminar la solicitud de pre-inscripción de <strong className="text-slate-900">{solicitudToDelete.nombresEstudiante} {solicitudToDelete.apellidosEstudiante}</strong>?
+              </p>
+              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-xs text-slate-500">
+                <span className="block font-bold text-slate-700">DNI: {solicitudToDelete.dniEstudiante}</span>
+                <span className="block text-[11px] text-slate-400 mt-0.5">Nivel: {solicitudToDelete.nivel} - {solicitudToDelete.grado}</span>
+              </div>
+            </div>
+
+            {/* Pie del Modal con Botones de Acción */}
+            <div className="bg-slate-50 px-6 py-4 border-t border-slate-100 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.currentTarget.blur();
+                  setSolicitudToDelete(null);
+                }}
+                disabled={deletingId === solicitudToDelete.id}
+                className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold transition-all border border-slate-200 shadow-2xs cursor-pointer outline-none disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.currentTarget.blur();
+                  confirmDelete();
+                }}
+                disabled={deletingId === solicitudToDelete.id}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all shadow-sm cursor-pointer outline-none disabled:opacity-50"
+              >
+                <Trash2 className="w-4 h-4" />
+                {deletingId === solicitudToDelete.id ? "Eliminando..." : "Sí, eliminar"}
               </button>
             </div>
 
