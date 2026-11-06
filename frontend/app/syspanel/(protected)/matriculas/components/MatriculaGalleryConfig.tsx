@@ -222,11 +222,13 @@ export default function MatriculaGalleryConfig() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {slots.map((item, index) => {
               const slotNumber = index + 1;
+              const uniqueKey = item ? `slot-occupied-${item.id}` : `slot-empty-${index}`;
+
               if (!item) {
                 // Slot Vacío
                 return (
                   <div
-                    key={index}
+                    key={uniqueKey}
                     onClick={(e) => handleOpenSlot(e, index)}
                     className="border-2 border-dashed border-slate-200 hover:border-[#16275d] bg-slate-50/50 hover:bg-[#16275d]/5 rounded-2xl aspect-[16/10] flex flex-col items-center justify-center cursor-pointer transition-all group p-4"
                   >
@@ -246,7 +248,7 @@ export default function MatriculaGalleryConfig() {
 
               return (
                 <div
-                  key={item.id}
+                  key={uniqueKey}
                   className="bg-white border border-slate-200/90 rounded-2xl p-3 shadow-xs flex flex-col justify-between group relative overflow-hidden"
                 >
                   <div className="relative aspect-[16/10] w-full rounded-xl overflow-hidden bg-slate-100 border border-slate-100">
