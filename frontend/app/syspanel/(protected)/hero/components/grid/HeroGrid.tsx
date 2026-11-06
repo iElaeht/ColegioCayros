@@ -1,4 +1,6 @@
 // frontend/app/syspanel/hero/components/Grid/HeroGrid.tsx
+"use client";
+
 import { ImageIcon, Plus } from "lucide-react";
 import HeroCard from "./HeroCard";
 import HeroFilters, { SortOption } from "./HeroFilters";
@@ -52,7 +54,7 @@ export default function HeroGrid({
   itemsPerPage,
 }: HeroGridProps) {
   return (
-    <div className="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-6 shadow-xs space-y-6 w-full transform-gpu">
+    <div className="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-6 shadow-xs space-y-6 w-full select-none">
       {/* Barra superior unificada: Filtros + Botón Nuevo Banner */}
       <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3 w-full">
         <div className="flex-1 w-full min-w-0">
@@ -66,14 +68,16 @@ export default function HeroGrid({
           />
         </div>
 
-        {/* Botón de Nuevo Banner optimizado */}
+        {/* Botón de Nuevo Banner optimizado corporativo */}
         <button
           type="button"
-          onClick={onOpenCreate}
-          style={{ borderColor: "#F8DE32" }}
-          className="w-full xl:w-auto inline-flex items-center justify-center gap-2 bg-white hover:bg-[#F8DE32] text-slate-900 text-xs font-bold px-5 py-3 rounded-xl border-2 shadow-xs transition-colors duration-200 cursor-pointer shrink-0 group truncate focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60 active:scale-[0.98]"
+          onClick={(e) => {
+            e.currentTarget.blur();
+            onOpenCreate();
+          }}
+          className="w-full xl:w-auto inline-flex items-center justify-center gap-2 bg-[#16275d] hover:bg-[#111c38] text-amber-400 text-xs font-bold px-5 py-3 rounded-xl border border-[#16275d] shadow-sm transition-colors duration-200 cursor-pointer shrink-0 group truncate focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60 active:scale-[0.98]"
         >
-          <Plus className="w-4 h-4 text-slate-900 stroke-[2.5] shrink-0" />
+          <Plus className="w-4 h-4 text-amber-400 stroke-[2.5] shrink-0" />
           <span className="truncate">Nuevo Banner</span>
         </button>
       </div>

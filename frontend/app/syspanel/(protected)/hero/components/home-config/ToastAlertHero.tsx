@@ -28,7 +28,7 @@ export default function ToastAlertHero({
       return () => clearTimeout(timer);
     } else {
       setIsVisible(false);
-      const timer = setTimeout(() => setIsRendered(false), 300); // Sincronizado con la duración de la animación (duration-300)
+      const timer = setTimeout(() => setIsRendered(false), 300);
       return () => clearTimeout(timer);
     }
   }, [show]);
@@ -75,14 +75,14 @@ export default function ToastAlertHero({
 
   return (
     <div
-      className={`fixed top-5 right-5 z-[99999] pointer-events-none flex justify-end w-full max-w-sm px-4 sm:px-0 transition-all duration-300 transform-gpu ${
+      className={`fixed top-5 right-5 z-[99999] pointer-events-none flex justify-end w-full max-w-sm px-4 sm:px-0 transition-all duration-300 select-none ${
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"
       }`}
     >
-      <div className="pointer-events-auto flex items-center gap-3 bg-white/95 border border-slate-200/80 shadow-2xl px-5 py-4 rounded-2xl backdrop-blur-xl w-full transform-gpu">
+      <div className="pointer-events-auto flex items-center gap-3 bg-white/95 border border-slate-200/80 shadow-2xl px-5 py-4 rounded-2xl backdrop-blur-xl w-full">
         {/* Icono dinámico en contenedor circular */}
         <div
-          className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center font-bold transform-gpu ${config.bgIcon}`}
+          className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center font-bold ${config.bgIcon}`}
         >
           {config.icon}
         </div>
@@ -92,7 +92,7 @@ export default function ToastAlertHero({
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
             {config.label}
           </span>
-          <p className="text-xs sm:text-sm font-semibold text-[#16275D] truncate sm:whitespace-normal">
+          <p className="text-xs sm:text-sm font-semibold text-[#16275d] truncate sm:whitespace-normal">
             {message}
           </p>
         </div>
@@ -100,8 +100,11 @@ export default function ToastAlertHero({
         {/* Botón de cierre manual */}
         <button
           type="button"
-          onClick={onClose}
-          className="ml-2 shrink-0 text-slate-400 hover:text-slate-600 transition-colors duration-200 cursor-pointer p-1"
+          onClick={(e) => {
+            e.currentTarget.blur();
+            onClose();
+          }}
+          className="ml-2 shrink-0 text-slate-400 hover:text-slate-700 transition-colors duration-200 cursor-pointer p-1 outline-none"
           aria-label="Cerrar alerta"
         >
           <X className="w-4 h-4" />

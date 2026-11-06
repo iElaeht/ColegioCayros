@@ -290,9 +290,9 @@ export default function AdminHeroPage() {
   );
 
   return (
-    <div className="p-4 sm:p-6 md:p-10 max-w-7xl mx-auto w-full font-['Poppins',sans-serif] space-y-6 overflow-x-hidden">
+    <div className="p-4 sm:p-6 md:p-10 max-w-7xl mx-auto w-full font-['Poppins',sans-serif] space-y-6 overflow-x-hidden select-none">
       <div className="space-y-1">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[#16275d] tracking-tight">
           Gestión de Hero
         </h1>
         <p className="text-slate-500 text-xs md:text-sm font-medium">
@@ -302,7 +302,7 @@ export default function AdminHeroPage() {
 
       <div className="h-px w-full bg-slate-200/90 my-2" />
 
-      {/* Aquí volvemos a pasar showToast={showToast} */}
+      {/* Configuración de banners destacados para el inicio */}
       <HeroHomeConfig allImages={items} showToast={showToast} />
 
       <HeroGrid
@@ -338,7 +338,7 @@ export default function AdminHeroPage() {
         editingItem={editingItem}
       />
 
-      {/* Componente Toast unificado */}
+      {/* Componente Toast unificado para el Hero */}
       <ToastAlertHero
         show={toastState.visible}
         type={toastState.type}

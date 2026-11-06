@@ -1,4 +1,4 @@
-// frontend/app/syspanel/(protected)/hero/components/HeroHomeConfig.tsx
+// frontend/app/syspanel/(protected)/hero/components/home-config/HeroHomeConfig.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -92,13 +92,13 @@ export default function HeroHomeConfig({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-6 shadow-xs space-y-4 w-full">
+    <div className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-6 shadow-xs space-y-4 w-full select-none">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
-          <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+          <h2 className="text-base sm:text-lg font-bold text-[#16275d] tracking-tight">
             Configuración de Banners del Hero
           </h2>
-          <p className="text-xs text-slate-500 leading-relaxed">
+          <p className="text-xs text-slate-500 leading-relaxed font-medium">
             Selecciona hasta {HOME_LIMIT} banners para mostrar en la sección
             principal del sitio web.
           </p>
@@ -108,21 +108,31 @@ export default function HeroHomeConfig({
           {/* Botón Editar optimizado */}
           <button
             type="button"
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center justify-center gap-2 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-xs truncate focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/50 active:scale-[0.98]"
+            onClick={(e) => {
+              e.currentTarget.blur();
+              setIsModalOpen(true);
+            }}
+            className="flex items-center justify-center gap-2 px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-xs truncate focus:outline-none focus-visible:ring-2 focus-visible:ring-[#16275d]/20 active:scale-[0.98]"
           >
             <Pencil className="w-3.5 h-3.5 shrink-0" />
             <span className="truncate">Editar ({selectedIds.length}/{HOME_LIMIT})</span>
           </button>
 
-          {/* Botón Guardar optimizado */}
+          {/* Botón Guardar optimizado con identidad corporativa */}
           <button
             type="button"
-            onClick={handleSaveChanges}
+            onClick={(e) => {
+              e.currentTarget.blur();
+              handleSaveChanges();
+            }}
             disabled={isSaving || !hasChanges}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-[#16275D] hover:bg-[#101d44] disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-xs truncate focus:outline-none focus-visible:ring-2 focus-visible:ring-[#16275D]/40 active:scale-[0.98]"
+            className={`flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm truncate focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60 active:scale-[0.98] ${
+              hasChanges && !isSaving
+                ? "bg-[#16275d] hover:bg-[#111c38] text-amber-400 border border-[#16275d]"
+                : "bg-slate-100 text-slate-400 cursor-not-allowed border border-transparent shadow-none"
+            }`}
           >
-            <Save className="w-3.5 h-3.5 shrink-0" />
+            <Save className={`w-3.5 h-3.5 shrink-0 ${hasChanges && !isSaving ? "text-amber-400" : "text-slate-400"}`} />
             <span className="truncate">
               {isSaving ? "Guardando..." : "Guardar"}
             </span>

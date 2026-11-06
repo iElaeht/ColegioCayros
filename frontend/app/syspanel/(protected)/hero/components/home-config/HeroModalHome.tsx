@@ -38,7 +38,7 @@ export default function HeroModalHome({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [hasScroll, setHasScroll] = useState<boolean>(false);
 
-  // Efecto para el bloqueo de scroll y la escucha de la tecla ESC
+  // Efecto limpio para el bloqueo de scroll y la escucha de la tecla ESC
   useEffect(() => {
     if (!isOpen) return;
 
@@ -54,11 +54,10 @@ export default function HeroModalHome({
 
     const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
     document.body.style.overflow = "hidden";
-    document.body.style.position = "fixed";
-    document.body.style.width = "100%";
     if (scrollbarWidth > 0) {
       document.body.style.paddingRight = `${scrollbarWidth}px`;
     }
+
     setSearchTerm("");
     setActiveTab("all");
     setVisibleLimit(ITEMS_PER_PAGE);
@@ -75,8 +74,6 @@ export default function HeroModalHome({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "unset";
-      document.body.style.position = "static";
-      document.body.style.width = "auto";
       document.body.style.paddingRight = "0px";
     };
   }, [isOpen, selectedIds, homeLimit, onClose]);
@@ -172,35 +169,38 @@ export default function HeroModalHome({
   const safeTotalCount = Array.isArray(allImages) ? allImages.length : 0;
 
   return (
-    <div className="fixed inset-0 w-screen h-screen z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-4xl h-[92vh] sm:h-[85vh] max-h-[92vh] rounded-xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-[99999] overflow-y-auto bg-slate-950/65 backdrop-blur-md flex min-h-full items-center justify-center p-3 sm:p-6 select-none animate-in fade-in duration-200">
+      <div className="bg-white w-full max-w-4xl max-h-[85vh] rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col my-auto">
         
-        <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col gap-3 bg-slate-50 shrink-0">
+        {/* Cabecera del Modal */}
+        <div className="p-4 sm:p-6 border-b border-slate-100 flex flex-col gap-3.5 bg-slate-50/80 shrink-0">
           <div className="flex items-center justify-between gap-2">
             <div className="space-y-0.5">
-              <h3 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
+              <h3 className="text-base sm:text-lg font-extrabold text-[#16275d] tracking-tight">
                 Seleccionar Banners Destacados
               </h3>
-              <p className="text-[11px] sm:text-xs text-slate-500">
+              <p className="text-xs text-slate-500 font-medium">
                 Seleccionados:{" "}
-                <span className="font-bold text-[#16275D]">
+                <span className="font-bold text-[#16275d]">
                   {safeSelectedCount} / {homeLimit}
                 </span>
               </p>
             </div>
 
-            {/* Botón X transparente con color azul y sin fondo */}
             <button
               type="button"
-              onClick={onClose}
-              className="p-1 text-[#16275D] hover:text-[#101d44] bg-transparent rounded-lg transition-colors cursor-pointer shrink-0"
+              onClick={(e) => {
+                e.currentTarget.blur();
+                onClose();
+              }}
+              className="p-2 text-slate-400 hover:text-[#16275d] bg-slate-100/80 hover:bg-slate-200 rounded-xl transition-all cursor-pointer shrink-0 outline-none"
               title="Cerrar y descartar"
             >
-              <X className="w-5 h-5 stroke-[2.5]" />
+              <X className="w-4 h-4 stroke-[2.5]" />
             </button>
           </div>
 
-          <div className="pt-2 border-t border-slate-200/60 w-full overflow-hidden">
+          <div className="pt-2 border-t border-slate-200/70 w-full overflow-hidden">
             <HeroFilterHome
               searchTerm={searchTerm}
               onSearchChange={handleSearchChange}
@@ -221,7 +221,7 @@ export default function HeroModalHome({
         >
           {paginatedImages.length > 0 ? (
             <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                 {paginatedImages.map((img) => {
                   const currentSelectedIds = tempSlots.filter((id): id is number => id !== null);
                   const isSelected = currentSelectedIds.includes(img.id);
@@ -246,8 +246,11 @@ export default function HeroModalHome({
                 <div className="flex justify-center mt-6 pt-4 border-t border-slate-100">
                   <button
                     type="button"
-                    onClick={handleLoadMore}
-                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-sm truncate"
+                    onClick={(e) => {
+                      e.currentTarget.blur();
+                      handleLoadMore();
+                    }}
+                    className="px-4.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-[#16275d] text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs truncate outline-none"
                   >
                     Cargar más banners ({filteredImages.length - visibleLimit} restantes)
                   </button>
@@ -255,10 +258,10 @@ export default function HeroModalHome({
               )}
             </>
           ) : (
-            <div className="flex flex-col items-center justify-center py-12 text-center text-slate-400 my-auto space-y-1">
-              <p className="text-sm font-medium">No se encontraron banners en esta vista.</p>
+            <div className="flex flex-col items-center justify-center py-16 text-center text-slate-400 my-auto space-y-2">
+              <p className="text-sm font-bold text-[#16275d]">No se encontraron banners en esta vista.</p>
               {searchTerm && (
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500 font-medium">
                   Intenta buscando con otro término o limpia el buscador.
                 </p>
               )}
@@ -266,27 +269,34 @@ export default function HeroModalHome({
           )}
         </div>
 
-        <div className="p-3 sm:p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-3 shrink-0">
+        {/* Footer del Modal */}
+        <div className="p-4 sm:p-5 border-t border-slate-100 bg-slate-50/80 flex items-center justify-end gap-3 shrink-0">
           <button
             type="button"
-            onClick={onClose}
-            className="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold rounded-xl transition-all cursor-pointer truncate"
+            onClick={(e) => {
+              e.currentTarget.blur();
+              onClose();
+            }}
+            className="px-4.5 py-2.5 bg-slate-200/80 hover:bg-slate-300 text-slate-700 text-xs sm:text-sm font-bold rounded-2xl transition-all cursor-pointer truncate outline-none"
           >
             Cancelar
           </button>
           
-          {/* Botón Guardar Inteligente */}
+          {/* Botón Guardar Inteligente con estilo corporativo */}
           <button
             type="button"
-            onClick={handleConfirmSave}
+            onClick={(e) => {
+              e.currentTarget.blur();
+              handleConfirmSave();
+            }}
             disabled={!hasChanges}
-            className={`flex items-center gap-2 text-xs font-semibold px-5 py-2.5 rounded-xl transition-all truncate ${
+            className={`flex items-center gap-2 text-xs sm:text-sm font-bold px-6 py-2.5 rounded-2xl transition-all truncate shadow-md outline-none ${
               hasChanges
-                ? "bg-[#16275D] hover:bg-[#101d44] text-white shadow-sm cursor-pointer"
-                : "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
+                ? "bg-[#16275d] hover:bg-[#111c38] text-amber-400 cursor-pointer border border-[#16275d]"
+                : "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none border border-transparent"
             }`}
           >
-            <Save className="w-4 h-4 shrink-0" />
+            <Save className={`w-4 h-4 shrink-0 ${hasChanges ? "text-amber-400" : "text-slate-400"}`} />
             <span className="truncate">Guardar</span>
           </button>
         </div>
