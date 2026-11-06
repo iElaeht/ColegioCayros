@@ -1,7 +1,7 @@
 // frontend/app/syspanel/matriculas/components/MatriculaSolicitudesTable.tsx
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Trash2, FileText, Mail, Phone, Calendar, User, BookOpen, X, Building, ShieldCheck } from "lucide-react";
 import ToastAlertMatricula from "./ToastAlertMatricula";
 import MatriculaFilter from "./MatriculaFilter";
@@ -45,7 +45,7 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
   // Estado para el Modal de Detalle
   const [selectedSolicitud, setSelectedSolicitud] = useState<SolicitudMatricula | null>(null);
 
-  const fetchSolicitudes = async () => {
+  const fetchSolicitudes = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch("http://localhost:4000/api/matricula-inscripcion");
@@ -60,13 +60,41 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [onCountChange]);
 
   useEffect(() => {
     fetchSolicitudes();
-  }, []);
+  }, [fetchSolicitudes]);
 
-  const handleDelete = async (id: number) => {
+  // Manejo de bloqueo de scroll seguro y tecla ESC en el modal
+  useEffect(() => {
+    if (!selectedSolicitud) return;
+
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    document.body.style.overflow = "hidden";
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        setSelectedSolicitud(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown, { capture: true });
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown, { capture: true });
+      document.body.style.overflow = "unset";
+      document.body.style.paddingRight = "0px";
+    };
+  }, [selectedSolicitud]);
+
+  const handleDelete = async (e: React.MouseEvent<HTMLButtonElement>, id: number) => {
+    e.currentTarget.blur();
     if (!confirm("¿Estás seguro de eliminar esta solicitud de pre-inscripción?")) return;
     setDeletingId(id);
     try {
@@ -136,7 +164,7 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
   }, [searchTerm, selectedDate, sortOrder]);
 
   return (
-    <div className="space-y-4 relative">
+    <div className="space-y-4 relative select-none">
       {/* Toast flotante */}
       {toast && (
         <ToastAlertMatricula
@@ -157,7 +185,7 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
       />
 
       {/* Tabla de registros */}
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-white border border-slate-200/85 rounded-3xl shadow-sm overflow-hidden">
         {loading ? (
           <div className="p-12 text-center text-slate-400 text-xs font-medium">
             Cargando solicitudes de inscripción...
@@ -169,21 +197,16 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs table-fixed">
+              <table className="w-full text-left border-collapse text-xs min-w-[700px]">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
-                    <th className="py-3.5 px-3 w-14 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <span>#</span>
-                        <span className="text-slate-300 font-light">|</span>
-                      </div>
-                    </th>
-                    <th className="py-3.5 px-4 w-[28%] text-center">Estudiante</th>
-                    <th className="py-3.5 px-4 w-44 text-center">Nivel / Grado</th>
-                    <th className="py-3.5 px-4 w-[22%] text-center">Apoderado</th>
-                    <th className="py-3.5 px-4 w-36 text-center">Contacto</th>
-                    <th className="py-3.5 px-4 w-32 text-center">Fecha</th>
-                    <th className="py-3.5 px-4 w-28 text-center">Acciones</th>
+                  <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
+                    <th className="py-3.5 px-3 w-12 text-center">#</th>
+                    <th className="py-3.5 px-4 w-[28%]">Estudiante</th>
+                    <th className="py-3.5 px-4 w-40">Nivel / Grado</th>
+                    <th className="py-3.5 px-4 w-[22%] hidden md:table-cell">Apoderado</th>
+                    <th className="py-3.5 px-4 w-36 hidden lg:table-cell">Contacto</th>
+                    <th className="py-3.5 px-4 w-28 hidden sm:table-cell">Fecha</th>
+                    <th className="py-3.5 px-4 w-24 text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
@@ -193,16 +216,13 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
                     return (
                       <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
                         
-                        <td className="py-4 px-3 text-center text-slate-400 font-bold relative">
-                          <div className="flex items-center justify-center gap-2">
-                            <span>{absoluteIndex}</span>
-                            <span className="absolute right-0 top-2 bottom-2 w-[1px] bg-slate-100" />
-                          </div>
+                        <td className="py-4 px-3 text-center text-slate-400 font-bold">
+                          {absoluteIndex}
                         </td>
 
                         <td className="py-4 px-4 font-bold text-slate-900 truncate" title={nombreCompleto}>
                           <div className="flex items-center gap-2 truncate">
-                            <User className="w-4 h-4 text-blue-900 shrink-0" />
+                            <User className="w-4 h-4 text-[#16275d] shrink-0" />
                             <span className="truncate">{nombreCompleto}</span>
                           </div>
                         </td>
@@ -214,11 +234,11 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
                           </span>
                         </td>
 
-                        <td className="py-4 px-4 text-slate-800 font-semibold truncate" title={item.nombresApoderado}>
+                        <td className="py-4 px-4 text-slate-800 font-semibold truncate hidden md:table-cell" title={item.nombresApoderado}>
                           <span className="truncate block">{item.nombresApoderado}</span>
                         </td>
 
-                        <td className="py-4 px-4 space-y-0.5 truncate">
+                        <td className="py-4 px-4 space-y-0.5 truncate hidden lg:table-cell">
                           <div className="flex items-center gap-1.5 text-slate-700 truncate" title={item.telefono}>
                             <Phone className="w-3 h-3 text-slate-400 shrink-0" />
                             <span className="truncate">{item.telefono}</span>
@@ -231,7 +251,7 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
                           )}
                         </td>
 
-                        <td className="py-4 px-4 text-slate-500 text-[11px] whitespace-nowrap">
+                        <td className="py-4 px-4 text-slate-500 text-[11px] whitespace-nowrap hidden sm:table-cell">
                           <div className="flex items-center gap-1.5">
                             <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
                             {new Date(item.createdAt).toLocaleDateString("es-PE", {
@@ -242,20 +262,25 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
                           </div>
                         </td>
 
-                        {/* ACCIONES: Botón de detalle (papel) y Botón de eliminar (papelera) */}
+                        {/* ACCIONES */}
                         <td className="py-4 px-4 text-center">
                           <div className="flex items-center justify-center gap-1">
                             <button
-                              onClick={() => setSelectedSolicitud(item)}
-                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                              type="button"
+                              onClick={(e) => {
+                                e.currentTarget.blur();
+                                setSelectedSolicitud(item);
+                              }}
+                              className="p-2 text-[#16275d] hover:bg-[#16275d]/10 rounded-xl transition-colors cursor-pointer outline-none"
                               title="Ver detalle completo"
                             >
                               <FileText className="w-4 h-4" />
                             </button>
                             <button
-                              onClick={() => handleDelete(item.id)}
+                              type="button"
+                              onClick={(e) => handleDelete(e, item.id)}
                               disabled={deletingId === item.id}
-                              className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                              className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer outline-none"
                               title="Eliminar solicitud"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -284,42 +309,46 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
 
       {/* MODAL DE DETALLE DE LA SOLICITUD */}
       {selectedSolicitud && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-fadeIn">
-          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden">
+        <div className="fixed inset-0 z-[99999] overflow-y-auto bg-slate-950/65 backdrop-blur-md flex min-h-full items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden my-auto flex flex-col">
             
             {/* Cabecera del Modal */}
-            <div className="bg-[#16275D] text-white px-6 py-5 flex items-center justify-between">
+            <div className="bg-[#16275d] text-white px-6 py-4.5 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-amber-400">
                   <FileText className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold">Detalle de Pre-Inscripción</h3>
-                  <p className="text-xs text-slate-300">ID Solicitud #{selectedSolicitud.id}</p>
+                  <h3 className="text-base font-extrabold tracking-tight">Detalle de Pre-Inscripción</h3>
+                  <p className="text-xs text-slate-300 font-medium">ID Solicitud #{selectedSolicitud.id}</p>
                 </div>
               </div>
               <button
-                onClick={() => setSelectedSolicitud(null)}
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors cursor-pointer"
+                type="button"
+                onClick={(e) => {
+                  e.currentTarget.blur();
+                  setSelectedSolicitud(null);
+                }}
+                className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors cursor-pointer outline-none"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4 stroke-[2.5]" />
               </button>
             </div>
 
             {/* Contenido del Modal */}
-            <div className="p-6 sm:p-8 space-y-6 max-h-[75vh] overflow-y-auto">
+            <div className="p-6 sm:p-8 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar">
               
               {/* Sede y Fecha */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                 <div className="flex items-center gap-2.5">
-                  <Building className="w-4 h-4 text-amber-600" />
+                  <Building className="w-4 h-4 text-amber-600 shrink-0" />
                   <div>
                     <span className="block text-[10px] uppercase font-bold text-slate-400">Sede</span>
                     <span className="text-xs font-bold text-slate-800">{selectedSolicitud.sede}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <Calendar className="w-4 h-4 text-blue-900" />
+                  <Calendar className="w-4 h-4 text-[#16275d] shrink-0" />
                   <div>
                     <span className="block text-[10px] uppercase font-bold text-slate-400">Fecha de Registro</span>
                     <span className="text-xs font-bold text-slate-800">
@@ -334,7 +363,7 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
 
               {/* Datos del Estudiante */}
               <div className="space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-[#16275D] flex items-center gap-2 border-b border-slate-100 pb-2">
+                <h4 className="text-xs font-extrabold uppercase tracking-wider text-[#16275d] flex items-center gap-2 border-b border-slate-100 pb-2">
                   <User className="w-4 h-4 text-amber-500" />
                   Datos del Estudiante
                 </h4>
@@ -365,8 +394,8 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
 
               {/* Datos del Apoderado y Contacto */}
               <div className="space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-[#16275D] flex items-center gap-2 border-b border-slate-100 pb-2">
-                  <Phone className="w-4 h-4 text-blue-900" />
+                <h4 className="text-xs font-extrabold uppercase tracking-wider text-[#16275d] flex items-center gap-2 border-b border-slate-100 pb-2">
+                  <Phone className="w-4 h-4 text-[#16275d]" />
                   Apoderado y Contacto
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
@@ -393,10 +422,10 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
 
               {/* Mensaje o Comentarios Adicionales */}
               <div className="space-y-2">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-[#16275D] flex items-center gap-2 border-b border-slate-100 pb-2">
+                <h4 className="text-xs font-extrabold uppercase tracking-wider text-[#16275d] flex items-center gap-2 border-b border-slate-100 pb-2">
                   Mensaje / Comentarios
                 </h4>
-                <p className="text-xs text-slate-600 bg-slate-50 p-3.5 rounded-xl border border-slate-200/60 italic">
+                <p className="text-xs text-slate-600 bg-slate-50 p-3.5 rounded-xl border border-slate-200/60 italic font-medium">
                   {selectedSolicitud.mensaje || "Sin comentarios adicionales registrados en la solicitud."}
                 </p>
               </div>
@@ -406,8 +435,12 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
             {/* Pie del Modal */}
             <div className="bg-slate-50 px-6 py-4 border-t border-slate-100 flex justify-end">
               <button
-                onClick={() => setSelectedSolicitud(null)}
-                className="px-5 py-2.5 rounded-xl bg-[#16275D] hover:bg-blue-900 text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
+                type="button"
+                onClick={(e) => {
+                  e.currentTarget.blur();
+                  setSelectedSolicitud(null);
+                }}
+                className="px-5 py-2.5 rounded-xl bg-[#16275d] hover:bg-[#111c38] text-amber-400 text-xs font-bold transition-all shadow-sm cursor-pointer outline-none border border-[#16275d]"
               >
                 Cerrar Detalle
               </button>

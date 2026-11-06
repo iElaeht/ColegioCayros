@@ -76,7 +76,8 @@ export default function MatriculaConfigForm() {
     }
   };
 
-  const handleUndo = () => {
+  const handleUndo = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.blur();
     setForm(initialForm);
     setToast(null);
   };
@@ -106,19 +107,19 @@ export default function MatriculaConfigForm() {
   };
 
   if (loading) {
-    return <div className="text-slate-600 text-sm p-6">Cargando configuración...</div>;
+    return <div className="text-slate-600 text-sm p-6 select-none">Cargando configuración...</div>;
   }
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-10 select-none">
       {/* SECCIÓN SUPERIOR: Configuración del Cartel + Vista Previa */}
       <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        <form onSubmit={handleSubmit} className="lg:col-span-7 bg-white border border-slate-200 p-6 sm:p-8 rounded-2xl shadow-sm space-y-5">
+        <form onSubmit={handleSubmit} className="lg:col-span-7 bg-white border border-slate-200/85 p-6 sm:p-8 rounded-3xl shadow-sm space-y-5">
           <div className="border-b border-slate-100 pb-4">
-            <h2 className="text-base font-bold text-[#16275D] tracking-tight">
+            <h2 className="text-base font-extrabold text-[#16275d] tracking-tight">
               Configuración del Cartel
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5 font-medium">
               Personaliza los textos del banner informativo de la web principal.
             </p>
           </div>
@@ -133,7 +134,7 @@ export default function MatriculaConfigForm() {
                 name="year" 
                 value={form.year} 
                 onChange={handleChange}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 text-xs font-medium focus:outline-none focus:border-[#16275D] focus:bg-white transition-colors"
+                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-900 text-xs font-semibold focus:outline-none focus:border-[#16275d] focus:ring-2 focus:ring-[#16275d]/10 transition-all shadow-xs"
               />
             </div>
             <div>
@@ -145,7 +146,7 @@ export default function MatriculaConfigForm() {
                 name="badgeText" 
                 value={form.badgeText} 
                 onChange={handleChange}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 text-xs font-medium focus:outline-none focus:border-[#16275D] focus:bg-white transition-colors"
+                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-900 text-xs font-semibold focus:outline-none focus:border-[#16275d] focus:ring-2 focus:ring-[#16275d]/10 transition-all shadow-xs"
               />
             </div>
           </div>
@@ -159,7 +160,7 @@ export default function MatriculaConfigForm() {
               name="title" 
               value={form.title} 
               onChange={handleChange}
-              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 text-xs font-medium focus:outline-none focus:border-[#16275D] focus:bg-white transition-colors"
+              className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-900 text-xs font-semibold focus:outline-none focus:border-[#16275d] focus:ring-2 focus:ring-[#16275d]/10 transition-all shadow-xs"
             />
           </div>
 
@@ -172,7 +173,7 @@ export default function MatriculaConfigForm() {
               rows={3}
               value={form.description} 
               onChange={handleChange}
-              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 text-xs font-medium focus:outline-none focus:border-[#16275D] focus:bg-white transition-colors resize-none"
+              className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-900 text-xs font-semibold focus:outline-none focus:border-[#16275d] focus:ring-2 focus:ring-[#16275d]/10 transition-all shadow-xs resize-none"
             />
           </div>
 
@@ -185,14 +186,14 @@ export default function MatriculaConfigForm() {
               name="buttonText" 
               value={form.buttonText} 
               onChange={handleChange}
-              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 text-xs font-medium focus:outline-none focus:border-[#16275D] focus:bg-white transition-colors"
+              className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-900 text-xs font-semibold focus:outline-none focus:border-[#16275d] focus:ring-2 focus:ring-[#16275d]/10 transition-all shadow-xs"
             />
           </div>
 
           <div className="flex items-center justify-between pt-4 border-t border-slate-100">
             <div>
-              <span className="block text-xs font-bold text-slate-800">Estado del Cartel</span>
-              <span className="text-[11px] text-slate-500">Mostrar u ocultar en la página web.</span>
+              <span className="block text-xs font-bold text-[#16275d]">Estado del Cartel</span>
+              <span className="text-[11px] text-slate-500 font-medium">Mostrar u ocultar en la página web.</span>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input 
@@ -202,7 +203,7 @@ export default function MatriculaConfigForm() {
                 onChange={handleChange}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#16275D] border border-slate-300 shadow-inner"></div>
+              <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#16275d] border border-slate-300 shadow-inner"></div>
             </label>
           </div>
 
@@ -210,7 +211,11 @@ export default function MatriculaConfigForm() {
             <button
               type="submit"
               disabled={saving || !hasChanges}
-              className="flex-1 bg-[#16275D] hover:bg-[#101d44] text-white text-xs font-bold py-3 px-4 rounded-xl transition-all shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`flex-1 text-xs font-bold py-3 px-4 rounded-xl transition-all shadow-sm cursor-pointer outline-none ${
+                hasChanges && !saving
+                  ? "bg-[#16275d] hover:bg-[#111c38] text-amber-400 border border-[#16275d]"
+                  : "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none border border-transparent"
+              }`}
             >
               {saving ? 'Guardando cambios...' : 'Guardar Cambios'}
             </button>
@@ -219,7 +224,7 @@ export default function MatriculaConfigForm() {
               type="button"
               onClick={handleUndo}
               disabled={!hasChanges || saving}
-              className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all border border-slate-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all border border-slate-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed outline-none"
               title="Deshacer cambios no guardados"
             >
               Deshacer
@@ -233,7 +238,7 @@ export default function MatriculaConfigForm() {
       </div>
 
       {/* SECCIÓN INFERIOR: Configuración de la Galería del Carrusel */}
-      <div className="pt-6 border-t border-slate-200">
+      <div className="pt-6 border-t border-slate-200/80">
         <MatriculaGalleryConfig />
       </div>
 

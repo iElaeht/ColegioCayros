@@ -1,5 +1,8 @@
 // frontend/app/syspanel/matriculas/components/MatriculaPreviewCard.tsx
+"use client";
+
 import React from 'react';
+import { Sparkles, ArrowRight } from 'lucide-react';
 
 interface MatriculaPreviewProps {
   year: string;
@@ -19,51 +22,67 @@ export default function MatriculaPreviewCard({
   isActive,
 }: MatriculaPreviewProps) {
   return (
-    <div className="flex flex-col items-center justify-center p-6 bg-white rounded-2xl border border-slate-200 shadow-sm">
-      <div className="w-full flex items-center justify-between mb-5">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-          Vista Previa en Vivo
-        </span>
-        <span className={`px-2.5 py-1 text-[11px] font-bold rounded-full ${isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}`}>
-          {isActive ? 'Cartel Visible (Activo)' : 'Cartel Oculto (Inactivo)'}
+    <div className="bg-white border border-slate-200/85 p-6 sm:p-7 rounded-3xl shadow-sm space-y-5 select-none">
+      {/* Cabecera de la Vista Previa */}
+      <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-[#16275d]/10 text-[#16275d] flex items-center justify-center">
+            <Sparkles className="w-4 h-4"/>
+          </div>
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+            Vista Previa en Vivo
+          </h3>
+        </div>
+
+        <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full shadow-2xs ${
+          isActive ? "bg-emerald-500 text-white" : "bg-slate-400 text-white"
+        }`}>
+          {isActive ? "Visible al público" : "Oculto en la web"}
         </span>
       </div>
 
-      {/* Contenedor simulando el diseño exacto del cartel con un marco limpio */}
-      <div className="relative w-full max-w-[380px] bg-slate-50 text-[#16275D] border border-slate-200 p-7 rounded-2xl shadow-md flex flex-col justify-between">
-        <div>
-          {/* Parte superior */}
-          <div className="flex items-center justify-between mb-5 border-b border-slate-200 pb-4">
-            <span className="text-xs font-bold uppercase tracking-widest text-slate-500">
+      {/* Contenedor que emula el diseño exacto del cartel corporativo */}
+      <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#16275d] via-[#1a2f6c] to-[#0d1633] p-7 text-white shadow-xl transition-all duration-300 ${
+        !isActive ? "opacity-60 grayscale-[25%]" : ""
+      }`}>
+        {/* Elemento decorativo de fondo */}
+        <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-amber-400/10 rounded-full blur-2xl pointer-events-none" />
+
+        <div className="relative z-10 space-y-5">
+          {/* Parte superior: Badge y Año */}
+          <div className="flex items-center justify-between border-b border-white/10 pb-4">
+            <span className="text-[11px] font-extrabold uppercase tracking-widest text-slate-300">
               {badgeText || "MATRÍCULAS"}
             </span>
-            <span className="bg-[#16275D] text-[#F8DE32] text-sm font-black px-3 py-1 rounded-lg shadow-sm">
+            <span className="bg-amber-400 text-slate-950 text-xs font-black px-3 py-1 rounded-xl shadow-md">
               {year || "2026"}
             </span>
           </div>
 
-          {/* Título */}
-          <h3 className="text-2xl font-black tracking-tight text-[#16275D] mb-3 leading-tight">
+          {/* Título Principal */}
+          <h3 className="text-xl sm:text-2xl font-black tracking-tight text-white leading-snug">
             {title || "Escribe un título..."}
           </h3>
           
-          {/* Descripción */}
-          <p className="text-xs text-slate-600 font-medium leading-relaxed mb-6">
+          {/* Descripción Corta */}
+          <p className="text-xs text-slate-200/90 font-medium leading-relaxed">
             {description || "Escribe una descripción corta para los padres de familia..."}
           </p>
-        </div>
 
-        {/* Parte inferior (Enlace) */}
-        <div className="flex items-center justify-between pt-3 border-t border-slate-200">
-          <span className="text-xs font-bold text-[#16275D]">
-            {buttonText || "Ver pasos y requisitos"}
-          </span>
-          <div className="w-8 h-8 rounded-full bg-[#16275D] text-white flex items-center justify-center shadow-sm">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
-            </svg>
+          {/* Parte inferior (Botón Simulado) */}
+          <div className="pt-2 flex items-center justify-between border-t border-white/10 pt-4">
+            <span className="text-xs font-bold text-amber-400 tracking-wide">
+              {buttonText || "Ver pasos y requisitos"}
+            </span>
+            <div className="w-8 h-8 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center shadow-md">
+              <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+            </div>
           </div>
         </div>
+      </div>
+
+      <div className="text-[11px] text-slate-400 text-center font-medium">
+        El cartel se actualizará instantáneamente en la sección principal del sitio web.
       </div>
     </div>
   );
