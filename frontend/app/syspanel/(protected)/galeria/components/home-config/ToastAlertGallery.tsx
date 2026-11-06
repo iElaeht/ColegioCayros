@@ -28,12 +28,12 @@ export default function ToastAlertGallery({
       return () => clearTimeout(timer);
     } else {
       setIsVisible(false);
-      const timer = setTimeout(() => setIsRendered(false), 300); // Sincronizado con la duración de la animación (duration-300)
+      const timer = setTimeout(() => setIsRendered(false), 300);
       return () => clearTimeout(timer);
     }
   }, [show]);
 
-  // Auto-cierre opcional a los 4 segundos
+  // Auto-cierre a los 4 segundos
   useEffect(() => {
     if (!show) return;
 
@@ -75,24 +75,25 @@ export default function ToastAlertGallery({
 
   return (
     <div
-      className={`fixed top-5 right-5 z-[99999] pointer-events-none flex justify-end w-full max-w-sm px-4 sm:px-0 transition-all duration-300 transform-gpu ${
+      className={`fixed top-6 right-6 z-[99999] pointer-events-none flex justify-end w-full max-w-sm px-4 sm:px-0 transition-all duration-300 transform-gpu select-none ${
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"
       }`}
     >
-      <div className="pointer-events-auto flex items-center gap-3 bg-white/95 border border-slate-200/80 shadow-2xl px-5 py-4 rounded-2xl backdrop-blur-xl w-full transform-gpu">
+      <div className="pointer-events-auto flex items-center gap-3.5 bg-white border border-slate-200 shadow-2xl px-5 py-4 rounded-3xl backdrop-blur-xl w-full transform-gpu">
+        
         {/* Icono dinámico en contenedor circular */}
         <div
-          className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center font-bold transform-gpu ${config.bgIcon}`}
+          className={`w-9 h-9 shrink-0 rounded-2xl flex items-center justify-center font-bold shadow-xs transform-gpu ${config.bgIcon}`}
         >
           {config.icon}
         </div>
 
         {/* Texto del mensaje con jerarquía */}
         <div className="flex flex-col flex-1 min-w-0">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
             {config.label}
           </span>
-          <p className="text-xs sm:text-sm font-semibold text-[#16275D] truncate sm:whitespace-normal">
+          <p className="text-xs sm:text-sm font-bold text-[#16275d] truncate sm:whitespace-normal">
             {message}
           </p>
         </div>
@@ -101,11 +102,12 @@ export default function ToastAlertGallery({
         <button
           type="button"
           onClick={onClose}
-          className="ml-2 shrink-0 text-slate-400 hover:text-slate-600 transition-colors duration-200 cursor-pointer p-1"
+          className="ml-2 shrink-0 text-slate-400 hover:text-[#16275d] transition-colors duration-200 cursor-pointer p-1.5 rounded-xl hover:bg-slate-100"
           aria-label="Cerrar alerta"
         >
           <X className="w-4 h-4" />
         </button>
+
       </div>
     </div>
   );

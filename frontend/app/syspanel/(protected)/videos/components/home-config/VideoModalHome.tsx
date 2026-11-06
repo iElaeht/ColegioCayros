@@ -22,7 +22,7 @@ interface VideoModalHomeProps {
   selectedIds?: number[];
   onSaveSelections: (newSelectedIds: number[]) => void;
   homeLimit: number;
-  onLimitReached?: () => void; // Añadido para consistencia con Hero
+  onLimitReached?: () => void;
 }
 
 export default function VideoModalHome({
@@ -46,7 +46,7 @@ export default function VideoModalHome({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [hasScroll, setHasScroll] = useState<boolean>(false);
 
-  // Efecto para el bloqueo de scroll y la escucha de la tecla ESC (Sincronizado con Hero)
+  // Efecto limpio para el bloqueo de scroll y la escucha de la tecla ESC
   useEffect(() => {
     if (!isOpen) return;
 
@@ -61,11 +61,9 @@ export default function VideoModalHome({
     }
     setTempSlots(initialSlots);
 
-    // Bloqueo de scroll inteligente (manejo de scrollbar width)
+    // Bloqueo de scroll seguro sin alterar la posición fija del body
     const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
     document.body.style.overflow = "hidden";
-    document.body.style.position = "fixed";
-    document.body.style.width = "100%";
     if (scrollbarWidth > 0) {
       document.body.style.paddingRight = `${scrollbarWidth}px`;
     }
@@ -87,10 +85,7 @@ export default function VideoModalHome({
     // Limpieza del efecto
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      // Restaurar estilos del body
       document.body.style.overflow = "unset";
-      document.body.style.position = "static";
-      document.body.style.width = "auto";
       document.body.style.paddingRight = "0px";
     };
   }, [isOpen, selectedIds, homeLimit, onClose]);
@@ -106,7 +101,7 @@ export default function VideoModalHome({
       } else {
         const firstEmptyIndex = prev.indexOf(null);
         if (firstEmptyIndex === -1) {
-            if (onLimitReached) onLimitReached(); // Notificar si se alcanzó el límite
+            if (onLimitReached) onLimitReached();
             return prev;
         }
 
@@ -117,19 +112,16 @@ export default function VideoModalHome({
     });
   };
 
-  // DETECCIÓN INTELIGENTE DE CAMBIOS (Heredado de Hero)
   const hasChanges = useMemo(() => {
     const cleanOriginal = (selectedIds || []).filter((id): id is number => id !== null);
     const cleanCurrent = tempSlots.filter((id): id is number => id !== null);
 
     if (cleanOriginal.length !== cleanCurrent.length) return true;
-
-    // Comparar orden y IDs
     return cleanOriginal.some((id, index) => id !== cleanCurrent[index]);
   }, [selectedIds, tempSlots]);
 
   const handleConfirmSave = () => {
-    if (!hasChanges) return; // No guardar si no hay cambios
+    if (!hasChanges) return;
     const finalCleanIds = tempSlots.filter((id): id is number => id !== null);
     onSaveSelections(finalCleanIds);
     onClose();
@@ -137,12 +129,12 @@ export default function VideoModalHome({
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
-    setVisibleLimit(ITEMS_PER_PAGE); // Resetear paginación al buscar
+    setVisibleLimit(ITEMS_PER_PAGE);
   };
 
   const handleTabChange = (tab: "all" | "selected") => {
     setActiveTab(tab);
-    setVisibleLimit(ITEMS_PER_PAGE); // Resetear paginación al cambiar de tab
+    setVisibleLimit(ITEMS_PER_PAGE);
   };
 
   const filteredVideos = useMemo(() => {
@@ -166,8 +158,7 @@ export default function VideoModalHome({
     return filteredVideos.slice(0, visibleLimit);
   }, [filteredVideos, visibleLimit]);
 
-   // Chequeo de scroll inteligente: verifica si el contenido excede la altura visible (Heredado de Hero)
-   useEffect(() => {
+  useEffect(() => {
     const checkScroll = () => {
       if (scrollContainerRef.current) {
         const { scrollHeight, clientHeight } = scrollContainerRef.current;
@@ -176,7 +167,6 @@ export default function VideoModalHome({
     };
 
     checkScroll();
-    // Pequeño delay para asegurar que el DOM se renderizó tras paginar
     const timer = setTimeout(checkScroll, 50);
     return () => clearTimeout(timer);
   }, [paginatedVideos, visibleLimit]);
@@ -192,51 +182,47 @@ export default function VideoModalHome({
   const safeTotalCount = Array.isArray(allVideos) ? allVideos.length : 0;
 
   return (
-    <div className="fixed inset-0 w-screen h-screen z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-4xl h-[92vh] sm:h-[85vh] max-h-[92vh] rounded-xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-[99999] overflow-y-auto bg-slate-950/60 backdrop-blur-xs flex min-h-full items-center justify-center p-3 sm:p-6 select-none animate-in fade-in duration-200">
+      <div className="bg-white w-full max-w-4xl max-h-[85vh] rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col my-auto">
         
-        {/* Cabecera del Modal (Estilos Hero) */}
-        <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col gap-3 bg-slate-50 shrink-0">
+        {/* Cabecera del Modal */}
+        <div className="p-4 sm:p-6 border-b border-slate-100 flex flex-col gap-3.5 bg-slate-50/80 shrink-0">
           <div className="flex items-center justify-between gap-2">
             <div className="space-y-0.5">
-              <h3 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
+              <h3 className="text-base sm:text-lg font-extrabold text-[#16275d] tracking-tight">
                 Seleccionar Videos Destacados
               </h3>
-              <p className="text-[11px] sm:text-xs text-slate-500">
+              <p className="text-xs text-slate-500 font-medium">
                 Seleccionados:{" "}
-                {/* Color azul del Hero */}
-                <span className="font-bold text-[#16275D]">
+                <span className="font-bold text-[#16275d]">
                   {safeSelectedCount} / {homeLimit}
                 </span>
               </p>
             </div>
 
-            {/* Botón X (Estilo Hero: azul, sin fondo circular) */}
             <button
               type="button"
               onClick={onClose}
-              className="p-1 text-[#16275D] hover:text-[#101d44] bg-transparent rounded-lg transition-colors cursor-pointer shrink-0"
-              title="Cerrar y descartar"
+              className="p-2 text-slate-400 hover:text-[#16275d] hover:bg-slate-200/60 rounded-xl transition-all cursor-pointer shrink-0 outline-none"
+              title="Cerrar"
             >
               <X className="w-5 h-5 stroke-[2.5]" />
             </button>
           </div>
 
-          <div className="pt-2 border-t border-slate-200/60 w-full overflow-hidden">
+          <div className="pt-2 border-t border-slate-200/70 w-full overflow-hidden">
             <VideoFilterHome
               searchTerm={searchTerm}
               onSearchChange={handleSearchChange}
               activeTab={activeTab}
               onTabChange={handleTabChange}
-              // Propiedades renombradas en tu componente original para coincidir con la lógica,
-              // asumo que FilterHome recibe estos nombres:
               totalVideosCount={safeTotalCount}
               selectedCount={safeSelectedCount}
             />
           </div>
         </div>
 
-        {/* Contenedor con scroll inteligente condicional (Heredado de Hero) */}
+        {/* Contenido con scroll condicional */}
         <div 
           ref={scrollContainerRef}
           className={`p-4 sm:p-6 overflow-x-hidden flex-1 flex flex-col bg-white ${
@@ -245,7 +231,7 @@ export default function VideoModalHome({
         >
           {paginatedVideos.length > 0 ? (
             <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                 {paginatedVideos.map((vid) => {
                   const currentSelectedIds = tempSlots.filter(
                     (id): id is number => id !== null
@@ -274,7 +260,7 @@ export default function VideoModalHome({
                   <button
                     type="button"
                     onClick={handleLoadMore}
-                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-sm truncate"
+                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-[#16275d] text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs truncate"
                   >
                     Cargar más videos ({filteredVideos.length - visibleLimit}{" "}
                     restantes)
@@ -283,12 +269,12 @@ export default function VideoModalHome({
               )}
             </>
           ) : (
-            <div className="flex flex-col items-center justify-center py-12 text-center text-slate-400 my-auto space-y-1">
-              <p className="text-sm font-medium">
+            <div className="flex flex-col items-center justify-center py-16 text-center text-slate-400 my-auto space-y-2">
+              <p className="text-sm font-bold text-[#16275d]">
                 No se encontraron videos en esta vista.
               </p>
               {searchTerm && (
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500 font-medium">
                   Intenta buscando con otro término o limpia el buscador.
                 </p>
               )}
@@ -296,28 +282,27 @@ export default function VideoModalHome({
           )}
         </div>
 
-        {/* Footer del Modal (Botones estilo Hero + Lógica Guardar Inteligente) */}
-        <div className="p-3 sm:p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-3 shrink-0">
+        {/* Footer del Modal */}
+        <div className="p-4 sm:p-5 border-t border-slate-100 bg-slate-50/80 flex items-center justify-end gap-3 shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold rounded-xl transition-all cursor-pointer truncate"
+            className="px-4.5 py-2.5 bg-slate-200/80 hover:bg-slate-300 text-slate-700 text-xs sm:text-sm font-bold rounded-2xl transition-all cursor-pointer truncate outline-none"
           >
             Cancelar
           </button>
           
-          {/* Botón Guardar Inteligente (Heredado de Hero) */}
           <button
             type="button"
             onClick={handleConfirmSave}
             disabled={!hasChanges}
-            className={`flex items-center gap-2 text-xs font-semibold px-5 py-2.5 rounded-xl transition-all truncate ${
+            className={`flex items-center gap-2 text-xs sm:text-sm font-bold px-6 py-2.5 rounded-2xl transition-all truncate shadow-md ${
               hasChanges
-                ? "bg-[#16275D] hover:bg-[#101d44] text-white shadow-sm cursor-pointer"
-                : "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
+                ? "bg-[#16275d] hover:bg-[#111c38] text-amber-400 cursor-pointer border border-[#16275d]"
+                : "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none border border-transparent"
             }`}
           >
-            <Save className="w-4 h-4 shrink-0" />
+            <Save className="w-4 h-4 shrink-0 text-amber-400" />
             <span className="truncate">Guardar</span>
           </button>
         </div>

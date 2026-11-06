@@ -112,11 +112,15 @@ export default function VideoCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={onClick}
-      className={`group bg-white rounded-xl transition-colors duration-200 flex flex-col cursor-pointer border border-slate-100 hover:border-slate-200 shadow-xs hover:shadow-md transform-gpu ${
+      className={`group bg-white rounded-xl transition-all duration-200 flex flex-col cursor-pointer border shadow-xs hover:shadow-md select-none ${
+        isSelected 
+          ? "border-[#16275d] ring-2 ring-[#16275d]/10 bg-amber-50/20" 
+          : "border-slate-200/80 hover:border-[#16275d]/40"
+      } ${
         hideDetails ? "p-1 gap-0" : "p-2 gap-2.5"
       }`}
     >
-      <div className={`relative w-full rounded-lg bg-slate-900 overflow-hidden isolate transform-gpu flex items-center justify-center ${
+      <div className={`relative w-full rounded-lg bg-slate-900 overflow-hidden flex items-center justify-center ${
         hideDetails ? "aspect-[4/3] rounded-lg" : "aspect-[16/10]"
       }`}>
         {activeThumb ? (
@@ -126,7 +130,7 @@ export default function VideoCard({
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             unoptimized
-            className="object-cover transition-transform duration-300 transform-gpu group-hover:scale-105" 
+            className="object-cover transition-transform duration-300 group-hover:scale-105" 
           />
         ) : isTikTok ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black text-white p-2 text-center">
@@ -146,7 +150,7 @@ export default function VideoCard({
         ) : (
           <video 
             src={fullUrl}
-            className="w-full h-full object-cover transition-transform duration-300 transform-gpu group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             preload="metadata"
             muted
           />
@@ -154,15 +158,15 @@ export default function VideoCard({
 
         <div className="absolute inset-0 bg-slate-950/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none" />
 
-        {/* Indicador de Slot / Destacado o Número de Selección (Espejo exacto del Hero) */}
+        {/* Indicador de Slot / Destacado o Número de Selección */}
         {isInteractive && isSelected && selectionNumber !== null ? (
-          <div className="absolute top-2.5 right-2.5 z-30 transform-gpu">
-            <div className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-[11px] font-bold shadow-md shadow-amber-500/40">
+          <div className="absolute top-2.5 right-2.5 z-30">
+            <div className="w-6 h-6 rounded-full bg-[#16275d] text-amber-400 flex items-center justify-center text-[11px] font-bold shadow-md border border-amber-400/40">
               {selectionNumber}
             </div>
           </div>
         ) : (
-          <div className="absolute top-2 left-2 z-20 flex items-center gap-1 bg-slate-900/70 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm transform-gpu">
+          <div className="absolute top-2 left-2 z-20 flex items-center gap-1 bg-slate-900/70 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
             <Star className={`w-3 h-3 ${item.isFeatured ? "text-amber-400 fill-amber-400" : "text-slate-400"}`} />
             <span>{item.isFeatured && item.order ? `#${item.order}` : "Libre"}</span>
           </div>
@@ -173,7 +177,7 @@ export default function VideoCard({
         <div className="flex flex-col gap-1 px-1 pb-0.5">
           <h3 
             title={titleText}
-            className="text-xs font-medium text-slate-600 tracking-tight truncate group-hover:text-amber-600 transition-colors duration-200"
+            className="text-xs font-bold text-[#16275d] tracking-tight truncate group-hover:text-amber-600 transition-colors duration-200"
           >
             {titleText}
           </h3>

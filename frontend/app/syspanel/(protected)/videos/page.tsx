@@ -288,14 +288,13 @@ export default function AdminVideosPage() {
   );
 
   return (
-    <div className="p-4 sm:p-6 md:p-10 max-w-7xl mx-auto w-full font-['Poppins',sans-serif] space-y-6 overflow-x-hidden">
+    <div className="p-4 sm:p-6 md:p-10 max-w-7xl mx-auto w-full font-['Poppins',sans-serif] space-y-6 overflow-x-hidden select-none">
       <div className="space-y-1">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[#16275d] tracking-tight">
           Gestión de Videos
         </h1>
         <p className="text-slate-500 text-xs md:text-sm font-medium">
-          Sube archivos de video o añade enlaces (YouTube, TikTok) que muestran la página
-          pública del Colegio &quot; I.E.P Cayros &quot;
+          Sube archivos o añade enlaces de video que se mostrarán en la sección pública del Colegio I.E.P. Cayros.
         </p>
       </div>
 

@@ -7,7 +7,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import GalleryGrid from "./components/grid/GalleryGrid";
 import GalleryModal from "./components/modal/GalleryModal";
 import GalleryHomeConfig from "./components/home-config/GalleryHomeConfig";
-import ToastAlertGallery from "./components/home-config/ToastAlertGallery"; // <-- Importamos el componente correcto
+import ToastAlertGallery from "./components/home-config/ToastAlertGallery";
 import { SortOption } from "./components/grid/GalleryFilters"; 
 
 interface GalleryItem {
@@ -28,7 +28,7 @@ export default function AdminGaleriaPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingImage, setEditingImage] = useState<GalleryItem | null>(null);
 
-  // Estado del Toast unificado con soporte para success, error y warning (igual que Hero)
+  // Estado del Toast unificado con soporte para success, error y warning
   const [toastState, setToastState] = useState<{
     visible: boolean;
     type: "success" | "error" | "warning";
@@ -98,7 +98,8 @@ export default function AdminGaleriaPage() {
 
     const loadImages = async () => {
       try {
-        const res = await fetch("http://localhost:4000/api/galeria");
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+        const res = await fetch(`${apiUrl}/api/galeria`);
         if (!res.ok)
           throw new Error("Error al obtener los registros del servidor");
 
@@ -158,7 +159,8 @@ export default function AdminGaleriaPage() {
       const formData = new FormData();
       formData.append("isActive", String(!target.isActive));
 
-      const res = await fetch(`http://localhost:4000/api/galeria/${id}`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+      const res = await fetch(`${apiUrl}/api/galeria/${id}`, {
         method: "PUT",
         body: formData,
       });
@@ -176,7 +178,8 @@ export default function AdminGaleriaPage() {
 
   const handleDelete = async (id: number) => {
     try {
-      const res = await fetch(`http://localhost:4000/api/galeria/${id}`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+      const res = await fetch(`${apiUrl}/api/galeria/${id}`, {
         method: "DELETE",
       });
 
@@ -211,9 +214,10 @@ export default function AdminGaleriaPage() {
         formData.append("imageUrl", imageUrl);
       }
 
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
       const url = editingImage
-        ? `http://localhost:4000/api/galeria/${editingImage.id}`
-        : "http://localhost:4000/api/galeria";
+        ? `${apiUrl}/api/galeria/${editingImage.id}`
+        : `${apiUrl}/api/galeria`;
 
       const method = editingImage ? "PUT" : "POST";
 
@@ -289,22 +293,24 @@ export default function AdminGaleriaPage() {
   );
 
   return (
-    <div className="p-4 sm:p-6 md:p-10 max-w-7xl mx-auto w-full font-['Poppins',sans-serif] space-y-6 overflow-x-hidden">
+    <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto w-full space-y-6 overflow-x-hidden select-none">
+      
+      {/* Cabecera del Módulo */}
       <div className="space-y-1">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[#16275d] tracking-tight">
           Gestión de Galería
         </h1>
         <p className="text-slate-500 text-xs md:text-sm font-medium">
-          Sube, edita, activa o deshabilita las imágenes que muestran la página
-          pública del Colegio &quot; I.E.P Cayros &quot;
+          Administra, edita, activa o deshabilita las imágenes institucionales de la I.E.P. Colegio Cayros.
         </p>
       </div>
 
-      <div className="h-[1px] w-full bg-slate-200/90 my-2" />
+      <div className="h-[1px] w-full bg-slate-200 my-2" />
 
-      {/* Configuración de Galería con soporte de notificaciones extendido */}
+      {/* Configuración de Galería en Inicio */}
       <GalleryHomeConfig allImages={images} showToast={showToast} />
 
+      {/* Grilla General de Galería */}
       <GalleryGrid
         images={paginatedImages}
         onToggleStatus={toggleStatus}
@@ -324,6 +330,7 @@ export default function AdminGaleriaPage() {
         itemsPerPage={itemsPerPage}
       />
 
+      {/* Modal de Creación / Edición */}
       <GalleryModal
         key={editingImage ? `edit-${editingImage.id}` : "create-new"}
         isOpen={isModalOpen}
@@ -338,7 +345,7 @@ export default function AdminGaleriaPage() {
         editingImage={editingImage}
       />
 
-      {/* Renderizamos el ToastAlertGallery unificado mediante Portal */}
+      {/* Sistema de Notificaciones Toast unificado */}
       {toastState.visible &&
         typeof window !== "undefined" &&
         createPortal(

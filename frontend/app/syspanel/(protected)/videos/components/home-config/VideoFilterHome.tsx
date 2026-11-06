@@ -21,8 +21,9 @@ export default function VideoFilterHome({
   selectedCount,
 }: VideoFilterHomeProps) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full transform-gpu">
-      {/* Buscador y botón limpiar */}
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full select-none">
+      
+      {/* Buscador de Videos */}
       <div className="relative w-full sm:max-w-md">
         <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
           <Search className="w-4 h-4" />
@@ -32,13 +33,13 @@ export default function VideoFilterHome({
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Buscar video por título..."
-          className="w-full pl-10 pr-9 py-2 bg-slate-50/50 hover:bg-slate-50 focus:bg-white border border-slate-200/85 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/15 transition-all duration-200 shadow-2xs"
+          className="w-full pl-10 pr-9 py-2.5 bg-white hover:bg-slate-50/50 focus:bg-white border border-slate-200 rounded-2xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#16275d] focus:ring-2 focus:ring-[#16275d]/10 transition-all shadow-xs font-semibold"
         />
         {searchTerm && (
           <button
             type="button"
             onClick={() => onSearchChange("")}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-700 transition-colors duration-200 cursor-pointer"
+            className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-[#16275d] transition-colors cursor-pointer"
             title="Limpiar búsqueda"
           >
             <X className="w-4 h-4" />
@@ -46,32 +47,33 @@ export default function VideoFilterHome({
         )}
       </div>
 
-      {/* Pestañas de filtrado (Todos / Seleccionados) */}
-      <div className="grid grid-cols-2 sm:flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200/60 shrink-0">
+      {/* Selector de Pestañas (Todas / Seleccionadas) */}
+      <div className="grid grid-cols-2 sm:flex items-center gap-1 bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200 shrink-0">
         <button
           type="button"
           onClick={() => onTabChange("all")}
-          className={`px-3 py-1.5 sm:px-3.5 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer text-center truncate ${
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-center truncate ${
             activeTab === "all"
-              ? "bg-white text-slate-900 shadow-2xs font-semibold"
-              : "text-slate-500 hover:text-slate-800"
+              ? "bg-[#16275d] text-white shadow-xs"
+              : "text-slate-600 hover:text-[#16275d]"
           }`}
         >
-          Todos ({totalVideosCount})
+          Todas ({totalVideosCount})
         </button>
 
         <button
           type="button"
           onClick={() => onTabChange("selected")}
-          className={`px-3 py-1.5 sm:px-3.5 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer text-center truncate ${
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-center truncate ${
             activeTab === "selected"
-              ? "bg-white text-indigo-600 shadow-2xs font-semibold"
-              : "text-slate-500 hover:text-slate-800"
+              ? "bg-[#16275d] text-amber-400 shadow-xs"
+              : "text-slate-600 hover:text-[#16275d]"
           }`}
         >
-          Destacados ({selectedCount})
+          Seleccionadas ({selectedCount})
         </button>
       </div>
+
     </div>
   );
 }

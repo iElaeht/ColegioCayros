@@ -31,7 +31,7 @@ export default function VideoCard({ item, onToggleStatus, onOpenEdit }: VideoCar
   const isYouTube = isHttpUrl && (item.src.includes('youtube.com') || item.src.includes('youtu.be'));
   const isTikTok = isHttpUrl && item.src.includes('tiktok.com');
 
-  // Lógica para extraer la miniatura inicial (si es YouTube)
+  // Lógica optimizada para extraer la miniatura inicial de YouTube
   let initialThumbnail = "";
   if (isYouTube) {
     let videoId = "";
@@ -87,9 +87,9 @@ export default function VideoCard({ item, onToggleStatus, onOpenEdit }: VideoCar
     <div 
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`group relative bg-white rounded-2xl border transition-all duration-300 flex flex-col justify-between overflow-hidden shadow-xs hover:shadow-xl w-full ${
+      className={`group relative bg-white rounded-2xl border transition-all duration-300 flex flex-col justify-between overflow-hidden shadow-xs hover:shadow-xl w-full select-none ${
         item.isActive 
-          ? "border-slate-200/80 hover:border-amber-400/50" 
+          ? "border-slate-200/80 hover:border-[#16275d]/30" 
           : "border-slate-200/60 opacity-75 bg-slate-50/50"
       }`}
     >
@@ -111,13 +111,13 @@ export default function VideoCard({ item, onToggleStatus, onOpenEdit }: VideoCar
           />
         ) : isHttpUrl ? (
           <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-950 flex flex-col items-center justify-center p-4 text-center">
-            <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white mb-2 shadow-inner backdrop-blur-xs">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 flex items-center justify-center text-white mb-2 shadow-inner backdrop-blur-xs">
               {isYouTube ? (
-                <span className="text-red-500 font-bold text-sm">YT</span>
+                <span className="text-red-500 font-bold text-xs sm:text-sm">YT</span>
               ) : isTikTok ? (
-                <Music2 className="w-6 h-6 text-pink-500 animate-pulse" />
+                <Music2 className="w-5 h-5 sm:w-6 sm:h-6 text-pink-500 animate-pulse" />
               ) : (
-                <Globe className="w-6 h-6 text-amber-400" />
+                <Globe className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400" />
               )}
             </div>
             <span className="text-[11px] font-medium text-slate-300 line-clamp-1 px-2">
@@ -132,18 +132,18 @@ export default function VideoCard({ item, onToggleStatus, onOpenEdit }: VideoCar
               muted
               preload="metadata"
             />
-            <div className="absolute inset-0 bg-black/20 pointer-events-none" />
+            <div className="absolute inset-0 bg-black/25 pointer-events-none" />
           </div>
         )}
 
         {/* Botón de edición en Hover */}
         <div className={`absolute inset-0 bg-slate-950/40 backdrop-blur-[2px] flex items-center justify-center transition-opacity duration-300 ${isHovered ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
-          <div className="w-10 h-10 rounded-full bg-white/90 text-slate-900 shadow-lg flex items-center justify-center transform transition-transform duration-300 scale-90 group-hover:scale-100">
-            <Edit className="w-4 h-4 text-amber-600" />
+          <div className="w-10 h-10 rounded-full bg-white/95 text-[#16275d] shadow-lg flex items-center justify-center transform transition-transform duration-300 scale-90 group-hover:scale-100">
+            <Edit className="w-4 h-4 text-[#16275d]" />
           </div>
         </div>
 
-        {/* Badge superior izquierdo: Estado de Destacado / Slot (Estilo Hero) */}
+        {/* Badge superior izquierdo: Estado de Destacado / Slot */}
         <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-md text-[10px] font-medium text-white flex items-center gap-1 shadow-sm">
           {item.isFeatured ? (
             <>
@@ -158,7 +158,7 @@ export default function VideoCard({ item, onToggleStatus, onOpenEdit }: VideoCar
           )}
         </div>
 
-        {/* Badge superior derecho: Tipo (URL / Archivo) movido a la derecha */}
+        {/* Badge superior derecho: Tipo (URL / Archivo) */}
         <div className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-md text-[10px] font-medium text-white flex items-center gap-1 shadow-sm">
           {isHttpUrl ? <Globe className="w-3 h-3 text-amber-400" /> : <VideoIcon className="w-3 h-3 text-emerald-400" />}
           <span>{isHttpUrl ? "URL" : "Archivo"}</span>
@@ -169,7 +169,7 @@ export default function VideoCard({ item, onToggleStatus, onOpenEdit }: VideoCar
       <div className="p-3.5 sm:p-4 flex flex-col gap-2.5 sm:gap-3">
         
         {/* Título */}
-        <h3 className="text-xs font-bold text-slate-800 tracking-wide line-clamp-1 group-hover:text-amber-600 transition-colors" title={item.alt}>
+        <h3 className="text-xs font-bold text-[#16275d] tracking-wide line-clamp-1 group-hover:text-amber-600 transition-colors" title={item.alt}>
           {item.alt}
         </h3>
 
@@ -189,17 +189,17 @@ export default function VideoCard({ item, onToggleStatus, onOpenEdit }: VideoCar
 
         <hr className="border-slate-100 my-0.5" />
 
-        {/* Botón inferior unificado a ancho completo con blur de seguridad */}
+        {/* Botón inferior unificado */}
         <button
           type="button"
           onClick={(e) => {
             e.currentTarget.blur();
             onToggleStatus(item.id);
           }}
-          className={`w-full px-3 py-1.5 rounded-xl text-[10px] sm:text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/40 active:scale-[0.98] ${
+          className={`w-full px-3 py-2 rounded-xl text-[10px] sm:text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#16275d]/20 active:scale-[0.98] ${
             item.isActive 
-              ? "bg-amber-50 text-amber-700 hover:bg-amber-100/80" 
-              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              ? "bg-amber-50 text-amber-800 hover:bg-amber-100/80 border border-amber-200/50" 
+              : "bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200/50"
           }`}
           title={item.isActive ? "Ocultar video" : "Mostrar video"}
         >

@@ -31,13 +31,13 @@ export default function VideoHomeGrid({
     .filter((vid): vid is VideoItem => vid !== undefined);
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 pt-2 transform-gpu">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 pt-2 select-none">
       {selectedItems.map((item) => (
         <div
           key={item.id}
-          className="relative group bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-2xs transform-gpu"
+          className="relative group bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-2xs"
         >
-          <div className="aspect-[4/3] w-full overflow-hidden transform-gpu">
+          <div className="aspect-[4/3] w-full overflow-hidden">
             <VideoCard
               item={item}
               isSelected={false}
@@ -55,9 +55,9 @@ export default function VideoHomeGrid({
         <div
           key={`empty-${index}`}
           onClick={onOpenModal}
-          className="border-2 border-dashed border-slate-200 hover:border-indigo-400 rounded-xl aspect-[4/3] flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-indigo-600 bg-slate-50/50 hover:bg-indigo-50/30 transition-colors duration-200 cursor-pointer group transform-gpu"
+          className="border-2 border-dashed border-slate-200 hover:border-[#16275d] rounded-xl aspect-[4/3] flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-[#16275d] bg-slate-50/50 hover:bg-[#16275d]/5 transition-colors duration-200 cursor-pointer group"
         >
-          <span className="text-lg font-light group-hover:scale-110 transition-transform duration-200 transform-gpu">
+          <span className="text-lg font-light group-hover:scale-110 transition-transform duration-200">
             +
           </span>
           <span className="text-[10px] font-medium tracking-tight">Vacío</span>

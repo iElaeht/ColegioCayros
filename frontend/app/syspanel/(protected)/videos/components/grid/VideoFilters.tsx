@@ -65,7 +65,7 @@ export default function VideoFilters({
   };
 
   return (
-    <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 w-full">
+    <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 w-full select-none">
       {/* Buscador por título */}
       <div className="relative flex-1">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 shrink-0 pointer-events-none" />
@@ -74,7 +74,7 @@ export default function VideoFilters({
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Buscar video por título..."
-          className="w-full bg-white text-slate-800 text-xs pl-10 pr-4 py-3 rounded-xl border border-slate-200/90 focus:border-[#6eb5ec] focus:ring-2 focus:ring-[#6eb5ec]/10 outline-none transition-all font-medium shadow-xs"
+          className="w-full bg-white text-slate-800 text-xs pl-10 pr-4 py-3 rounded-xl border border-slate-200/90 focus:border-[#16275d] focus:ring-2 focus:ring-[#16275d]/10 outline-none transition-all font-medium shadow-xs"
         />
       </div>
 
@@ -99,19 +99,19 @@ export default function VideoFilters({
                 setIsDropdownOpen(true);
               }
             }}
-            className={`w-full sm:w-auto flex items-center justify-between sm:justify-start gap-3 px-3.5 py-3 border rounded-xl text-xs font-semibold transition-colors duration-200 cursor-pointer shadow-xs bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6eb5ec]/40 active:scale-[0.98] ${
+            className={`w-full sm:w-auto flex items-center justify-between sm:justify-start gap-3 px-3.5 py-3 border rounded-xl text-xs font-semibold transition-colors duration-200 cursor-pointer shadow-xs bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#16275d]/20 active:scale-[0.98] ${
               isDropdownOpen
-                ? "border-[#6eb5ec] text-[#16275d] ring-2 ring-[#6eb5ec]/10"
+                ? "border-[#16275d] text-[#16275d] ring-2 ring-[#16275d]/10"
                 : "border-slate-200/90 hover:bg-slate-50 text-slate-700"
             }`}
           >
             <div className="flex items-center gap-2 truncate">
-              <ArrowUpDown className="w-3.5 h-3.5 text-[#6eb5ec] shrink-0" />
+              <ArrowUpDown className="w-3.5 h-3.5 text-[#16275d] shrink-0" />
               <span className="truncate">{sortLabels[sortOption]}</span>
             </div>
             <ChevronDown
               className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ml-auto sm:ml-0 ${
-                isDropdownOpen ? "rotate-180 text-[#6eb5ec]" : ""
+                isDropdownOpen ? "rotate-180 text-[#16275d]" : ""
               }`}
             />
           </button>
@@ -139,12 +139,12 @@ export default function VideoFilters({
                     }}
                     className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
                       isSelected
-                        ? "text-[#6eb5ec] bg-[#6eb5ec]/10 font-bold"
+                        ? "text-[#16275d] bg-[#16275d]/10 font-bold"
                         : "text-slate-700 hover:bg-slate-50"
                     }`}
                   >
                     <span className="truncate">{option.label}</span>
-                    {isSelected && <Check className="w-3.5 h-3.5 text-[#6eb5ec] shrink-0 ml-2" />}
+                    {isSelected && <Check className="w-3.5 h-3.5 text-[#16275d] shrink-0 ml-2" />}
                   </button>
                 );
               })}
