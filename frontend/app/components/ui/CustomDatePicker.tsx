@@ -90,22 +90,22 @@ export default function CustomDatePicker({ selectedDate, onChange }: CustomDateP
   };
 
   return (
-    <div className="relative w-full sm:w-auto select-none" ref={containerRef}>
+    <div className="relative w-full select-none" ref={containerRef}>
       <button
         type="button"
         onClick={() => {
           setIsOpen(!isOpen);
           setViewMode("days");
         }}
-        className={`w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2.5 pl-3.5 pr-3 py-2.5 border rounded-2xl text-xs sm:text-sm transition-all cursor-pointer shadow-sm focus:outline-none focus:ring-2 focus:ring-[#16275d]/20 ${
+        className={`w-full flex items-center justify-between gap-2.5 px-3.5 py-3 border rounded-2xl text-xs sm:text-sm transition-all cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-[#16275d]/20 ${
           selectedDate
             ? "bg-[#16275d]/5 border-[#16275d]/30 text-[#16275d]"
-            : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
+            : "bg-slate-50/80 hover:bg-slate-50 border-slate-200/90 text-slate-700"
         }`}
       >
         <div className="flex items-center gap-2.5 truncate">
           <Calendar className={`w-4 h-4 shrink-0 ${selectedDate ? "text-[#16275d]" : "text-slate-400"}`} />
-          <span className={`font-semibold truncate ${selectedDate ? "text-[#16275d]" : "text-slate-600"}`}>
+          <span className={`font-semibold truncate ${selectedDate ? "text-[#16275d]" : "text-slate-700"}`}>
             {formatDisplayDate(selectedDate)}
           </span>
         </div>
@@ -121,7 +121,7 @@ export default function CustomDatePicker({ selectedDate, onChange }: CustomDateP
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 sm:left-0 sm:right-auto mt-2 w-full sm:w-72 bg-white border border-slate-200 rounded-3xl shadow-2xl z-50 p-4 animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute left-0 right-0 sm:left-auto sm:right-0 mt-2 w-full sm:w-80 bg-white border border-slate-200 rounded-3xl shadow-2xl z-[99999] p-4 animate-in fade-in zoom-in-95 duration-150">
           
           <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
             <div className="flex items-center gap-1">
@@ -206,7 +206,7 @@ export default function CustomDatePicker({ selectedDate, onChange }: CustomDateP
                       key={day}
                       type="button"
                       onClick={() => handleSelectDay(day)}
-                      className={`h-8 w-8 mx-auto flex items-center justify-center text-xs rounded-xl font-semibold transition-all cursor-pointer ${
+                      className={`h-9 w-9 mx-auto flex items-center justify-center text-xs rounded-xl font-semibold transition-all cursor-pointer ${
                         isSelected
                           ? "bg-[#16275d] text-amber-400 shadow-md font-bold scale-105"
                           : "text-slate-700 hover:bg-slate-100"

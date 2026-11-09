@@ -163,13 +163,35 @@ export default function MensajesPage() {
       </header>
 
       {/* Componente de Filtros, Búsqueda y Ordenamiento */}
-      <ContactFilter 
+      <ContactFilter
         searchTerm={searchTerm}
         setSearchTerm={handleSearchChange}
         selectedDate={selectedDate}
         setSelectedDate={handleDateChange}
         sortOrder={sortOrder}
         setSortOrder={handleSortChange}
+        exportData={mensajesOrdenados}
+        onImportData={async (nuevosDatos) => {
+          try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+            const res = await fetch(`${apiUrl}/api/mensajes/importar`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ mensajes: nuevosDatos }),
+            });
+
+            if (res.ok) {
+              // Volvemos a consultar la API para reflejar el total sumado real desde la Base de Datos
+              fetchMensajes();
+              setToast({ message: "¡Registros importados y guardados con éxito!", type: "success" });
+            } else {
+              setToast({ message: "Error al guardar los registros importados.", type: "error" });
+            }
+          } catch (err) {
+            console.error("Error de red al importar:", err);
+            setToast({ message: "Error de red al intentar importar.", type: "error" });
+          }
+        }}
       />
 
       {/* Componente Grid / Tabla de Mensajes */}

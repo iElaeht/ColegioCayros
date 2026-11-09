@@ -24,7 +24,7 @@ const GRADOS_POR_NIVEL: Record<string, string[]> = {
 export default function MatriculaPage() {
   const [slides, setSlides] = useState<MatriculaImage[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [progress, setProgress] = useState(0); // Control de barra de progreso sincronizada (0 a 100)
+  const [progress, setProgress] = useState(0);
 
   const [formData, setFormData] = useState({
     sede: "",
@@ -42,7 +42,6 @@ export default function MatriculaPage() {
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
-  // Auto-cierre del toast después de 5 segundos
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => {
@@ -51,7 +50,10 @@ export default function MatriculaPage() {
     return () => clearTimeout(timer);
   }, [toast]);
 
-  // Cargar galería de matrículas (solo activas)
+  useEffect(() => {
+    document.title = "Matrículas | Colegio Cayros";
+  }, []);
+
   useEffect(() => {
     fetch("http://localhost:4000/api/matricula-galeria")
       .then((res) => res.json())
@@ -64,18 +66,16 @@ export default function MatriculaPage() {
       .catch((err) => console.error("Error al cargar galería de matrículas:", err));
   }, []);
 
-  // Temporizador blindado y fluido para la barra de carga y el carrusel (5 segundos por slide)
   useEffect(() => {
     if (slides.length <= 1) return;
 
-    const intervalTime = 50; // Intervalo de actualización en ms
-    const totalDuration = 5000; // Duración total por imagen (5 segundos)
+    const intervalTime = 50;
+    const totalDuration = 5000;
     const increment = (intervalTime / totalDuration) * 100;
 
     const timer = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
-          // Cambiar al siguiente slide y reiniciar progreso
           setCurrentSlide((curr) => (curr + 1) % slides.length);
           return 0;
         }
@@ -86,7 +86,6 @@ export default function MatriculaPage() {
     return () => clearInterval(timer);
   }, [slides.length]);
 
-  // Cambio manual de slide al hacer clic en un dot (resetea el progreso de inmediato)
   const handleSelectSlide = (index: number) => {
     setCurrentSlide(index);
     setProgress(0);
@@ -196,7 +195,6 @@ export default function MatriculaPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             
-            {/* LADO IZQUIERDO: Carrusel con Animación Fade y Barra de Progreso Sincronizada */}
             <div className="lg:col-span-6 relative">
               <div className="absolute -inset-2 bg-gradient-to-tr from-amber-400/20 via-blue-600/10 to-transparent rounded-[2.5rem] blur-xl -z-10 pointer-events-none" />
 
@@ -235,7 +233,6 @@ export default function MatriculaPage() {
                 )}
               </div>
 
-              {/* Indicadores (Dots) con barra de progreso fluida */}
               {slides.length > 0 && (
                 <div className="flex justify-center items-center gap-2.5 mt-4">
                   {slides.map((_, idx) => (
@@ -259,7 +256,6 @@ export default function MatriculaPage() {
               )}
             </div>
 
-            {/* LADO DERECHO: Formulario de Pre-Inscripción */}
             <div className="lg:col-span-6 bg-white rounded-[2rem] shadow-xl border border-slate-100 p-6 sm:p-8">
               <div className="flex items-center gap-3 mb-1">
                 <div className="w-1.5 h-6 bg-amber-500 rounded-full" />
@@ -440,7 +436,7 @@ export default function MatriculaPage() {
 
                 {toast && (
                   <div
-                    className={`mt-4 p-4 rounded-xl flex items-center gap-3 text-xs font-semibold animate-fadeIn transition-all duration-300 ${
+                    className={`mt-4 p-4 rounded-xl flex items-center gap-3 text-xs font-semibold transition-all duration-300 ${
                       toast.type === "success" 
                         ? "bg-emerald-50 text-emerald-800 border border-emerald-200" 
                         : "bg-rose-50 text-rose-800 border border-rose-200"
@@ -460,7 +456,6 @@ export default function MatriculaPage() {
 
           </div>
 
-          {/* BANNER INFERIOR */}
           <div className="mt-20">
             <div className="bg-[#16275D] text-white rounded-[2.5rem] shadow-2xl p-8 sm:p-12 border border-slate-700/30 relative overflow-hidden">
               <div className="absolute -top-24 -right-24 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />

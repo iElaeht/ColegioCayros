@@ -36,7 +36,7 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
-// 3. Guardar un nuevo mensaje desde el formulario público
+// 3. Guardar un nuevo mensaje individual desde el formulario público
 router.post('/', async (req: Request, res: Response) => {
   try {
     const { dni, nombre, telefono, asunto } = req.body;
@@ -56,7 +56,43 @@ router.post('/', async (req: Request, res: Response) => {
   }
 });
 
-// 4. Actualizar un mensaje existente por ID
+// NUEVO: 3.1. Importación masiva de mensajes (Desde Excel / CSV)
+router.post('/importar', async (req: Request, res: Response) => {
+  try {
+    const { mensajes } = req.body;
+
+    if (!Array.isArray(mensajes) || mensajes.length === 0) {
+      return res.status(400).json({ error: 'No se proporcionaron datos válidos para importar' });
+    }
+
+    // Normalizamos y mapeamos los campos para asegurarnos de que coincidan con Prisma
+    const datosAInsertar = mensajes.map((msg: any) => ({
+      dni: String(msg.dni || msg.DNI || ''),
+      nombre: String(msg.nombre || msg.NOMBRE || ''),
+      telefono: String(msg.telefono || msg.TELEFONO || ''),
+      asunto: String(msg.asunto || msg.ASUNTO || ''),
+      // Si el archivo trae fecha la respetamos, sino Prisma asigna la actual por defecto
+      ...(msg.fecha || msg.FECHA ? { fecha: new Date(msg.fecha || msg.FECHA) } : {}),
+    }));
+
+    // Insertamos masivamente usando createMany (optimizado en Prisma)
+    const resultado = await prisma.mensajeContacto.createMany({
+      data: datosAInsertar,
+      skipDuplicates: true, // Evita errores si hay registros duplicados exactos
+    });
+
+    return res.status(201).json({ 
+      success: true, 
+      message: `${resultado.count} registros importados correctamente`,
+      count: resultado.count 
+    });
+  } catch (error) {
+    console.error('Error en la importación masiva de mensajes:', error);
+    return res.status(500).json({ error: 'No se pudieron importar los registros en la base de datos' });
+  }
+});
+
+// 4. Actualizar un mensaje existente por ID (Parte del CRUD completo)
 router.put('/:id', async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);

@@ -5,15 +5,15 @@ import React from 'react';
 
 export default function Ubicanos() {
   return (
-    <section id="ubicanos" className="w-full py-16 sm:py-24 lg:py-32 bg-gray-50 select-none">
+    <section id="ubicacion" className="w-full py-16 sm:py-24 lg:py-32 bg-gray-50 select-none">
       <div className="max-w-6xl mx-auto px-4 sm:px-8 flex flex-col items-center">
         
-        {/* Encabezado de la sección */}
-        <div className="text-center space-y-3 mb-10 sm:mb-14 max-w-xl">
-          <span className="text-xs font-bold tracking-[0.2em] text-[#16275d] uppercase bg-amber-100/60 px-3 py-1 rounded-full">
+        {/* Encabezado de la sección con espaciado corregido */}
+        <div className="text-center mb-12 sm:mb-16 max-w-xl">
+          <span className="inline-block text-xs font-bold tracking-[0.2em] text-[#16275d] uppercase bg-amber-100/60 px-3.5 py-1.5 rounded-full mb-10">
             Nuestra Sede
           </span>
-          <h2 className="text-2xl font-bold tracking-tight text-[#111c38] sm:text-3xl lg:text-4xl font-['Poppins',sans-serif]">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[#111c38] font-['Poppins',sans-serif] mb-3">
             ¿Dónde Encontrarnos?
           </h2>
           <p className="text-gray-600 max-w-md mx-auto text-sm sm:text-base font-['Open_Sans',sans-serif]">

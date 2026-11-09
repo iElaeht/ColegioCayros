@@ -7,9 +7,11 @@ import SchoolGallery from "./components/sections/SchoolGallery";
 import SchoolVideos from "./components/sections/SchoolVideos";
 import ObjetivosSection from "./components/sections/ObjetivosSchool";
 import EventsSection from "./components/sections/EventosSchool";
-import ContactSchool from "./components/sections/ContactSchool";
 import Ubicanos from "./components/sections/Ubicacion";
+import ContactSchool from "./components/sections/ContactSchool";
 import Footer from "./components/layout/Footer";
+import ScrollToTopButton from "@/app/components/common/ScrollToTopButton";
+
 
 export const metadata: Metadata = {
   title: "I.E.P | Colegio Cayros",
@@ -18,24 +20,46 @@ export const metadata: Metadata = {
 
 export default function Home() {
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* 1. Barra de navegación superior */}
+    <div className="flex flex-col min-h-screen relative">
+      {/* El Navbar unificado se mantiene fijo arriba */}
       <Navbar />
 
-      {/* 2. Contenido principal con flujo libre para el scroll */}
       <main className="flex-grow">
         <HeroSection />
-        <EducationalLevels />
-        <SchoolGallery />
-        <SchoolVideos />
-        <ObjetivosSection />
-        <EventsSection />
-        <Ubicanos />
-        <ContactSchool />
+        
+        <div id="niveles">
+          <EducationalLevels />
+        </div>
+
+        <div id="galeria">
+          <SchoolGallery />
+        </div>
+
+        <div id="videos">
+          <SchoolVideos />
+        </div>
+
+        <div id="objetivos">
+          <ObjetivosSection />
+        </div>
+
+        <div id="eventos">
+          <EventsSection />
+        </div>
+
+        <div id="ubicacion">
+          <Ubicanos />
+        </div>
+
+        <div id="contacto">
+          <ContactSchool />
+        </div>
       </main>
 
-      {/* 3. Pie de página institucional */}
       <Footer />
+
+      {/* Botón flotante para volver arriba */}
+      <ScrollToTopButton />
     </div>
   );
 }
