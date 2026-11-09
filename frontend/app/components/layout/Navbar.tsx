@@ -3,11 +3,13 @@
 
 import React from "react";
 import Link from "next/link";
-import SubNavbar from "./SubNavbar"; // Importamos el submenú aquí mismo
+import SubNavbar from "./SubNavbar";
 
 export default function Navbar() {
   return (
-    <header className="sticky top-0 z-50 w-full select-none shadow-md">
+    /* Añadimos sticky top-0 y z-50 para que se quede anclado al hacer scroll en cualquier página */
+    <header className="sticky top-0 z-50 w-full select-none shadow-md bg-white">
+      
       {/* 1. BARRA SUPERIOR INSTITUCIONAL (AZUL MARINO) */}
       <div className="w-full bg-[#16275D] text-white border-b border-blue-950/40">
         <div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -57,7 +59,7 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* 2. SUBNAVBAR (SE LLAMA AUTOMÁTICAMENTE AQUÍ) */}
+      {/* 2. SUBNAVBAR */}
       <SubNavbar />
     </header>
   );

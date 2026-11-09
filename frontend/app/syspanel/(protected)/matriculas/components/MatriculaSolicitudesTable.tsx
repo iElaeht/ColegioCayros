@@ -6,6 +6,7 @@ import { Trash2, FileText, Mail, Phone, Calendar, User, BookOpen, X, Building, S
 import ToastAlertMatricula from "./ToastAlertMatricula";
 import MatriculaFilter from "./MatriculaFilter";
 import Pagination from "./Pagination";
+import ExportImportModal from "../../components/ExportImport"; // Importamos el modal genérico
 
 export interface SolicitudMatricula {
   id: number;
@@ -20,6 +21,7 @@ export interface SolicitudMatricula {
   email?: string | null;
   mensaje?: string | null;
   createdAt: string;
+  [key: string]: unknown;
 }
 
 interface Props {
@@ -42,14 +44,16 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
-  // Estado para el Modal de Detalle y Modal de Confirmación de Eliminación
+  // Estados para Modales (Detalle, Eliminación y Exportar/Importar)
   const [selectedSolicitud, setSelectedSolicitud] = useState<SolicitudMatricula | null>(null);
   const [solicitudToDelete, setSolicitudToDelete] = useState<SolicitudMatricula | null>(null);
+  const [isExportImportModalOpen, setIsExportImportModalOpen] = useState(false);
 
   const fetchSolicitudes = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:4000/api/matricula-inscripcion");
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+      const res = await fetch(`${apiUrl}/api/matricula-inscripcion`);
       const data = await res.json();
       if (Array.isArray(data)) {
         setSolicitudes(data);
@@ -69,7 +73,7 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
 
   // Manejo de bloqueo de scroll seguro y tecla ESC en los modales
   useEffect(() => {
-    if (!selectedSolicitud && !solicitudToDelete) return;
+    if (!selectedSolicitud && !solicitudToDelete && !isExportImportModalOpen) return;
 
     const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
     document.body.style.overflow = "hidden";
@@ -83,6 +87,7 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
         e.stopPropagation();
         setSelectedSolicitud(null);
         setSolicitudToDelete(null);
+        setIsExportImportModalOpen(false);
       }
     };
 
@@ -93,7 +98,7 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
       document.body.style.overflow = "unset";
       document.body.style.paddingRight = "0px";
     };
-  }, [selectedSolicitud, solicitudToDelete]);
+  }, [selectedSolicitud, solicitudToDelete, isExportImportModalOpen]);
 
   const confirmDelete = async () => {
     if (!solicitudToDelete) return;
@@ -101,7 +106,8 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
     setDeletingId(id);
 
     try {
-      const res = await fetch(`http://localhost:4000/api/matricula-inscripcion/${id}`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+      const res = await fetch(`${apiUrl}/api/matricula-inscripcion/${id}`, {
         method: "DELETE",
       });
       if (res.ok) {
@@ -118,6 +124,28 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
       setToast({ message: "Error de red al intentar eliminar.", type: "error" });
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  // Manejador de importación masiva real conectada al backend
+  const handleImportData = async (importedJson: Record<string, unknown>[]) => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+      const res = await fetch(`${apiUrl}/api/matricula-inscripcion/importar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ matriculas: importedJson }),
+      });
+
+      if (res.ok) {
+        await fetchSolicitudes();
+        setToast({ message: "¡Matrículas importadas y guardadas con éxito!", type: "success" });
+      } else {
+        setToast({ message: "Error al guardar las matrículas importadas.", type: "error" });
+      }
+    } catch (err) {
+      console.error("Error al importar matrículas:", err);
+      setToast({ message: "Error de red al intentar importar.", type: "error" });
     }
   };
 
@@ -178,7 +206,7 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
         />
       )}
 
-      {/* Componente de Filtros */}
+      {/* Componente de Filtros con Apertura del Modal de Exportar/Importar */}
       <MatriculaFilter
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
@@ -186,6 +214,8 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
         setSelectedDate={setSelectedDate}
         sortOrder={sortOrder}
         setSortOrder={setSortOrder}
+        exportData={sorted}
+        onImportData={handleImportData}
       />
 
       {/* Tabla de registros */}
@@ -284,7 +314,7 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
                               type="button"
                               onClick={(e) => {
                                 e.currentTarget.blur();
-                                setSolicitudToDelete(item); // Abre el modal minimalista de confirmación
+                                setSolicitudToDelete(item);
                               }}
                               disabled={deletingId === item.id}
                               className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer outline-none disabled:opacity-50"
@@ -313,6 +343,16 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
           </>
         )}
       </div>
+
+      {/* MODAL DE EXPORTACIÓN E IMPORTACIÓN */}
+      <ExportImportModal
+        isOpen={isExportImportModalOpen}
+        onClose={() => setIsExportImportModalOpen(false)}
+        title="Gestión de Matrículas"
+        data={sorted}
+        filename="reporte-matriculas"
+        onImportData={handleImportData}
+      />
 
       {/* MODAL DE DETALLE DE LA SOLICITUD */}
       {selectedSolicitud && (

@@ -260,7 +260,7 @@ export default function ExportImportModal({
                   type="text"
                   value={customFilename}
                   onChange={(e) => setCustomFilename(e.target.value)}
-                  placeholder="Ej. reporte-actualizado"
+                  placeholder="Reporte, Registro, etc."
                   disabled={isImporting}
                   className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-[#16275d]"
                 />

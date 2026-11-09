@@ -202,7 +202,7 @@ export default function ContactFilter({
         onClose={() => setIsModalOpen(false)}
         title="Gestión de Mensajes"
         data={exportData}
-        filename="reporte-mensajes"
+        filename=""
         onImportData={onImportData}
       />
     </>

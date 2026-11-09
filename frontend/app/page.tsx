@@ -39,10 +39,6 @@ export default function Home() {
           <SchoolVideos />
         </div>
 
-        <div id="objetivos">
-          <ObjetivosSection />
-        </div>
-
         <div id="eventos">
           <EventsSection />
         </div>
