@@ -102,10 +102,11 @@ export default function EventsSection() {
 
   return (
     <section id="Eventos" className="py-16 sm:py-24 lg:py-32 px-4 sm:px-8 bg-[#16275d] text-white select-none font-['Poppins',sans-serif] overflow-hidden">
-      <div className="max-w-6xl mx-auto flex flex-col items-center">
+      {/* Alineado a la izquierda al igual que la galería utilizando max-w-6xl y mx-auto con items-start */}
+      <div className="max-w-6xl mx-auto flex flex-col items-start">
 
-        {/* Cabecera Responsiva */}
-        <div className="w-full mb-10 sm:mb-14 flex flex-col items-start max-w-2xl px-1">
+        {/* Cabecera Alineada a la Izquierda */}
+        <div className="w-full mb-10 sm:mb-14 flex flex-col items-start max-w-3xl px-1">
           <div className="flex items-center gap-3 mb-3">
             <span aria-hidden="true" className="h-3.5 w-3.5 flex-shrink-0 rounded-[2px] bg-[#f8de32]" />
             <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl">
@@ -129,7 +130,7 @@ export default function EventsSection() {
           </div>
         ) : (
           <div className="w-full relative px-1 group">
-            {/* Botón Izquierdo (Oculto en móvil, visible en sm+) */}
+            {/* Botón Izquierdo */}
             <button
               onClick={scrollPrev}
               disabled={!canScrollPrev}
@@ -200,7 +201,7 @@ export default function EventsSection() {
               </div>
             </div>
 
-            {/* Botón Derecho (Oculto en móvil, visible en sm+) */}
+            {/* Botón Derecho */}
             <button
               onClick={scrollNext}
               disabled={!canScrollNext}

@@ -17,7 +17,7 @@ export default function Ubicanos() {
             ¿Dónde Encontrarnos?
           </h2>
           <p className="text-gray-600 max-w-md mx-auto text-sm sm:text-base font-['Open_Sans',sans-serif]">
-            Visítanos en nuestras instalaciones principales ubicadas en Grocio Prado, Chincha.
+            Visítanos en nuestras instalaciones principales ubicadas en Grocio Prado, Chincha Alta.
           </p>
         </div>
 
