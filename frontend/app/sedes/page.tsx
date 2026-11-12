@@ -1,14 +1,18 @@
 // frontend/app/sedes/page.tsx
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
+import Link from "next/link";
 import Navbar from "@/app/components/layout/Navbar";
-import { Building2, ChevronDown, MapPin} from "lucide-react";
+import Footer from "@/app/components/layout/Footer";
+import { Building2, ChevronDown, MapPin, ArrowLeft } from "lucide-react";
 
 export default function SedesPage() {
+  useEffect(() => {
+    document.title = "Nuestras Sedes | Colegio Cayros";
+  }, []);
 
-  // Función para hacer scroll dinámico hacia abajo
-  const handleScrollDown = () => {
+  const handleScrollDown = (): void => {
     window.scrollBy({
       top: 450,
       behavior: "smooth",
@@ -17,16 +21,23 @@ export default function SedesPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 select-none">
-      {/* Navbar institucional unificado con el submenú */}
       <Navbar />
 
       <main className="flex-grow py-12 sm:py-20 lg:py-24">
-        <div className="max-w-6xl mx-auto px-4 sm:px-8 space-y-20">
+        <div className="max-w-6xl mx-auto px-4 sm:px-8 space-y-10">
           
-          {/* Encabezado Principal de la Página (Bloque Minimalista Actualizado) */}
+          {/* Botón Volver alineado perfectamente al margen izquierdo */}
+          <div className="w-full flex justify-start">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 text-xs font-bold text-[#16275d] hover:text-amber-600 py-1.5 transition-all duration-300 group outline-none"
+            >
+              <ArrowLeft className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1" />
+              <span>Volver al inicio</span>
+            </Link>
+          </div>
+
           <div className="text-center max-w-3xl mx-auto space-y-4 flex flex-col items-center">
-            
-            {/* Insignia minimalista grande y sin fondo con ícono de ubicación */}
             <div className="inline-flex items-center gap-2.5 text-[#16275d] text-sm sm:text-base font-extrabold uppercase tracking-[0.25em]">
               <MapPin className="w-5 h-5 text-amber-500" />
               Nuestras Sedes
@@ -40,22 +51,17 @@ export default function SedesPage() {
               Conoce nuestras sedes y descubre espacios modernos, seguros y diseñados estratégicamente en Chincha para potenciar el aprendizaje y desarrollo integral de nuestros estudiantes.
             </p>
 
-            {/* Flecha grande y limpia sin fondo con animación de rebote */}
             <button
               onClick={handleScrollDown}
               aria-label="Desplazarse hacia abajo"
               className="mt-6 text-[#16275d] hover:text-amber-500 transition-colors duration-300 cursor-pointer animate-bounce outline-none p-2"
             >
-              <ChevronDown className="w-15 h-15 stroke-[2.5]" />
+              <ChevronDown className="w-12 h-12 stroke-[2.5]" />
             </button>
           </div>
 
-          {/* ==========================================
-              SEDE 1: I.E.P. COLEGIO CAYROS (Principal)
-             ========================================== */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 w-full gap-6 sm:gap-8 items-stretch">
+          <div className="grid grid-cols-1 lg:grid-cols-3 w-full gap-6 sm:gap-8 items-stretch pt-6">
             
-            {/* Tarjeta de Información */}
             <div className="bg-[#111c38] text-white p-6 sm:p-8 rounded-3xl flex flex-col justify-between shadow-xl relative overflow-hidden">
               <div className="absolute top-0 left-0 w-4 h-4 bg-amber-400" />
               <div className="absolute bottom-0 right-0 w-4 h-4 bg-amber-400" />
@@ -94,7 +100,6 @@ export default function SedesPage() {
               </div>
             </div>
 
-            {/* Visor de Google Maps (Sede Principal) */}
             <div className="lg:col-span-2 w-full h-[350px] sm:h-[400px] lg:h-auto rounded-3xl overflow-hidden shadow-xl border border-gray-200 bg-white">
               <iframe
                 title="Ubicación Colegio Cayros Principal"
@@ -111,12 +116,8 @@ export default function SedesPage() {
 
           </div>
 
-          {/* ==========================================
-              SEDE 2: CAYROS SCHOOL
-             ========================================== */}
           <div className="grid grid-cols-1 lg:grid-cols-3 w-full gap-6 sm:gap-8 items-stretch">
             
-            {/* Tarjeta de Información (Cayros School) */}
             <div className="bg-[#16275d] text-white p-6 sm:p-8 rounded-3xl flex flex-col justify-between shadow-xl relative overflow-hidden">
               <div className="absolute top-0 left-0 w-4 h-4 bg-amber-400" />
               <div className="absolute bottom-0 right-0 w-4 h-4 bg-amber-400" />
@@ -142,15 +143,8 @@ export default function SedesPage() {
                   <p className="flex items-center gap-2"><strong className="text-white">Correo:</strong> informes@colegiocayros.edu.pe</p>
                 </div>
               </div>
-
-              <div className="pt-2 z-10">
-                <p className="text-[11px] text-amber-300/80 font-medium italic">
-                  * Sede equipada con instalaciones exclusivas.
-                </p>
-              </div>
             </div>
 
-            {/* Visor de Google Maps oficial */}
             <div className="lg:col-span-2 w-full h-[350px] sm:h-[400px] lg:h-auto rounded-3xl overflow-hidden shadow-xl border border-gray-200 bg-white">
               <iframe
                 title="Ubicación Cayros School"
@@ -169,6 +163,8 @@ export default function SedesPage() {
 
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

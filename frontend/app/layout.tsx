@@ -1,8 +1,9 @@
+// frontend/app/layout.tsx
 "use client";
 
-import type { Metadata } from "next";
 import { Open_Sans } from "next/font/google";
 import { useEffect, useRef } from "react";
+import ScrollToTop from "@/app/components/common/ScrollToTop";
 import "./globals.css";
 
 const openSans = Open_Sans({ 
@@ -19,6 +20,11 @@ export default function RootLayout({
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    // Desactivamos la restauración automática del navegador para evitar saltos al recargar
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+
     const handleScroll = () => {
       // Agregamos la clase para mostrar el scroll con el color #16275d
       document.body.classList.add("is-scrolling");
@@ -45,6 +51,8 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={`${openSans.className} bg-gray-50 text-gray-900 antialiased`}>
+        {/* Componente que asegura el salto al inicio al cambiar de página */}
+        <ScrollToTop />
         {children}
       </body>
     </html>

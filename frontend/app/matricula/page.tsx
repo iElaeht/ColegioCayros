@@ -3,9 +3,10 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import Navbar from "@/app/components/layout/Navbar";
 import Footer from "@/app/components/layout/Footer";
-import { CheckCircle2, AlertCircle, ArrowRight } from "lucide-react";
+import { CheckCircle2, AlertCircle, ArrowRight, ArrowLeft } from "lucide-react";
 
 interface MatriculaImage {
   id: number;
@@ -23,8 +24,8 @@ const GRADOS_POR_NIVEL: Record<string, string[]> = {
 
 export default function MatriculaPage() {
   const [slides, setSlides] = useState<MatriculaImage[]>([]);
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [progress, setProgress] = useState(0);
+  const [currentSlide, setCurrentSlide] = useState<number>(0);
+  const [progress, setProgress] = useState<number>(0);
 
   const [formData, setFormData] = useState({
     sede: "",
@@ -39,7 +40,7 @@ export default function MatriculaPage() {
     mensaje: "",
   });
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   useEffect(() => {
@@ -57,13 +58,13 @@ export default function MatriculaPage() {
   useEffect(() => {
     fetch("http://localhost:4000/api/matricula-galeria")
       .then((res) => res.json())
-      .then((data) => {
+      .then((data: MatriculaImage[]) => {
         if (Array.isArray(data)) {
-          const activas = data.filter((item: MatriculaImage) => item.isActive);
+          const activas = data.filter((item) => item.isActive);
           setSlides(activas.slice(0, 8));
         }
       })
-      .catch((err) => console.error("Error al cargar galería de matrículas:", err));
+      .catch((err: unknown) => console.error("Error al cargar galería de matrículas:", err));
   }, []);
 
   useEffect(() => {
@@ -86,12 +87,12 @@ export default function MatriculaPage() {
     return () => clearInterval(timer);
   }, [slides.length]);
 
-  const handleSelectSlide = (index: number) => {
+  const handleSelectSlide = (index: number): void => {
     setCurrentSlide(index);
     setProgress(0);
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>): void => {
     const { name, value } = e.target;
 
     if (name === "sede") {
@@ -112,13 +113,13 @@ export default function MatriculaPage() {
     }
   };
 
-  const handleNumberInput = (e: React.FormEvent<HTMLInputElement>, maxLength: number) => {
+  const handleNumberInput = (e: React.FormEvent<HTMLInputElement>, maxLength: number): void => {
     const input = e.currentTarget;
     const numericValue = input.value.replace(/\D/g, "").slice(0, maxLength);
     setFormData({ ...formData, [input.name]: numericValue });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setLoading(true);
     setToast(null);
@@ -167,7 +168,7 @@ export default function MatriculaPage() {
       } else {
         setToast({ type: "error", message: result.error || "Ocurrió un error al enviar el formulario." });
       }
-    } catch (error) {
+    } catch {
       setToast({ type: "error", message: "Error de red al conectar con el servidor." });
     } finally {
       setLoading(false);
@@ -178,22 +179,34 @@ export default function MatriculaPage() {
   const gradosActuales = formData.nivel ? GRADOS_POR_NIVEL[formData.nivel] || [] : [];
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 font-['Poppins',sans-serif]">
+    <div className="flex flex-col min-h-screen bg-slate-50 font-['Poppins',sans-serif] select-none">
       <Navbar />
 
       <main className="flex-grow pt-10 pb-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           
-          <div className="text-center max-w-3xl mx-auto mb-12">
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mt-3 tracking-tight">
+          {/* Botón Volver alineado a la izquierda de forma independiente */}
+          <div className="w-full max-w-7xl mx-auto flex justify-start">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 text-xs font-bold text-[#16275d] hover:text-amber-600 px-2 py-1.5 transition-all duration-300 group outline-none"
+            >
+              <ArrowLeft className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1" />
+              <span>Volver al inicio</span>
+            </Link>
+          </div>
+
+          {/* Encabezado Principal Centrado */}
+          <div className="text-center max-w-3xl mx-auto space-y-3">
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
               Proceso de Matrícula Institucional
             </h1>
-            <p className="text-slate-600 text-sm sm:text-base mt-2">
+            <p className="text-slate-600 text-sm sm:text-base">
               Forma parte de la gran familia de la I.E.P Colegio Cayros. Completa tus datos o conoce nuestra propuesta formativa.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center pt-2">
             
             <div className="lg:col-span-6 relative">
               <div className="absolute -inset-2 bg-gradient-to-tr from-amber-400/20 via-blue-600/10 to-transparent rounded-[2.5rem] blur-xl -z-10 pointer-events-none" />

@@ -2,15 +2,16 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import Link from "next/link";
 import Navbar from "@/app/components/layout/Navbar";
 import Footer from "@/app/components/layout/Footer";
 import GalleryFilters, { FilterOption } from "./components/GalleryFilters";
 import GalleryGrid, { GalleryItem } from "./components/GalleryGrid";
-import { Camera, ChevronDown, Loader2 } from "lucide-react";
+import { Camera, ChevronDown, Loader2, ArrowLeft } from "lucide-react";
 
 export default function GalleryPage() {
   const [items, setItems] = useState<GalleryItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterOption>("recientes");
   const contentRef = useRef<HTMLDivElement>(null);
@@ -18,19 +19,20 @@ export default function GalleryPage() {
   useEffect(() => {
     document.title = "Galería Institucional | Colegio Cayros";
 
-    const fetchGallery = async () => {
+    const fetchGallery = async (): Promise<void> => {
       try {
         setLoading(true);
-        // Consumimos directamente tu ruta de backend trayendo solo las activas
-        const response = await fetch("http://localhost:4000/api/galeria?soloActivas=true");
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/galeria?soloActivas=true`
+        );
         
         if (!response.ok) {
           throw new Error("Error al conectar con el servidor.");
         }
         
-        const data = await response.json();
+        const data: GalleryItem[] = await response.json();
         setItems(data);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Error al obtener galería:", err);
         setError("No se pudieron cargar las imágenes del servidor.");
       } finally {
@@ -41,26 +43,25 @@ export default function GalleryPage() {
     fetchGallery();
   }, []);
 
-  const handleScrollDown = () => {
+  const handleScrollDown = (): void => {
     contentRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Lógica de ordenamiento dinámica basada en tu base de datos
-  const sortedItems = useMemo(() => {
+  const sortedItems = useMemo<GalleryItem[]>(() => {
     const list = [...items];
     if (filter === "recientes") {
-      return list.sort((a, b) => b.id - a.id); // IDs más altos primero (más recientes)
+      return list.sort((a, b) => b.id - a.id);
     }
     if (filter === "antiguas") {
-      return list.sort((a, b) => a.id - b.id); // IDs más bajos primero
+      return list.sort((a, b) => a.id - b.id);
     }
     if (filter === "az") {
-      return list.sort((a, b) => a.alt.localeCompare(b.alt)); // Orden alfabético por descripción/título (alt)
+      return list.sort((a, b) => a.alt.localeCompare(b.alt));
     }
     return list;
   }, [items, filter]);
 
-  const handleResetFilter = () => {
+  const handleResetFilter = (): void => {
     setFilter("recientes");
   };
 
@@ -69,11 +70,21 @@ export default function GalleryPage() {
       <Navbar />
 
       <main className="flex-grow py-12 sm:py-20 lg:py-24">
-        <div className="max-w-6xl mx-auto px-4 sm:px-8 space-y-12">
+        <div className="max-w-6xl mx-auto px-4 sm:px-8 space-y-10">
           
-          {/* Encabezado Estilo Sedes / Identidad */}
-          <div className="text-center max-w-3xl mx-auto space-y-4 flex flex-col items-center">
-            
+          {/* Botón Volver alineado perfectamente al margen interior del contenido */}
+          <div className="w-full flex justify-start">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 text-xs font-bold text-[#16275d] hover:text-amber-600 py-1.5 transition-all duration-300 group outline-none"
+            >
+              <ArrowLeft className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1" />
+              <span>Volver al inicio</span>
+            </Link>
+          </div>
+
+          {/* Encabezado Principal Centrado */}
+          <div className="w-full text-center space-y-4 flex flex-col items-center max-w-3xl mx-auto">
             <div className="inline-flex items-center gap-2.5 text-[#16275d] text-sm sm:text-base font-extrabold uppercase tracking-[0.25em]">
               <Camera className="w-5 h-5 text-amber-500" />
               Colegio Cayros
@@ -90,7 +101,7 @@ export default function GalleryPage() {
             <button
               onClick={handleScrollDown}
               aria-label="Desplazarse hacia abajo"
-              className="mt-6 text-[#16275d] hover:text-amber-500 transition-colors duration-300 cursor-pointer animate-bounce outline-none p-2"
+              className="mt-4 text-[#16275d] hover:text-amber-500 transition-colors duration-300 cursor-pointer animate-bounce outline-none p-2"
             >
               <ChevronDown className="w-12 h-12 stroke-[2.5]" />
             </button>
@@ -105,14 +116,13 @@ export default function GalleryPage() {
             />
           </div>
 
-          {/* Estado de carga o error desde el backend */}
           {loading ? (
             <div className="flex flex-col items-center justify-center py-24 space-y-3">
               <Loader2 className="w-8 h-8 text-[#16275d] animate-spin" />
               <p className="text-xs sm:text-sm text-gray-500 font-['Open_Sans',sans-serif]">Cargando imágenes institucionales...</p>
             </div>
           ) : error ? (
-            <div className="text-center py-16 bg-white rounded-3xl border border-red-200 p-6">
+            <div className="text-center py-16 bg-white rounded-3xl border border-red-200 p-6 shadow-sm">
               <p className="text-red-500 text-sm font-['Open_Sans',sans-serif]">{error}</p>
             </div>
           ) : (

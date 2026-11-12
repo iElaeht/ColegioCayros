@@ -2,9 +2,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import Navbar from "@/app/components/layout/Navbar";
 import Footer from "@/app/components/layout/Footer";
-import { MessageSquare, Mail, Phone, MapPin, Send } from "lucide-react";
+import { MessageSquare, Mail, Phone, MapPin, Send, ArrowLeft } from "lucide-react";
 
 export default function ContactanosPage() {
   const [formData, setFormData] = useState({
@@ -77,9 +78,19 @@ export default function ContactanosPage() {
       <Navbar />
 
       <main className="flex-grow py-12 sm:py-20 lg:py-24">
-        <div className="max-w-5xl mx-auto px-4 sm:px-8 space-y-16">
+        <div className="max-w-5xl mx-auto px-4 sm:px-8 space-y-10">
           
-          {/* Encabezado Principal Minimalista (Estilo Sedes / Identidad) */}
+          {/* Botón Volver alineado perfectamente al margen izquierdo */}
+          <div className="w-full flex justify-start">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 text-xs font-bold text-[#16275d] hover:text-amber-600 py-1.5 transition-all duration-300 group outline-none"
+            >
+              <ArrowLeft className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1" />
+              <span>Volver al inicio</span>
+            </Link>
+          </div>
+
           <div className="text-center max-w-3xl mx-auto space-y-4 flex flex-col items-center">
             
             <div className="inline-flex items-center gap-2.5 text-[#16275d] text-sm sm:text-base font-extrabold uppercase tracking-[0.25em]">
@@ -96,10 +107,8 @@ export default function ContactanosPage() {
             </p>
           </div>
 
-          {/* Sección de Contenido Principal (Información y Formulario) */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start pt-2">
             
-            {/* Columna de Datos e Info Rápida */}
             <div className="lg:col-span-5 bg-white border border-gray-200/80 p-8 rounded-3xl shadow-sm space-y-8">
               <div>
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-600 bg-amber-50 px-2.5 py-1 rounded-md mb-2 inline-block">
@@ -145,7 +154,6 @@ export default function ContactanosPage() {
                 </div>
               </div>
 
-              {/* Redes Sociales */}
               <div className="border-t border-gray-100 pt-6">
                 <span className="text-xs font-bold text-[#111c38] uppercase tracking-wider block mb-3">
                   Síguenos en Redes
@@ -167,7 +175,6 @@ export default function ContactanosPage() {
               </div>
             </div>
 
-            {/* Columna del Formulario de Contacto */}
             <div className="lg:col-span-7 bg-white border border-gray-200/80 p-8 sm:p-10 rounded-3xl shadow-sm">
               <form onSubmit={handleSubmit} className="space-y-6">
                 
