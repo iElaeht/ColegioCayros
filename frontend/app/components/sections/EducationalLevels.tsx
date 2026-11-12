@@ -1,38 +1,39 @@
 // frontend/components/EducationalLevels.tsx
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 const levels = [
   {
     id: "inicial",
     title: "INICIAL",
     bgColor: "bg-[#f8de32]",
-    textColor: "text-[#16275d]",
-    image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=800&auto=format&fit=crop",
-    videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
+    textColor: "text-white",
+    image: "/images/inicial/Image-1.jpg",
+    path: "/academico/inicial"
   },
   {
     id: "primaria",
     title: "PRIMARIA",
     bgColor: "bg-[#6eb5ec]",
     textColor: "text-white",
-    image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=800&auto=format&fit=crop",
-    videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
+    image: "/images/primaria/Image-1.jpg",
+    path: "/academico/primaria"
   },
   {
     id: "secundaria",
     title: "SECUNDARIA",
     bgColor: "bg-[#16275d]",
     textColor: "text-white",
-    image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
-    videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
+    image: "/images/secundaria/Image-1.jpg",
+    path: "/academico/secundaria"
   }
 ];
 
 export default function EducationalLevels() {
-  const [activeVideo, setActiveVideo] = useState<string | null>(null);
+  const router = useRouter();
 
   return (
     <section id="Levels" className="w-full bg-white px-4 sm:px-8 py-16 sm:py-24 lg:py-32">
@@ -56,10 +57,10 @@ export default function EducationalLevels() {
           {levels.map((level) => (
             <article 
               key={level.id}
-              onClick={() => setActiveVideo(level.videoUrl)}
+              onClick={() => router.push(level.path)}
               className={`${level.bgColor} ${level.textColor} relative cursor-pointer group h-[220px] sm:h-[280px] lg:h-[320px] flex flex-col justify-center items-center overflow-hidden transition-all duration-300`}
             >
-              {/* Imagen con clip-path interactiva (Hover en desktop, visible/táctil en móvil) */}
+              {/* Imagen local con clip-path interactiva */}
               <div 
                 className="absolute inset-2 opacity-0 group-hover:opacity-100 sm:group-hover:opacity-100 transition-all duration-500 ease-in-out z-10 overflow-hidden rounded-xl shadow-inner"
                 style={{
@@ -94,28 +95,6 @@ export default function EducationalLevels() {
         </div>
 
       </div>
-
-      {/* Modal de Video Institucional */}
-      {activeVideo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fadeIn">
-          <div className="relative w-full max-w-4xl bg-black rounded-2xl overflow-hidden shadow-2xl border border-white/10 aspect-video">
-            <button
-              onClick={() => setActiveVideo(null)}
-              className="absolute top-4 right-4 z-50 bg-black/60 hover:bg-[#f8de32] hover:text-[#16275d] text-white w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer font-bold shadow"
-              aria-label="Cerrar video"
-            >
-              ✕
-            </button>
-            <iframe
-              src={activeVideo}
-              title="Video Institucional"
-              className="w-full h-full border-0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
-        </div>
-      )}
     </section>
   );
 }

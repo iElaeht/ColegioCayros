@@ -120,11 +120,11 @@ export default function SubNavbar() {
     {
       title: "Académico",
       icon: GraduationCap,
-      hasDropdown: true,
+      hasDropdown: true,  
       items: [
-        { label: "Inicial", href: "/#niveles", icon: GraduationCap },
-        { label: "Primaria", href: "/#niveles", icon: GraduationCap },
-        { label: "Secundaria", href: "/#niveles", icon: GraduationCap },
+        { label: "Inicial", href: "/academico/inicial", icon: GraduationCap },
+        { label: "Primaria", href: "/academico/primaria", icon: GraduationCap },
+        { label: "Secundaria", href: "/academico/secundaria", icon: GraduationCap },
       ]
     },
     {
