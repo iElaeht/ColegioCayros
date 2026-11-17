@@ -18,6 +18,8 @@ router.post("/", async (req: Request, res: Response) => {
       telefono,
       email,
       mensaje,
+      tieneOpcion,
+      detalleOpcion,
     } = req.body;
 
     if (
@@ -33,6 +35,11 @@ router.post("/", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Faltan campos obligatorios para la inscripción." });
     }
 
+    // Validación estricta en el backend: Si indica que viene de otro colegio ("Si"), el detalle es obligatorio
+    if (tieneOpcion === "Si" && (!detalleOpcion || detalleOpcion.trim() === "")) {
+      return res.status(400).json({ error: "El nombre de la institución de procedencia es obligatorio si provienes de otro colegio." });
+    }
+
     const nuevaInscripcion = await prisma.matriculaInscripcion.create({
       data: {
         sede: sede.trim(),
@@ -45,6 +52,8 @@ router.post("/", async (req: Request, res: Response) => {
         telefono: telefono.trim(),
         email: email ? email.trim() : null,
         mensaje: mensaje ? mensaje.trim() : null,
+        tieneOpcion: tieneOpcion ? tieneOpcion.trim() : null,
+        detalleOpcion: tieneOpcion === "Si" && detalleOpcion ? detalleOpcion.trim() : null,
       },
     });
 
@@ -79,6 +88,8 @@ router.post("/importar", async (req: Request, res: Response) => {
       telefono: String(item.telefono || item.TELEFONO || "").trim(),
       email: item.email || item.EMAIL ? String(item.email || item.EMAIL).trim() : null,
       mensaje: item.mensaje || item.MENSAJE ? String(item.mensaje || item.MENSAJE).trim() : null,
+      tieneOpcion: item.tieneOpcion || item.TIENE_OPCION ? String(item.tieneOpcion || item.TIENE_OPCION).trim() : null,
+      detalleOpcion: item.detalleOpcion || item.DETALLE_OPCION ? String(item.detalleOpcion || item.DETALLE_OPCION).trim() : null,
     }));
 
     const resultado = await prisma.matriculaInscripcion.createMany({
@@ -125,6 +136,8 @@ router.put("/:id", async (req: Request, res: Response) => {
       telefono,
       email,
       mensaje,
+      tieneOpcion,
+      detalleOpcion,
     } = req.body;
 
     const matriculaActualizada = await prisma.matriculaInscripcion.update({
@@ -140,6 +153,8 @@ router.put("/:id", async (req: Request, res: Response) => {
         telefono: telefono?.trim(),
         email: email ? email.trim() : null,
         mensaje: mensaje ? mensaje.trim() : null,
+        tieneOpcion: tieneOpcion ? tieneOpcion.trim() : null,
+        detalleOpcion: tieneOpcion === "Si" && detalleOpcion ? detalleOpcion.trim() : null,
       },
     });
 

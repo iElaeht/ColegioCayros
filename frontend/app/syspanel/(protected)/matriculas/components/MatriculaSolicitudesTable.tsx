@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Trash2, FileText, Mail, Phone, Calendar, User, BookOpen, X, Building, ShieldCheck, AlertTriangle } from "lucide-react";
+import { Trash2, FileText, Mail, Phone, Calendar, User, BookOpen, X, Building, ShieldCheck, AlertTriangle, School } from "lucide-react";
 import ToastAlertMatricula from "./ToastAlertMatricula";
 import MatriculaFilter from "./MatriculaFilter";
 import Pagination from "./Pagination";
@@ -20,6 +20,8 @@ export interface SolicitudMatricula {
   telefono: string;
   email?: string | null;
   mensaje?: string | null;
+  tieneOpcion?: string | null;     // Nuevo: "Si" o "No" (¿Vienes de otro colegio?)
+  detalleOpcion?: string | null;   // Nuevo: Institución de procedencia
   createdAt: string;
   [key: string]: unknown;
 }
@@ -158,7 +160,8 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
       item.nombresApoderado.toLowerCase().includes(q) ||
       item.dniEstudiante.includes(q) ||
       item.sede.toLowerCase().includes(q) ||
-      item.telefono.includes(q);
+      item.telefono.includes(q) ||
+      (item.detalleOpcion && item.detalleOpcion.toLowerCase().includes(q));
 
     let matchesDate = true;
     if (selectedDate) {
@@ -436,6 +439,28 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
                       {selectedSolicitud.grado}
                     </span>
                   </div>
+                </div>
+              </div>
+
+              {/* Procedencia (Nuevo Bloque Traslado) */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-extrabold uppercase tracking-wider text-[#16275d] flex items-center gap-2 border-b border-slate-100 pb-2">
+                  <School className="w-4 h-4 text-amber-600" />
+                  Procedencia Escolar
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                  <div>
+                    <span className="text-slate-400 block font-medium">¿Viene de otro colegio?</span>
+                    <span className={`inline-block font-bold px-2.5 py-0.5 rounded-md mt-0.5 ${selectedSolicitud.tieneOpcion === "Si" ? "bg-amber-100 text-amber-900 border border-amber-200" : "bg-slate-200 text-slate-700"}`}>
+                      {selectedSolicitud.tieneOpcion === "Si" ? "Sí" : "No / No especificado"}
+                    </span>
+                  </div>
+                  {selectedSolicitud.tieneOpcion === "Si" && (
+                    <div className="sm:col-span-2">
+                      <span className="text-slate-400 block font-medium">Institución de Procedencia (Traslado)</span>
+                      <span className="font-bold text-slate-900 text-sm">{selectedSolicitud.detalleOpcion || "No especificado"}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 

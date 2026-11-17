@@ -38,6 +38,9 @@ export default function MatriculaPage() {
     telefono: "",
     email: "",
     mensaje: "",
+    // Nuevos campos condicionales
+    tieneOpcion: "", // "Si" o "No"
+    detalleOpcion: "", // Texto obligatorio si tieneOpcion es "Si"
   });
 
   const [loading, setLoading] = useState<boolean>(false);
@@ -108,6 +111,13 @@ export default function MatriculaPage() {
         nivel: value,
         grado: "",
       });
+    } else if (name === "tieneOpcion") {
+      // Si cambia a "No" o se vacía, limpiamos el detalle opcional
+      setFormData({
+        ...formData,
+        tieneOpcion: value,
+        detalleOpcion: value === "Si" ? formData.detalleOpcion : "",
+      });
     } else {
       setFormData({ ...formData, [name]: value });
     }
@@ -142,6 +152,13 @@ export default function MatriculaPage() {
       return;
     }
 
+    // Validación condicional: Si marca "Si", el campo de detalle es obligatorio
+    if (formData.tieneOpcion === "Si" && !formData.detalleOpcion.trim()) {
+      setToast({ type: "error", message: "Has seleccionado 'Sí', por favor completa el campo de detalles obligatorio." });
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch("http://localhost:4000/api/matricula-inscripcion", {
         method: "POST",
@@ -164,6 +181,8 @@ export default function MatriculaPage() {
           telefono: "",
           email: "",
           mensaje: "",
+          tieneOpcion: "",
+          detalleOpcion: "",
         });
       } else {
         setToast({ type: "error", message: result.error || "Ocurrió un error al enviar el formulario." });
@@ -185,7 +204,6 @@ export default function MatriculaPage() {
       <main className="flex-grow pt-10 pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           
-          {/* Botón Volver alineado a la izquierda de forma independiente */}
           <div className="w-full max-w-7xl mx-auto flex justify-start">
             <Link
               href="/"
@@ -196,7 +214,6 @@ export default function MatriculaPage() {
             </Link>
           </div>
 
-          {/* Encabezado Principal Centrado */}
           <div className="text-center max-w-3xl mx-auto space-y-3">
             <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
               Proceso de Matrícula Institucional
@@ -419,6 +436,47 @@ export default function MatriculaPage() {
                     />
                   </div>
                 </div>
+
+                {/* --- NUEVO BLOQUE CONDICIONAL: TRASLADO DE OTRO COLEGIO --- */}
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                      ¿Vienes de Otro Colegio? (Opcional)
+                    </label>
+                    <select
+                      name="tieneOpcion"
+                      value={formData.tieneOpcion}
+                      onChange={handleChange}
+                      className="w-full bg-white text-slate-800 text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/10 outline-none font-medium cursor-pointer"
+                    >
+                      <option value="">Seleccione una opción (Opcional)</option>
+                      <option value="Si">Sí</option>
+                      <option value="No">No</option>
+                    </select>
+                  </div>
+
+                  {/* Cuadro de texto condicional (Institución de procedencia) */}
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">
+                      ¿De qué Institución Vienes (Traslado)? {formData.tieneOpcion === "Si" && <span className="text-rose-500">*Obligatorio</span>}
+                    </label>
+                    <input
+                      type="text"
+                      name="detalleOpcion"
+                      value={formData.detalleOpcion}
+                      onChange={handleChange}
+                      disabled={formData.tieneOpcion !== "Si"}
+                      required={formData.tieneOpcion === "Si"}
+                      placeholder={formData.tieneOpcion === "Si" ? "Ej. Jose Pardo y Barrera, Santa Ana, Industrial, Etc" : "Deshabilitado (Selecciona 'Sí' si provienes de otro colegio)"}
+                      className={`w-full text-xs px-3.5 py-2.5 rounded-xl border outline-none font-medium transition-all ${
+                        formData.tieneOpcion !== "Si"
+                          ? "bg-slate-200 text-slate-400 border-slate-300 cursor-not-allowed opacity-60"
+                          : "bg-white text-slate-800 border-slate-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/10"
+                      }`}
+                    />
+                  </div>
+                </div>
+                {/* --------------------------------------------------------- */}
 
                 <div>
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Mensaje o Comentarios (Opcional)</label>

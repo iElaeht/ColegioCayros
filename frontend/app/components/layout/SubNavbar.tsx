@@ -108,7 +108,7 @@ export default function SubNavbar() {
         { label: "Galería", href: "/galeria", icon: BookOpen },
         { label: "Videos", href: "/#videos", icon: Video },
         { label: "Eventos", href: "/eventos", icon: Calendar },
-        { label: "Nuestra Identidad (Misión, Visión y Objetivos)", href: "/nosotros", icon: Award },
+        { label: "Nuestra Identidad", href: "/nosotros", icon: Award },
       ]
     },
     {
@@ -132,8 +132,8 @@ export default function SubNavbar() {
       icon: HeartHandshake,
       hasDropdown: true,
       items: [
-        { label: "Enfermería", href: "/#servicios", icon: HeartHandshake },
-        { label: "Psicológica", href: "/#servicios", icon: HeartHandshake },
+        { label: "Enfermería", href: "/servicios/enfermeria", icon: HeartHandshake },
+        { label: "Psicológica", href: "/servicios/psicologica", icon: HeartHandshake },
       ]
     },
     {
@@ -150,8 +150,8 @@ export default function SubNavbar() {
       icon: Shield,
       hasDropdown: true,
       items: [
-        { label: "Política de Privacidad", href: "/politica", icon: Shield },
-        { label: "Términos y Condiciones", href: "/terminos", icon: ScrollText },
+        { label: "Política de Privacidad", href: "/legal/politica", icon: Shield },
+        { label: "Términos y Condiciones", href: "/legal/terminos", icon: ScrollText },
       ]
     },
     {

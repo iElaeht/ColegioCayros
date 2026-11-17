@@ -108,6 +108,8 @@ model MatriculaInscripcion {
   telefono            String   // Celular(9 dígitos)
   email               String?
   mensaje             String?
+  tieneOpcion         String?  // Nuevo: "Si" o "No" (¿Vienes de otro colegio?)
+  detalleOpcion       String?  // Nuevo: Institución de procedencia (Obligatorio si es "Si")
   createdAt           DateTime @default(now())
 }
 
