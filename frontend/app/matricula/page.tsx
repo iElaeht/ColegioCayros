@@ -6,7 +6,8 @@ import Image from "next/image";
 import Link from "next/link";
 import Navbar from "@/app/components/layout/Navbar";
 import Footer from "@/app/components/layout/Footer";
-import { CheckCircle2, AlertCircle, ArrowRight, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import MatriculaFormSteps from "./components/MatriculaFormSteps";
 
 interface MatriculaImage {
   id: number;
@@ -16,43 +17,10 @@ interface MatriculaImage {
   order: number;
 }
 
-const GRADOS_POR_NIVEL: Record<string, string[]> = {
-  Inicial: ["3 Años", "4 Años", "5 Años"],
-  Primaria: ["1er Grado", "2do Grado", "3er Grado", "4to Grado", "5to Grado", "6to Grado"],
-  Secundaria: ["1er Año", "2do Año", "3er Año", "4to Año", "5to Año"],
-};
-
 export default function MatriculaPage() {
   const [slides, setSlides] = useState<MatriculaImage[]>([]);
   const [currentSlide, setCurrentSlide] = useState<number>(0);
   const [progress, setProgress] = useState<number>(0);
-
-  const [formData, setFormData] = useState({
-    sede: "",
-    nombresEstudiante: "",
-    apellidosEstudiante: "",
-    dniEstudiante: "",
-    nivel: "",
-    grado: "",
-    nombresApoderado: "",
-    telefono: "",
-    email: "",
-    mensaje: "",
-    // Nuevos campos condicionales
-    tieneOpcion: "", // "Si" o "No"
-    detalleOpcion: "", // Texto obligatorio si tieneOpcion es "Si"
-  });
-
-  const [loading, setLoading] = useState<boolean>(false);
-  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
-
-  useEffect(() => {
-    if (!toast) return;
-    const timer = setTimeout(() => {
-      setToast(null);
-    }, 5000);
-    return () => clearTimeout(timer);
-  }, [toast]);
 
   useEffect(() => {
     document.title = "Matrículas | Colegio Cayros";
@@ -95,108 +63,6 @@ export default function MatriculaPage() {
     setProgress(0);
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>): void => {
-    const { name, value } = e.target;
-
-    if (name === "sede") {
-      setFormData({
-        ...formData,
-        sede: value,
-        nivel: "",
-        grado: "",
-      });
-    } else if (name === "nivel") {
-      setFormData({
-        ...formData,
-        nivel: value,
-        grado: "",
-      });
-    } else if (name === "tieneOpcion") {
-      // Si cambia a "No" o se vacía, limpiamos el detalle opcional
-      setFormData({
-        ...formData,
-        tieneOpcion: value,
-        detalleOpcion: value === "Si" ? formData.detalleOpcion : "",
-      });
-    } else {
-      setFormData({ ...formData, [name]: value });
-    }
-  };
-
-  const handleNumberInput = (e: React.FormEvent<HTMLInputElement>, maxLength: number): void => {
-    const input = e.currentTarget;
-    const numericValue = input.value.replace(/\D/g, "").slice(0, maxLength);
-    setFormData({ ...formData, [input.name]: numericValue });
-  };
-
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
-    e.preventDefault();
-    setLoading(true);
-    setToast(null);
-
-    if (!formData.sede || !formData.nivel || !formData.grado) {
-      setToast({ type: "error", message: "Por favor, selecciona la Sede, Nivel y Grado al que postula." });
-      setLoading(false);
-      return;
-    }
-
-    if (!/^\d{8}$/.test(formData.dniEstudiante)) {
-      setToast({ type: "error", message: "El DNI del estudiante debe contener exactamente 8 dígitos." });
-      setLoading(false);
-      return;
-    }
-
-    if (!/^9\d{8}$/.test(formData.telefono)) {
-      setToast({ type: "error", message: "El teléfono celular debe ser un número peruano válido de 9 dígitos." });
-      setLoading(false);
-      return;
-    }
-
-    // Validación condicional: Si marca "Si", el campo de detalle es obligatorio
-    if (formData.tieneOpcion === "Si" && !formData.detalleOpcion.trim()) {
-      setToast({ type: "error", message: "Has seleccionado 'Sí', por favor completa el campo de detalles obligatorio." });
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const res = await fetch("http://localhost:4000/api/matricula-inscripcion", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      const result = await res.json();
-
-      if (res.ok) {
-        setToast({ type: "success", message: "¡Inscripción enviada con éxito! Nos comunicaremos contigo pronto." });
-        setFormData({
-          sede: "",
-          nombresEstudiante: "",
-          apellidosEstudiante: "",
-          dniEstudiante: "",
-          nivel: "",
-          grado: "",
-          nombresApoderado: "",
-          telefono: "",
-          email: "",
-          mensaje: "",
-          tieneOpcion: "",
-          detalleOpcion: "",
-        });
-      } else {
-        setToast({ type: "error", message: result.error || "Ocurrió un error al enviar el formulario." });
-      }
-    } catch {
-      setToast({ type: "error", message: "Error de red al conectar con el servidor." });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const nivelesDisponibles = formData.sede === "Cayros School" ? ["Inicial"] : formData.sede === "Colegio Cayros" ? ["Inicial", "Primaria", "Secundaria"] : [];
-  const gradosActuales = formData.nivel ? GRADOS_POR_NIVEL[formData.nivel] || [] : [];
-
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 font-['Poppins',sans-serif] select-none">
       <Navbar />
@@ -219,12 +85,13 @@ export default function MatriculaPage() {
               Proceso de Matrícula Institucional
             </h1>
             <p className="text-slate-600 text-sm sm:text-base">
-              Forma parte de la gran familia de la I.E.P Colegio Cayros. Completa tus datos o conoce nuestra propuesta formativa.
+              Forma parte de la gran familia de la I.E.P Colegio Cayros. Completa tus datos en 4 sencillos pasos.
             </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center pt-2">
             
+            {/* Columna Izquierda: Galería deslizante con barra de progreso */}
             <div className="lg:col-span-6 relative">
               <div className="absolute -inset-2 bg-gradient-to-tr from-amber-400/20 via-blue-600/10 to-transparent rounded-[2.5rem] blur-xl -z-10 pointer-events-none" />
 
@@ -286,247 +153,14 @@ export default function MatriculaPage() {
               )}
             </div>
 
-            <div className="lg:col-span-6 bg-white rounded-[2rem] shadow-xl border border-slate-100 p-6 sm:p-8">
-              <div className="flex items-center gap-3 mb-1">
-                <div className="w-1.5 h-6 bg-amber-500 rounded-full" />
-                <h2 className="text-xl font-bold text-slate-900">Formulario de Pre-Inscripción</h2>
-              </div>
-              <p className="text-xs text-slate-500 mb-6 pl-4">
-                Déjanos tus datos y nos pondremos en contacto contigo a la brevedad.
-              </p>
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Nombres del Estudiante</label>
-                    <input
-                      type="text"
-                      name="nombresEstudiante"
-                      value={formData.nombresEstudiante}
-                      onChange={handleChange}
-                      required
-                      placeholder="Ej. Juan Carlos"
-                      className="w-full bg-slate-50 text-slate-800 text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/10 outline-none font-medium"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Apellidos del Estudiante</label>
-                    <input
-                      type="text"
-                      name="apellidosEstudiante"
-                      value={formData.apellidosEstudiante}
-                      onChange={handleChange}
-                      required
-                      placeholder="Ej. Pérez Gómez"
-                      className="w-full bg-slate-50 text-slate-800 text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/10 outline-none font-medium"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">DNI del Estudiante</label>
-                    <input
-                      type="text"
-                      name="dniEstudiante"
-                      maxLength={8}
-                      value={formData.dniEstudiante}
-                      onChange={(e) => handleNumberInput(e, 8)}
-                      required
-                      placeholder="Ej. 74839201"
-                      className="w-full bg-slate-50 text-slate-800 text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/10 outline-none font-medium"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Sede de Postulación</label>
-                    <select
-                      name="sede"
-                      value={formData.sede}
-                      onChange={handleChange}
-                      required
-                      className="w-full bg-slate-50 text-slate-800 text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/10 outline-none font-medium cursor-pointer"
-                    >
-                      <option value="">Seleccionar Sede</option>
-                      <option value="Colegio Cayros">Colegio Cayros</option>
-                      <option value="Cayros School">Cayros School</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Nivel de Estudio</label>
-                    <select
-                      name="nivel"
-                      value={formData.nivel}
-                      onChange={handleChange}
-                      disabled={!formData.sede}
-                      required
-                      className={`w-full text-xs px-3.5 py-2.5 rounded-xl border outline-none font-medium transition-all ${
-                        !formData.sede
-                          ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-60"
-                          : "bg-slate-50 text-slate-800 border-slate-200 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/10 cursor-pointer"
-                      }`}
-                    >
-                      <option value="">Seleccionar Nivel</option>
-                      {nivelesDisponibles.map((n) => (
-                        <option key={n} value={n}>{n}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Grado al que postula</label>
-                    <select
-                      name="grado"
-                      value={formData.grado}
-                      onChange={handleChange}
-                      disabled={!formData.nivel}
-                      required
-                      className={`w-full text-xs px-3.5 py-2.5 rounded-xl border outline-none font-medium transition-all ${
-                        !formData.nivel
-                          ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-60"
-                          : "bg-slate-50 text-slate-800 border-slate-200 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/10 cursor-pointer"
-                      }`}
-                    >
-                      <option value="">Seleccionar Grado</option>
-                      {gradosActuales.map((g) => (
-                        <option key={g} value={g}>{g}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Datos Completos del Apoderado</label>
-                  <input
-                    type="text"
-                    name="nombresApoderado"
-                    value={formData.nombresApoderado}
-                    onChange={handleChange}
-                    required
-                    placeholder="Ej. María Gómez Martinez Muñoz"
-                    className="w-full bg-slate-50 text-slate-800 text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/10 outline-none font-medium"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Teléfono / Celular</label>
-                    <input
-                      type="text"
-                      name="telefono"
-                      maxLength={9}
-                      value={formData.telefono}
-                      onChange={(e) => handleNumberInput(e, 9)}
-                      required
-                      placeholder="Ej. 987654321"
-                      className="w-full bg-slate-50 text-slate-800 text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/10 outline-none font-medium"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Correo Electrónico (Opcional)</label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      placeholder="Ej. correo@ejemplo.com"
-                      className="w-full bg-slate-50 text-slate-800 text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/10 outline-none font-medium"
-                    />
-                  </div>
-                </div>
-
-                {/* --- NUEVO BLOQUE CONDICIONAL: TRASLADO DE OTRO COLEGIO --- */}
-                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
-                  <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
-                      ¿Vienes de Otro Colegio? (Opcional)
-                    </label>
-                    <select
-                      name="tieneOpcion"
-                      value={formData.tieneOpcion}
-                      onChange={handleChange}
-                      className="w-full bg-white text-slate-800 text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/10 outline-none font-medium cursor-pointer"
-                    >
-                      <option value="">Seleccione una opción (Opcional)</option>
-                      <option value="Si">Sí</option>
-                      <option value="No">No</option>
-                    </select>
-                  </div>
-
-                  {/* Cuadro de texto condicional (Institución de procedencia) */}
-                  <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">
-                      ¿De qué Institución Vienes (Traslado)? {formData.tieneOpcion === "Si" && <span className="text-rose-500">*Obligatorio</span>}
-                    </label>
-                    <input
-                      type="text"
-                      name="detalleOpcion"
-                      value={formData.detalleOpcion}
-                      onChange={handleChange}
-                      disabled={formData.tieneOpcion !== "Si"}
-                      required={formData.tieneOpcion === "Si"}
-                      placeholder={formData.tieneOpcion === "Si" ? "Ej. Jose Pardo y Barrera, Santa Ana, Industrial, Etc" : "Deshabilitado (Selecciona 'Sí' si provienes de otro colegio)"}
-                      className={`w-full text-xs px-3.5 py-2.5 rounded-xl border outline-none font-medium transition-all ${
-                        formData.tieneOpcion !== "Si"
-                          ? "bg-slate-200 text-slate-400 border-slate-300 cursor-not-allowed opacity-60"
-                          : "bg-white text-slate-800 border-slate-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/10"
-                      }`}
-                    />
-                  </div>
-                </div>
-                {/* --------------------------------------------------------- */}
-
-                <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Mensaje o Comentarios (Opcional)</label>
-                  <textarea
-                    name="mensaje"
-                    rows={2}
-                    value={formData.mensaje}
-                    onChange={handleChange}
-                    placeholder="Ej. Consulta sobre vacantes disponibles..."
-                    className="w-full bg-slate-50 text-slate-800 text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/10 outline-none font-medium resize-none"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-3 px-4 rounded-xl text-xs font-bold bg-[#16275D] hover:bg-blue-900 text-white transition-all shadow-lg shadow-blue-900/20 cursor-pointer flex items-center justify-center gap-2"
-                >
-                  {loading ? (
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      <span>Enviar Solicitud de Matrícula</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
-                </button>
-
-                {toast && (
-                  <div
-                    className={`mt-4 p-4 rounded-xl flex items-center gap-3 text-xs font-semibold transition-all duration-300 ${
-                      toast.type === "success" 
-                        ? "bg-emerald-50 text-emerald-800 border border-emerald-200" 
-                        : "bg-rose-50 text-rose-800 border border-rose-200"
-                    }`}
-                  >
-                    {toast.type === "success" ? (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
-                    ) : (
-                      <AlertCircle className="w-5 h-5 text-rose-500 shrink-0" />
-                    )}
-                    <span>{toast.message}</span>
-                  </div>
-                )}
-
-              </form>
+            {/* Columna Derecha: Componente Modular de 4 Pasos */}
+            <div className="lg:col-span-6">
+              <MatriculaFormSteps />
             </div>
 
           </div>
 
+          {/* Sección institucional inferior (Misión, Visión, Propósito y Valores) */}
           <div className="mt-20">
             <div className="bg-[#16275D] text-white rounded-[2.5rem] shadow-2xl p-8 sm:p-12 border border-slate-700/30 relative overflow-hidden">
               <div className="absolute -top-24 -right-24 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />

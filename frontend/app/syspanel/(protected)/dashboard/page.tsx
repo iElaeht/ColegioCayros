@@ -129,7 +129,7 @@ export default function DashboardPage() {
           <div>
             <div className="flex items-center justify-between mb-4">
               <span className="text-slate-500 text-xs font-bold uppercase tracking-wider">Mensajes</span>
-              <div className="p-2.5 bg-[#16275d]/8 text-[#16275d] rounded-xl group-hover:bg-[#16275d] group-hover:text-amber-400 transition-colors">
+              <div className="p-2.5 bg-[#16275d]/8 text-[#16275d] rounded-xl group-hover:bg-[#16275d] group-hover:text-yellow-400 transition-colors">
                 <MessageSquare className="w-5 h-5" />
               </div>
             </div>
@@ -142,7 +142,7 @@ export default function DashboardPage() {
             )}
             <p className="text-xs text-slate-400 mt-2 font-medium">Bandeja de contactos institucionales</p>
           </div>
-          <div className="mt-6 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#16275d] group-hover:text-amber-600 transition-colors">
+          <div className="mt-6 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#16275d] group-hover:text-yellow-600 transition-colors">
             <span>Ver bandeja</span>
             <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
           </div>
@@ -178,7 +178,7 @@ export default function DashboardPage() {
 
         {/* 3. Photos (Galería) */}
         <Link 
-          href="/syspanel/photos"
+          href="/syspanel/galeria"
           className="group bg-white border border-slate-200/90 hover:border-blue-500/40 p-6 rounded-3xl shadow-2xs hover:shadow-xl transition-all duration-300 relative overflow-hidden flex flex-col justify-between"
         >
           <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500"></div>
@@ -260,7 +260,7 @@ export default function DashboardPage() {
           </div>
         </Link>
 
-        {/* 6. Estado del Sistema (Esta se mantiene informativa) */}
+        {/* 6. Estado del Sistema */}
         <div className="bg-white border border-slate-200/90 p-6 rounded-3xl shadow-2xs transition-all duration-300 relative overflow-hidden flex flex-col justify-between">
           <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500"></div>
           <div>

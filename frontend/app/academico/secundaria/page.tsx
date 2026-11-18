@@ -9,6 +9,7 @@ import Footer from "@/app/components/layout/Footer";
 import SecundariaHeader from "./components/SecundariaHeader";
 import SecundariaDetails from "./components/SecundariaDetails";
 import SecundariaPilares from "./components/SecundariaPilares";
+import AcademicLevelsNav from "../components/AcademicLevelsNav";
 
 export default function SecundariaPage() {
   useEffect(() => {
@@ -20,7 +21,7 @@ export default function SecundariaPage() {
       <Navbar />
 
       <main className="flex-grow py-12 sm:py-20 lg:py-24">
-        <div className="max-w-5xl mx-auto px-4 sm:px-8 space-y-10">
+        <div className="max-w-5xl mx-auto px-4 sm:px-8 space-y-12">
           
           {/* Botón Volver */}
           <div>
@@ -33,14 +34,17 @@ export default function SecundariaPage() {
             </Link>
           </div>
 
-          {/* 1. Header (Título e información básica) */}
+          {/* 1. Header de Secundaria */}
           <SecundariaHeader />
 
-          {/* 2. Details (Texto izquierda, carrusel inteligente derecha) */}
+          {/* 2. Details de Secundaria */}
           <SecundariaDetails />
 
-          {/* 3. Pilares (Más información de valor y botón de matrícula) */}
+          {/* 3. Pilares de Secundaria */}
           <SecundariaPilares />
+
+          {/* 4. Navegación cruzada */}
+          <AcademicLevelsNav currentLevel="Secundaria" />
 
         </div>
       </main>

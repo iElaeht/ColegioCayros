@@ -83,13 +83,21 @@ export default function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
     }
   };
 
-  const handleLogout = () => {
+const handleLogout = () => {
     document.body.style.overflow = "unset";
+    
+    // 1. Limpiamos las cookies de sesión
     document.cookie = "sys_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    localStorage.removeItem("sys_token");
-    localStorage.removeItem("admin_user");
-    router.replace("/");
-    router.refresh();
+    
+    // 2. Limpiamos completamente el sessionStorage y cualquier rastro en localStorage
+    try {
+      sessionStorage.clear();
+      localStorage.removeItem("sys_token");
+      localStorage.removeItem("admin_user");
+    } catch (e) {}
+
+    // 3. Forzamos una recarga dura directo al login institucional del syspanel
+    window.location.href = "/";
   };
 
   const navigationGroups = [

@@ -9,6 +9,7 @@ import Footer from "@/app/components/layout/Footer";
 import InicialHeader from "./components/InicialHeader";
 import InicialDetails from "./components/InicialDetails";
 import InicialPilares from "./components/InicialPilares";
+import AcademicLevelsNav from "../components/AcademicLevelsNav";
 
 export default function InicialPage() {
   useEffect(() => {
@@ -20,7 +21,7 @@ export default function InicialPage() {
       <Navbar />
 
       <main className="flex-grow py-12 sm:py-20 lg:py-24">
-        <div className="max-w-5xl mx-auto px-4 sm:px-8 space-y-10">
+        <div className="max-w-5xl mx-auto px-4 sm:px-8 space-y-12">
           
           {/* Botón Volver */}
           <div>
@@ -41,6 +42,9 @@ export default function InicialPage() {
 
           {/* 3. Pilares (Más información de valor y botón de matrícula) */}
           <InicialPilares />
+
+          {/* 4. Navegación cruzada */}
+          <AcademicLevelsNav currentLevel="Inicial" />
 
         </div>
       </main>
