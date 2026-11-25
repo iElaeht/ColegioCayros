@@ -1,9 +1,31 @@
-// backend/routes/matriculaInscripcion.routes.ts
 import { Router, Request, Response } from "express";
 import crypto from "crypto";
+import path from "path";
+import fs from "fs";
 import { prisma } from "../db";
 
 const router = Router();
+
+// Ajusta esta carpeta si en pagosMatricula.routes.ts usas otro subdirectorio de uploads
+const vouchersUploadDir = path.join(__dirname, "../uploads/vouchers");
+
+function eliminarVoucherFisico(voucherUrl: string | null | undefined) {
+  if (!voucherUrl) return;
+  const safeName = path.basename(voucherUrl);
+  if (!safeName || safeName === "." || safeName === "..") return;
+
+  const resolvedBase = path.resolve(vouchersUploadDir);
+  const resolvedFile = path.resolve(vouchersUploadDir, safeName);
+  if (!resolvedFile.startsWith(resolvedBase + path.sep)) return;
+
+  if (fs.existsSync(resolvedFile)) {
+    try {
+      fs.unlinkSync(resolvedFile);
+    } catch (err) {
+      console.error(`Error al eliminar archivo de voucher ${safeName}:`, err);
+    }
+  }
+}
 
 function generarCodigoPago(): string {
   const year = new Date().getFullYear();
@@ -91,7 +113,7 @@ router.post("/consultar-credenciales", async (req: Request, res: Response) => {
         normalizarComparacion(item.nombresEstudiante) ===
           normalizarComparacion(String(nombresEstudiante)) &&
         normalizarComparacion(item.apellidosEstudiante) ===
-          normalizarComparacion(String(apellidosEstudiante))
+          normalizarComparacion(String(apellidosEstudiante)),
     );
 
     if (!coincidencia || !coincidencia.pagoMatricula) {
@@ -148,7 +170,7 @@ router.post("/", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Faltan campos obligatorios para la inscripción." });
     }
 
-    if (tieneOpcion === "Si" && (!detalleOpcion || detalleOpcion.trim() === "")) {
+    if (tieneOpcion === "Si" && (!detalleOpcion || String(detalleOpcion).trim() === "")) {
       return res.status(400).json({
         error: "El nombre de la institución de procedencia es obligatorio si provienes de otro colegio.",
       });
@@ -174,7 +196,7 @@ router.post("/", async (req: Request, res: Response) => {
 
       const nuevaInscripcion = await tx.matriculaInscripcion.create({
         data: {
-          sede: sede.trim(),
+          sede: String(sede).trim(),
           nombresEstudiante: normalizarMayusculas(String(nombresEstudiante)),
           apellidosEstudiante: normalizarMayusculas(String(apellidosEstudiante)),
           dniEstudiante: dniLimpio,
@@ -186,7 +208,9 @@ router.post("/", async (req: Request, res: Response) => {
           mensaje: mensaje ? normalizarMayusculas(String(mensaje)) : null,
           tieneOpcion: tieneOpcion ? String(tieneOpcion).trim() : null,
           detalleOpcion:
-            tieneOpcion === "Si" && detalleOpcion ? normalizarMayusculas(String(detalleOpcion)) : null,
+            tieneOpcion === "Si" && detalleOpcion
+              ? normalizarMayusculas(String(detalleOpcion))
+              : null,
         },
       });
 
@@ -246,35 +270,49 @@ router.post("/importar", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "No se proporcionaron datos válidos para importar" });
     }
 
-    const datosAInsertar = matriculas.map((item: any) => ({
-      sede: String(item.sede || item.SEDE || "Principal").trim(),
-      nombresEstudiante: normalizarMayusculas(
-        String(item.nombresestudiante || item.NOMBRES_ESTUDIANTE || item.nombres || "")
-      ),
-      apellidosEstudiante: normalizarMayusculas(
-        String(item.apellidosestudiante || item.APELLIDOS_ESTUDIANTE || item.apellidos || "")
-      ),
-      dniEstudiante: String(item.dniestudiante || item.DNI_ESTUDIANTE || item.dni || "").trim(),
-      nivel: String(item.nivel || item.NIVEL || "Primaria").trim(),
-      grado: String(item.grado || item.GRADO || "1ro").trim(),
-      nombresApoderado: normalizarMayusculas(
-        String(item.nombresapoderado || item.NOMBRES_APODERADO || item.apoderado || "")
-      ),
-      telefono: String(item.telefono || item.TELEFONO || "").trim(),
-      email: item.email || item.EMAIL ? String(item.email || item.EMAIL).trim().toLowerCase() : null,
-      mensaje:
-        item.mensaje || item.MENSAJE
-          ? normalizarMayusculas(String(item.mensaje || item.MENSAJE))
-          : null,
-      tieneOpcion:
-        item.tieneOpcion || item.TIENE_OPCION
-          ? String(item.tieneOpcion || item.TIENE_OPCION).trim()
-          : null,
-      detalleOpcion:
-        item.detalleOpcion || item.DETALLE_OPCION
-          ? normalizarMayusculas(String(item.detalleOpcion || item.DETALLE_OPCION))
-          : null,
-    }));
+    const datosAInsertar = matriculas
+      .map((item: any) => ({
+        sede: String(item.sede || item.SEDE || "Colegio Cayros").trim(),
+        nombresEstudiante: normalizarMayusculas(
+          String(item.nombresestudiante || item.NOMBRES_ESTUDIANTE || item.nombres || ""),
+        ),
+        apellidosEstudiante: normalizarMayusculas(
+          String(item.apellidosestudiante || item.APELLIDOS_ESTUDIANTE || item.apellidos || ""),
+        ),
+        dniEstudiante: String(item.dniestudiante || item.DNI_ESTUDIANTE || item.dni || "").trim(),
+        nivel: String(item.nivel || item.NIVEL || "Primaria").trim(),
+        grado: String(item.grado || item.GRADO || "1ro").trim(),
+        nombresApoderado: normalizarMayusculas(
+          String(item.nombresapoderado || item.NOMBRES_APODERADO || item.apoderado || ""),
+        ),
+        telefono: String(item.telefono || item.TELEFONO || "").trim(),
+        email:
+          item.email || item.EMAIL ? String(item.email || item.EMAIL).trim().toLowerCase() : null,
+        mensaje:
+          item.mensaje || item.MENSAJE
+            ? normalizarMayusculas(String(item.mensaje || item.MENSAJE))
+            : null,
+        tieneOpcion:
+          item.tieneOpcion || item.TIENE_OPCION
+            ? String(item.tieneOpcion || item.TIENE_OPCION).trim()
+            : null,
+        detalleOpcion:
+          item.detalleOpcion || item.DETALLE_OPCION
+            ? normalizarMayusculas(String(item.detalleOpcion || item.DETALLE_OPCION))
+            : null,
+      }))
+      .filter(
+        (item) =>
+          /^\d{8}$/.test(item.dniEstudiante) &&
+          item.nombresEstudiante.length > 0 &&
+          item.apellidosEstudiante.length > 0,
+      );
+
+    if (datosAInsertar.length === 0) {
+      return res.status(400).json({
+        error: "Ningún registro cumple con DNI de 8 dígitos, nombres y apellidos válidos.",
+      });
+    }
 
     const resultado = await prisma.matriculaInscripcion.createMany({
       data: datosAInsertar,
@@ -296,18 +334,23 @@ router.post("/importar", async (req: Request, res: Response) => {
 
 router.post("/eliminar-masivo", async (req: Request, res: Response) => {
   try {
-    const rawIds = Array.isArray(req.body?.ids) ? req.body.ids : [];
-    const ids = Array.from(
-      new Set(
+    const rawIds: unknown[] = Array.isArray(req.body?.ids) ? req.body.ids : [];
+    const ids: number[] = Array.from<number>(
+      new Set<number>(
         rawIds
-          .map((id: unknown) => Number(id))
-          .filter((id: number) => Number.isInteger(id) && id > 0)
-      )
+          .map((id: unknown): number => Number(id))
+          .filter((id: number): id is number => Number.isInteger(id) && id > 0),
+      ),
     );
 
     if (ids.length === 0) {
       return res.status(400).json({ error: "Debes enviar al menos un ID válido para eliminar." });
     }
+
+    const pagosConVoucher = await prisma.pagoMatricula.findMany({
+      where: { matriculaId: { in: ids }, voucherUrl: { not: null } },
+      select: { voucherUrl: true },
+    });
 
     const eliminado = await prisma.$transaction(async (tx) => {
       await tx.pagoMatricula.deleteMany({
@@ -318,6 +361,10 @@ router.post("/eliminar-masivo", async (req: Request, res: Response) => {
         where: { id: { in: ids } },
       });
     });
+
+    for (const pago of pagosConVoucher) {
+      eliminarVoucherFisico(pago.voucherUrl);
+    }
 
     return res.json({
       message: `${eliminado.count} solicitud(es) eliminada(s) con éxito.`,
@@ -385,7 +432,9 @@ router.put("/:id", async (req: Request, res: Response) => {
       data: {
         sede: sede !== undefined ? String(sede).trim() : undefined,
         nombresEstudiante:
-          nombresEstudiante !== undefined ? normalizarMayusculas(String(nombresEstudiante)) : undefined,
+          nombresEstudiante !== undefined
+            ? normalizarMayusculas(String(nombresEstudiante))
+            : undefined,
         apellidosEstudiante:
           apellidosEstudiante !== undefined
             ? normalizarMayusculas(String(apellidosEstudiante))
@@ -394,7 +443,9 @@ router.put("/:id", async (req: Request, res: Response) => {
         nivel: nivel !== undefined ? String(nivel).trim() : undefined,
         grado: grado !== undefined ? String(grado).trim() : undefined,
         nombresApoderado:
-          nombresApoderado !== undefined ? normalizarMayusculas(String(nombresApoderado)) : undefined,
+          nombresApoderado !== undefined
+            ? normalizarMayusculas(String(nombresApoderado))
+            : undefined,
         telefono: telefono !== undefined ? String(telefono).trim() : undefined,
         email: email !== undefined ? (email ? String(email).trim().toLowerCase() : null) : undefined,
         mensaje:
@@ -427,6 +478,11 @@ router.delete("/:id", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "ID de solicitud inválido." });
     }
 
+    const pagoAsociado = await prisma.pagoMatricula.findUnique({
+      where: { matriculaId: idNum },
+      select: { voucherUrl: true },
+    });
+
     await prisma.$transaction(async (tx) => {
       await tx.pagoMatricula.deleteMany({
         where: { matriculaId: idNum },
@@ -436,6 +492,8 @@ router.delete("/:id", async (req: Request, res: Response) => {
         where: { id: idNum },
       });
     });
+
+    eliminarVoucherFisico(pagoAsociado?.voucherUrl);
 
     return res.json({ message: "Solicitud eliminada con éxito" });
   } catch (error: any) {

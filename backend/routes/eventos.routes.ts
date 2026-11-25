@@ -1,4 +1,3 @@
-// backend/src/routes/eventos.ts
 import { Router, Request, Response } from "express";
 import { prisma } from "../db";
 import multer from "multer";
@@ -24,16 +23,29 @@ const slugify = (text: string) => {
     .substring(0, 30);
 };
 
-const deletePhysicalFile = (srcPath: string) => {
-  if (srcPath && srcPath.startsWith("/api/eventos/image/")) {
-    const filename = path.basename(srcPath);
-    const filePath = path.join(uploadDir, filename);
-    if (fs.existsSync(filePath)) {
-      try {
-        fs.unlinkSync(filePath);
-      } catch (err) {
-        console.error(`Error al eliminar archivo físico de eventos ${filename}:`, err);
-      }
+const isLocalEventImage = (srcPath: string | null | undefined): srcPath is string => {
+  return Boolean(srcPath && srcPath.startsWith("/api/eventos/image/"));
+};
+
+const resolveSafeUploadPath = (srcOrFilename: string): string | null => {
+  const safeName = path.basename(srcOrFilename);
+  if (!safeName || safeName === "." || safeName === "..") return null;
+  const resolvedBase = path.resolve(uploadDir);
+  const resolvedFile = path.resolve(uploadDir, safeName);
+  if (!resolvedFile.startsWith(resolvedBase + path.sep)) return null;
+  return resolvedFile;
+};
+
+const deletePhysicalFile = (srcPath: string | null | undefined) => {
+  if (!isLocalEventImage(srcPath)) return;
+  const filePath = resolveSafeUploadPath(srcPath);
+  if (!filePath) return;
+
+  if (fs.existsSync(filePath)) {
+    try {
+      fs.unlinkSync(filePath);
+    } catch (err) {
+      console.error(`Error al eliminar archivo físico de eventos ${path.basename(filePath)}:`, err);
     }
   }
 };
@@ -58,9 +70,7 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|webp|avif|gif/;
-    const extname = allowedTypes.test(
-      path.extname(file.originalname).toLowerCase(),
-    );
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = allowedTypes.test(file.mimetype);
     if (extname && mimetype) {
       return cb(null, true);
@@ -94,77 +104,106 @@ router.get("/", async (req: Request, res: Response) => {
 });
 
 router.get("/image/:filename", (req: Request, res: Response) => {
-  const filename = req.params.filename as string;
-  const filePath = path.join(uploadDir, filename);
-  if (fs.existsSync(filePath)) {
+  const filename = String(req.params.filename || "");
+  const filePath = resolveSafeUploadPath(filename);
+  if (filePath && fs.existsSync(filePath)) {
     res.sendFile(filePath);
   } else {
     res.status(404).json({ error: "Imagen de evento no encontrada" });
   }
 });
 
-router.post(
-  "/",
-  upload.single("imageFile"),
-  async (req: Request, res: Response) => {
-    try {
-      const rawAlt = req.body.alt;
-      const rawTitulo = req.body.titulo;
-      const rawDescripcion = req.body.descripcion;
-      const rawImageUrl = req.body.imageUrl;
+// Limpia archivos en uploads/eventos que no estén referenciados en la tabla Evento
+router.post("/cleanup-orphans", async (req: Request, res: Response) => {
+  try {
+    const registros = await prisma.evento.findMany({ select: { src: true } });
+    const archivosEnUso = new Set(
+      registros
+        .map((r) => (isLocalEventImage(r.src) ? path.basename(r.src) : null))
+        .filter((name): name is string => Boolean(name)),
+    );
 
-      const alt = rawAlt ? rawAlt.trim() : (rawTitulo ? rawTitulo.trim() : "");
-      const titulo = rawTitulo ? rawTitulo.trim() : alt;
-      const descripcion = rawDescripcion ? rawDescripcion.trim() : null;
-      const imageUrl = rawImageUrl ? rawImageUrl.trim() : "";
+    const archivosEnDisco = fs.existsSync(uploadDir) ? fs.readdirSync(uploadDir) : [];
+    const eliminados: string[] = [];
 
-      let finalSrc = "";
-
-      if (req.file) {
-        finalSrc = `/api/eventos/image/${req.file.filename}`;
-      } else if (imageUrl) {
-        finalSrc = imageUrl;
-      } else {
-        return res.status(400).json({
-          error: "Debe subir un archivo de imagen o proporcionar una URL",
-        });
+    for (const file of archivosEnDisco) {
+      if (!archivosEnUso.has(file)) {
+        const fullPath = resolveSafeUploadPath(file);
+        if (fullPath && fs.existsSync(fullPath)) {
+          fs.unlinkSync(fullPath);
+          eliminados.push(file);
+        }
       }
-
-      if (!titulo && !alt) {
-        return res.status(400).json({ error: "El título del evento es obligatorio" });
-      }
-
-      const newEvento = await prisma.evento.create({
-        data: {
-          src: finalSrc,
-          titulo: titulo || alt,
-          descripcion: descripcion,
-          alt: alt || titulo,
-          isActive: true,
-          isFeatured:
-            req.body.isFeatured === "true" || req.body.isFeatured === true,
-          order: req.body.order ? Number(req.body.order) : 0,
-        },
-      });
-
-      res.status(201).json(newEvento);
-    } catch (error: any) {
-      console.error("Error al registrar evento:", error);
-      res
-        .status(500)
-        .json({ error: error.message || "Error al registrar el evento" });
     }
-  },
-);
+
+    res.json({
+      message: "Limpieza de archivos huérfanos completada",
+      eliminadosCount: eliminados.length,
+      eliminados,
+    });
+  } catch (error) {
+    console.error("Error al limpiar archivos huérfanos de eventos:", error);
+    res.status(500).json({ error: "Error al limpiar archivos huérfanos" });
+  }
+});
+
+router.post("/", upload.single("imageFile"), async (req: Request, res: Response) => {
+  const uploadedFileSrc = req.file ? `/api/eventos/image/${req.file.filename}` : null;
+
+  try {
+    const rawAlt = req.body.alt;
+    const rawTitulo = req.body.titulo;
+    const rawDescripcion = req.body.descripcion;
+    const rawImageUrl = req.body.imageUrl;
+
+    const alt = rawAlt ? rawAlt.trim() : rawTitulo ? rawTitulo.trim() : "";
+    const titulo = rawTitulo ? rawTitulo.trim() : alt;
+    const descripcion = rawDescripcion ? rawDescripcion.trim() : null;
+    const imageUrl = rawImageUrl ? rawImageUrl.trim() : "";
+
+    let finalSrc = "";
+
+    if (uploadedFileSrc) {
+      finalSrc = uploadedFileSrc;
+    } else if (imageUrl) {
+      finalSrc = imageUrl;
+    } else {
+      return res.status(400).json({
+        error: "Debe subir un archivo de imagen o proporcionar una URL",
+      });
+    }
+
+    if (!titulo && !alt) {
+      deletePhysicalFile(uploadedFileSrc);
+      return res.status(400).json({ error: "El título del evento es obligatorio" });
+    }
+
+    const newEvento = await prisma.evento.create({
+      data: {
+        src: finalSrc,
+        titulo: titulo || alt,
+        descripcion,
+        alt: alt || titulo,
+        isActive: true,
+        isFeatured: req.body.isFeatured === "true" || req.body.isFeatured === true,
+        order: req.body.order ? Number(req.body.order) : 0,
+      },
+    });
+
+    res.status(201).json(newEvento);
+  } catch (error: any) {
+    deletePhysicalFile(uploadedFileSrc);
+    console.error("Error al registrar evento:", error);
+    res.status(500).json({ error: error.message || "Error al registrar el evento" });
+  }
+});
 
 router.put("/featured", async (req: Request, res: Response) => {
   try {
     const { featuredIds } = req.body;
 
     if (!Array.isArray(featuredIds)) {
-      return res
-        .status(400)
-        .json({ error: "El formato de featuredIds debe ser un arreglo" });
+      return res.status(400).json({ error: "El formato de featuredIds debe ser un arreglo" });
     }
 
     await prisma.evento.updateMany({
@@ -189,117 +228,98 @@ router.put("/featured", async (req: Request, res: Response) => {
     res.json({ message: "Eventos destacados y orden actualizados con éxito" });
   } catch (error) {
     console.error("Error al actualizar eventos destacados:", error);
-    res
-      .status(500)
-      .json({ error: "Error al actualizar los eventos destacados" });
+    res.status(500).json({ error: "Error al actualizar los eventos destacados" });
   }
 });
 
-router.put(
-  "/:id",
-  upload.single("imageFile"),
-  async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
+router.put("/:id", upload.single("imageFile"), async (req: Request, res: Response) => {
+  const uploadedFileSrc = req.file ? `/api/eventos/image/${req.file.filename}` : null;
 
-      const titulo = req.body.titulo !== undefined ? req.body.titulo.trim() : undefined;
-      const descripcion = req.body.descripcion !== undefined ? req.body.descripcion.trim() : undefined;
-      const alt = req.body.alt !== undefined ? req.body.alt.trim() : undefined;
-      const imageUrl =
-        req.body.imageUrl !== undefined ? req.body.imageUrl.trim() : undefined;
-      const { isActive, isFeatured, order } = req.body;
-
-      const existingEvento = await prisma.evento.findUnique({
-        where: { id: Number(id) },
-      });
-
-      if (!existingEvento) {
-        return res.status(404).json({ error: "Evento no encontrado" });
-      }
-
-      let newSrc = existingEvento.src;
-
-      if (req.file) {
-        newSrc = `/api/eventos/image/${req.file.filename}`;
-        deletePhysicalFile(existingEvento.src);
-      } else if (imageUrl && imageUrl !== existingEvento.src) {
-        newSrc = imageUrl;
-        deletePhysicalFile(existingEvento.src);
-      } else if (
-        (titulo || alt) &&
-        (titulo !== existingEvento.titulo || alt !== existingEvento.alt) &&
-        existingEvento.src.startsWith("/api/eventos/image/")
-      ) {
-        const oldFilename = path.basename(existingEvento.src);
-        const oldPath = path.join(uploadDir, oldFilename);
-
-        if (fs.existsSync(oldPath)) {
-          const cleanAlt = slugify(titulo || alt || "evento");
-          const ext = path.extname(oldFilename);
-
-          const parts = oldFilename.split("-");
-          const dateStr =
-            parts[parts.length - 2] ||
-            new Date().toISOString().slice(0, 10).replace(/-/g, "");
-          const randomSuffix =
-            parts[parts.length - 1]?.split(".")[0] ||
-            Math.floor(1000 + Math.random() * 9000);
-
-          const newFilename = cleanAlt
-            ? `${cleanAlt}-${dateStr}-${randomSuffix}${ext}`
-            : `evento-${dateStr}-${randomSuffix}${ext}`;
-
-          const newPath = path.join(uploadDir, newFilename);
-
-          try {
-            fs.renameSync(oldPath, newPath);
-            newSrc = `/api/eventos/image/${newFilename}`;
-          } catch (err) {
-            console.error("Error al renombrar el archivo físico del evento:", err);
-          }
-        }
-      }
-
-      const updatedEvento = await prisma.evento.update({
-        where: { id: Number(id) },
-        data: {
-          src: newSrc,
-          ...(titulo !== undefined && { titulo }),
-          ...(descripcion !== undefined && { descripcion }),
-          ...(alt !== undefined && { alt }),
-          ...(isActive !== undefined && {
-            isActive: isActive === "true" || isActive === true,
-          }),
-          ...(isFeatured !== undefined && {
-            isFeatured: isFeatured === "true" || isFeatured === true,
-          }),
-          ...(order !== undefined && { order: Number(order) }),
-        },
-      });
-
-      res.json(updatedEvento);
-    } catch (error) {
-      console.error("Error al actualizar evento:", error);
-      res.status(500).json({ error: "Error al actualizar el evento" });
+  try {
+    const idNum = Number(req.params.id);
+    if (!Number.isInteger(idNum) || idNum <= 0) {
+      deletePhysicalFile(uploadedFileSrc);
+      return res.status(400).json({ error: "ID de evento inválido" });
     }
-  },
-);
+
+    const titulo = req.body.titulo !== undefined ? String(req.body.titulo).trim() : undefined;
+    const descripcion =
+      req.body.descripcion !== undefined ? String(req.body.descripcion).trim() : undefined;
+    const alt = req.body.alt !== undefined ? String(req.body.alt).trim() : undefined;
+    const imageUrl =
+      req.body.imageUrl !== undefined ? String(req.body.imageUrl).trim() : undefined;
+    const { isActive, isFeatured, order } = req.body;
+
+    const existingEvento = await prisma.evento.findUnique({
+      where: { id: idNum },
+    });
+
+    if (!existingEvento) {
+      deletePhysicalFile(uploadedFileSrc);
+      return res.status(404).json({ error: "Evento no encontrado" });
+    }
+
+    const oldSrc = existingEvento.src;
+    let newSrc = oldSrc;
+    let shouldDeleteOldFile = false;
+
+    if (uploadedFileSrc) {
+      newSrc = uploadedFileSrc;
+      shouldDeleteOldFile = isLocalEventImage(oldSrc) && oldSrc !== uploadedFileSrc;
+    } else if (imageUrl && imageUrl !== oldSrc) {
+      newSrc = imageUrl;
+      shouldDeleteOldFile = isLocalEventImage(oldSrc);
+    }
+
+    const updatedEvento = await prisma.evento.update({
+      where: { id: idNum },
+      data: {
+        src: newSrc,
+        ...(titulo !== undefined && { titulo }),
+        ...(descripcion !== undefined && { descripcion }),
+        ...(alt !== undefined && { alt }),
+        ...(isActive !== undefined && {
+          isActive: isActive === "true" || isActive === true,
+        }),
+        ...(isFeatured !== undefined && {
+          isFeatured: isFeatured === "true" || isFeatured === true,
+        }),
+        ...(order !== undefined && { order: Number(order) }),
+      },
+    });
+
+    if (shouldDeleteOldFile) {
+      deletePhysicalFile(oldSrc);
+    }
+
+    res.json(updatedEvento);
+  } catch (error) {
+    deletePhysicalFile(uploadedFileSrc);
+    console.error("Error al actualizar evento:", error);
+    res.status(500).json({ error: "Error al actualizar el evento" });
+  }
+});
 
 router.delete("/:id", async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const idNum = Number(req.params.id);
+    if (!Number.isInteger(idNum) || idNum <= 0) {
+      return res.status(400).json({ error: "ID de evento inválido" });
+    }
 
     const eventoToDelete = await prisma.evento.findUnique({
-      where: { id: Number(id) },
+      where: { id: idNum },
     });
 
-    if (eventoToDelete) {
-      deletePhysicalFile(eventoToDelete.src);
+    if (!eventoToDelete) {
+      return res.status(404).json({ error: "Evento no encontrado" });
     }
 
     await prisma.evento.delete({
-      where: { id: Number(id) },
+      where: { id: idNum },
     });
+
+    deletePhysicalFile(eventoToDelete.src);
 
     res.json({ message: "Evento eliminado con éxito" });
   } catch (error) {

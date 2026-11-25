@@ -1,5 +1,7 @@
 import { Router, Request, Response } from "express";
 import crypto from "crypto";
+import path from "path";
+import fs from "fs";
 import { EstadoPagoMatricula } from "@prisma/client";
 import { prisma } from "../db";
 
@@ -14,6 +16,33 @@ const ESTADOS_VALIDOS: EstadoPagoMatricula[] = [
   "CONFIRMADO",
   "COMPLETADO",
 ];
+
+// Ajusta esta carpeta si en tu ruta de subida de vouchers usas otro subdirectorio
+const vouchersUploadDir = path.join(__dirname, "../uploads/vouchers");
+
+function resolveSafeVoucherPath(voucherUrl: string | null | undefined): string | null {
+  if (!voucherUrl) return null;
+  const safeName = path.basename(String(voucherUrl).trim());
+  if (!safeName || safeName === "." || safeName === "..") return null;
+
+  const resolvedBase = path.resolve(vouchersUploadDir);
+  const resolvedFile = path.resolve(vouchersUploadDir, safeName);
+  if (!resolvedFile.startsWith(resolvedBase + path.sep)) return null;
+  return resolvedFile;
+}
+
+function eliminarVoucherFisico(voucherUrl: string | null | undefined) {
+  const filePath = resolveSafeVoucherPath(voucherUrl);
+  if (!filePath) return;
+
+  if (fs.existsSync(filePath)) {
+    try {
+      fs.unlinkSync(filePath);
+    } catch (err) {
+      console.error(`Error al eliminar archivo de voucher ${path.basename(filePath)}:`, err);
+    }
+  }
+}
 
 function verificarPasswordPago(passwordIngresada: string, hashAlmacenado: string): boolean {
   const partes = hashAlmacenado.split(":");
@@ -106,7 +135,11 @@ router.post("/login", async (req: Request, res: Response) => {
 
     const disponibilidad = evaluarDisponibilidadSubida(pago);
 
-    if (pago.estado === "OBSERVADO_RECHAZADO" && disponibilidad.plazoVencido && pago.accesoHabilitado) {
+    if (
+      pago.estado === "OBSERVADO_RECHAZADO" &&
+      disponibilidad.plazoVencido &&
+      pago.accesoHabilitado
+    ) {
       await prisma.pagoMatricula.update({
         where: { id: pago.id },
         data: { accesoHabilitado: false },
@@ -186,10 +219,13 @@ router.post("/subir-voucher", async (req: Request, res: Response) => {
       }
     }
 
+    const voucherAnterior = pago.voucherUrl;
+    const nuevoVoucher = String(voucherUrl).trim();
+
     const pagoActualizado = await prisma.pagoMatricula.update({
       where: { id: pago.id },
       data: {
-        voucherUrl: String(voucherUrl).trim(),
+        voucherUrl: nuevoVoucher,
         numeroOperacion: numeroOperacion ? String(numeroOperacion).trim() : null,
         bancoOrigen: bancoOrigen ? String(bancoOrigen).trim() : null,
         montoPagado:
@@ -201,6 +237,10 @@ router.post("/subir-voucher", async (req: Request, res: Response) => {
         accesoHabilitado: false,
       },
     });
+
+    if (voucherAnterior && voucherAnterior !== nuevoVoucher) {
+      eliminarVoucherFisico(voucherAnterior);
+    }
 
     return res.json({
       message:
@@ -284,7 +324,11 @@ router.patch("/:id/estado", async (req: Request, res: Response) => {
       message: "Estado de pago actualizado correctamente",
       data: pagoActualizado,
     });
-  } catch (error) {
+  } catch (error: unknown) {
+    const prismaError = error as { code?: string };
+    if (prismaError?.code === "P2025") {
+      return res.status(404).json({ error: "El registro de pago no existe." });
+    }
     console.error("Error al actualizar estado de pago:", error);
     return res.status(500).json({ error: "Error al actualizar el estado del pago." });
   }
@@ -295,8 +339,8 @@ router.post("/importar", async (req: Request, res: Response) => {
     const registros = Array.isArray(req.body?.pagos)
       ? req.body.pagos
       : Array.isArray(req.body)
-      ? req.body
-      : [];
+        ? req.body
+        : [];
 
     if (registros.length === 0) {
       return res.status(400).json({ error: "No se enviaron registros válidos para importar." });
@@ -355,18 +399,31 @@ router.post("/importar", async (req: Request, res: Response) => {
 // Eliminación por lote (seleccionados o tabla)
 router.post("/eliminar-lote", async (req: Request, res: Response) => {
   try {
-    const rawIds = Array.isArray(req.body?.ids) ? req.body.ids : [];
-    const ids = rawIds
-      .map((n: unknown) => Number(n))
-      .filter((n: number) => Number.isInteger(n) && n > 0);
+    const rawIds: unknown[] = Array.isArray(req.body?.ids) ? req.body.ids : [];
+    const ids: number[] = Array.from<number>(
+      new Set<number>(
+        rawIds
+          .map((n: unknown): number => Number(n))
+          .filter((n: number): n is number => Number.isInteger(n) && n > 0),
+      ),
+    );
 
     if (ids.length === 0) {
       return res.status(400).json({ error: "Debes enviar al menos un ID válido para eliminar." });
     }
 
+    const pagosConVoucher = await prisma.pagoMatricula.findMany({
+      where: { id: { in: ids }, voucherUrl: { not: null } },
+      select: { voucherUrl: true },
+    });
+
     const resultado = await prisma.pagoMatricula.deleteMany({
       where: { id: { in: ids } },
     });
+
+    for (const pago of pagosConVoucher) {
+      eliminarVoucherFisico(pago.voucherUrl);
+    }
 
     return res.json({
       message: "Registros eliminados correctamente",
@@ -386,9 +443,20 @@ router.delete("/:id", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "ID de pago inválido." });
     }
 
+    const pagoExistente = await prisma.pagoMatricula.findUnique({
+      where: { id: pagoId },
+      select: { voucherUrl: true },
+    });
+
+    if (!pagoExistente) {
+      return res.status(404).json({ error: "El registro de pago no existe." });
+    }
+
     await prisma.pagoMatricula.delete({
       where: { id: pagoId },
     });
+
+    eliminarVoucherFisico(pagoExistente.voucherUrl);
 
     return res.json({
       message: "Registro de pago eliminado correctamente",
