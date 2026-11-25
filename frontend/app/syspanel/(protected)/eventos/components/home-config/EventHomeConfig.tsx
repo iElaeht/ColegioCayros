@@ -1,4 +1,3 @@
-// frontend/app/syspanel/(protected)/eventos/components/home-config/EventHomeConfig.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,7 +6,7 @@ import EventModalHome from "./EventModalHome";
 import EventHomeAlert from "./EventHomeAlert";
 import { Pencil, Save, Loader2 } from "lucide-react";
 
-interface EventItem {
+export interface EventHomeItem {
   id: number;
   src: string;
   alt: string;
@@ -18,9 +17,12 @@ interface EventItem {
 }
 
 interface EventHomeConfigProps {
-  allImages: EventItem[];
+  allImages: EventHomeItem[];
   showToast: (type: "success" | "error", message: string) => void;
 }
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const HOME_LIMIT = 8;
 
 export default function EventHomeConfig({
   allImages,
@@ -31,48 +33,33 @@ export default function EventHomeConfig({
   const [showAlert, setShowAlert] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  const HOME_LIMIT = 8;
-
   useEffect(() => {
-    const slots = Array(HOME_LIMIT).fill(null);
+    const slots: (number | null)[] = Array(HOME_LIMIT).fill(null);
     allImages.forEach((img) => {
       if (img.isFeatured && img.order && img.order >= 1 && img.order <= HOME_LIMIT) {
         slots[img.order - 1] = img.id;
       }
     });
 
-    const initialFeatured: number[] = [];
-    slots.forEach((id) => {
-      if (id !== null) initialFeatured.push(id);
-    });
-
-    if (initialFeatured.length === 0) {
-      const fallbackFeatured = allImages
-        .filter((img) => img.isFeatured)
-        .map((img) => img.id);
-      setSelectedIds(fallbackFeatured);
+    const orderedFeatured = slots.filter((id): id is number => id !== null);
+    if (orderedFeatured.length > 0) {
+      setSelectedIds(orderedFeatured);
     } else {
-      setSelectedIds(slots.filter((id): id is number => id !== null));
+      setSelectedIds(allImages.filter((img) => img.isFeatured).map((img) => img.id));
     }
   }, [allImages]);
 
   const handleSaveChanges = async () => {
     setIsSaving(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-      const res = await fetch(`${apiUrl}/api/eventos/featured`, {
+      const res = await fetch(`${API_URL}/api/eventos/featured`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ featuredIds: selectedIds }),
       });
 
       if (res.ok) {
-        showToast(
-          "success",
-          "¡Eventos destacados actualizados correctamente!",
-        );
+        showToast("success", "¡Eventos destacados actualizados correctamente!");
       } else {
         showToast("error", "Error al guardar los cambios en el servidor.");
       }
@@ -87,8 +74,6 @@ export default function EventHomeConfig({
   return (
     <>
       <div className="bg-white rounded-3xl border border-slate-200 p-5 sm:p-8 shadow-sm space-y-6 w-full select-none">
-        
-        {/* Cabecera y Botones de Acción */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
           <div className="space-y-1">
             <h2 className="text-base sm:text-lg font-extrabold text-[#16275d] tracking-tight">
@@ -106,7 +91,9 @@ export default function EventHomeConfig({
               className="flex items-center justify-center gap-2 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-[#16275d] text-xs sm:text-sm font-bold rounded-2xl transition-all cursor-pointer shadow-xs border border-slate-200/80 truncate"
             >
               <Pencil className="w-4 h-4 shrink-0" />
-              <span className="truncate">Editar ({selectedIds.length}/{HOME_LIMIT})</span>
+              <span className="truncate">
+                Editar ({selectedIds.length}/{HOME_LIMIT})
+              </span>
             </button>
 
             <button
@@ -125,20 +112,18 @@ export default function EventHomeConfig({
           </div>
         </div>
 
-        {/* Grilla principal de previsualización */}
         <EventHomeGrid
           allImages={allImages}
           selectedIds={selectedIds}
           onOpenModal={() => setIsModalOpen(true)}
         />
 
-        {/* Modal de selección */}
         <EventModalHome
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           allImages={allImages}
           selectedIds={selectedIds}
-          onSaveSelections={(newIds) => setSelectedIds(newIds)}
+          onSaveSelections={setSelectedIds}
           homeLimit={HOME_LIMIT}
         />
       </div>

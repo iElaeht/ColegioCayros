@@ -1,15 +1,14 @@
-// frontend/app/syspanel/mensajes/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { MessageSquare } from "lucide-react";
 import ContactFilter from "./components/ContactFilter";
 import ContactGrid from "./components/ContactGrid";
 import Pagination from "./components/Pagination";
-import ToastAlertMatricula from "../matriculas/components/ToastAlertMatricula";
+import ToastAlert from "../components/ToastAlert";
 
 export interface Mensaje {
-  id: string; // Sincronizado con UUID string de Prisma
+  id: string;
   dni: string;
   nombre: string;
   telefono: string;
@@ -17,31 +16,28 @@ export interface Mensaje {
   fecha?: string;
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const ITEMS_PER_PAGE = 15;
+
 export default function MensajesPage() {
-  // Título de la pestaña
   useEffect(() => {
     document.title = "Bandeja de Mensajes | Colegio Cayros";
   }, []);
 
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<boolean>(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
-  // Estados para filtros, búsqueda y ordenamiento
-  const [searchTerm, setSearchTerm] = useState<string>("");
-  const [selectedDate, setSelectedDate] = useState<string>("");
-  const [sortOrder, setSortOrder] = useState<string>("recientes");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
+  const [sortOrder, setSortOrder] = useState("recientes");
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Estados para la paginación
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const itemsPerPage = 15;
-
-  const fetchMensajes = async () => {
+  const fetchMensajes = useCallback(async () => {
     setLoading(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-      const response = await fetch(`${apiUrl}/api/mensajes`, {
+      const response = await fetch(`${API_URL}/api/mensajes`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
@@ -49,7 +45,7 @@ export default function MensajesPage() {
       if (!response.ok) throw new Error("Error al obtener mensajes");
 
       const data = await response.json();
-      const listaMensajes = Array.isArray(data) ? data : (data.mensajes ?? []);
+      const listaMensajes = Array.isArray(data) ? data : data.mensajes ?? [];
       setMensajes(listaMensajes);
       setError(false);
     } catch (err) {
@@ -58,17 +54,49 @@ export default function MensajesPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchMensajes();
   }, []);
 
-  // Función para eliminar el mensaje comunicándose con el backend
+  useEffect(() => {
+    let active = true;
+
+    const loadInitialMensajes = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(`${API_URL}/api/mensajes`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        if (!response.ok) throw new Error("Error al obtener mensajes");
+
+        const data = await response.json();
+        if (active) {
+          const listaMensajes = Array.isArray(data) ? data : data.mensajes ?? [];
+          setMensajes(listaMensajes);
+          setError(false);
+        }
+      } catch (err) {
+        if (active) {
+          console.error(err);
+          setError(true);
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void loadInitialMensajes();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const handleDelete = async (id: string) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-      const res = await fetch(`${apiUrl}/api/mensajes/${id}`, {
+      const res = await fetch(`${API_URL}/api/mensajes/${id}`, {
         method: "DELETE",
       });
 
@@ -84,21 +112,16 @@ export default function MensajesPage() {
     }
   };
 
-  // Lógica de filtrado en tiempo real
   const mensajesFiltrados = mensajes.filter((msg) => {
     const matchesSearch =
       msg.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
       msg.dni.includes(searchTerm) ||
       msg.telefono.includes(searchTerm);
 
-    const matchesDate = selectedDate
-      ? msg.fecha?.startsWith(selectedDate)
-      : true;
-
+    const matchesDate = selectedDate ? Boolean(msg.fecha?.startsWith(selectedDate)) : true;
     return matchesSearch && matchesDate;
   });
 
-  // Lógica de Ordenamiento
   const mensajesOrdenados = [...mensajesFiltrados].sort((a, b) => {
     if (sortOrder === "recientes") {
       return new Date(b.fecha || 0).getTime() - new Date(a.fecha || 0).getTime();
@@ -130,22 +153,20 @@ export default function MensajesPage() {
     setCurrentPage(1);
   };
 
-  const totalPages = Math.ceil(mensajesOrdenados.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const mensajesPaginados = mensajesOrdenados.slice(startIndex, startIndex + itemsPerPage);
+  const totalPages = Math.ceil(mensajesOrdenados.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const mensajesPaginados = mensajesOrdenados.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   return (
     <div className="w-full space-y-6 select-none max-w-7xl mx-auto p-4 sm:p-8 lg:p-10">
-      {/* Toast de alerta flotante */}
       {toast && (
-        <ToastAlertMatricula
+        <ToastAlert
           message={toast.message}
           type={toast.type}
           onClose={() => setToast(null)}
         />
       )}
 
-      {/* Cabecera de la sección */}
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-200/80 pb-6">
         <div>
           <div className="flex items-center gap-3 mb-1">
@@ -162,7 +183,6 @@ export default function MensajesPage() {
         </div>
       </header>
 
-      {/* Componente de Filtros, Búsqueda y Ordenamiento */}
       <ContactFilter
         searchTerm={searchTerm}
         setSearchTerm={handleSearchChange}
@@ -173,19 +193,23 @@ export default function MensajesPage() {
         exportData={mensajesOrdenados}
         onImportData={async (nuevosDatos) => {
           try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-            const res = await fetch(`${apiUrl}/api/mensajes/importar`, {
+            const res = await fetch(`${API_URL}/api/mensajes/importar`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ mensajes: nuevosDatos }),
             });
 
             if (res.ok) {
-              // Volvemos a consultar la API para reflejar el total sumado real desde la Base de Datos
-              fetchMensajes();
-              setToast({ message: "¡Registros importados y guardados con éxito!", type: "success" });
+              await fetchMensajes();
+              setToast({
+                message: "¡Registros importados y guardados con éxito!",
+                type: "success",
+              });
             } else {
-              setToast({ message: "Error al guardar los registros importados.", type: "error" });
+              setToast({
+                message: "Error al guardar los registros importados.",
+                type: "error",
+              });
             }
           } catch (err) {
             console.error("Error de red al importar:", err);
@@ -194,23 +218,21 @@ export default function MensajesPage() {
         }}
       />
 
-      {/* Componente Grid / Tabla de Mensajes */}
-      <ContactGrid 
+      <ContactGrid
         mensajes={mensajesPaginados}
         loading={loading}
         error={error}
         currentPage={currentPage}
-        itemsPerPage={itemsPerPage}
+        itemsPerPage={ITEMS_PER_PAGE}
         onDelete={handleDelete}
       />
 
-      {/* Componente de Paginación */}
-      <Pagination 
+      <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
-        itemsPerPage={itemsPerPage}
+        itemsPerPage={ITEMS_PER_PAGE}
         totalItems={mensajesOrdenados.length}
-        onPageChange={(page) => setCurrentPage(page)}
+        onPageChange={setCurrentPage}
         itemName="Mensajes"
       />
     </div>

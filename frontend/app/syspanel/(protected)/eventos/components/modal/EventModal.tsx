@@ -1,4 +1,3 @@
-// frontend/app/syspanel/eventos/components/modal/EventModal.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -32,6 +31,8 @@ interface EventModalProps {
   editingImage: EventItem | null;
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+
 export default function EventModal({
   isOpen,
   onClose,
@@ -64,11 +65,7 @@ export default function EventModal({
         if (!editingImage.src) {
           setPreviewUrl("");
         } else {
-          setPreviewUrl(
-            isHttpSource
-              ? editingImage.src
-              : `http://localhost:4000${editingImage.src}`
-          );
+          setPreviewUrl(isHttpSource ? editingImage.src : `${API_URL}${editingImage.src}`);
         }
       } else {
         setAlt("");
@@ -93,8 +90,7 @@ export default function EventModal({
     const file = e.target.files?.[0] || null;
     setImageFile(file);
     if (file) {
-      const objectUrl = URL.createObjectURL(file);
-      setPreviewUrl(objectUrl);
+      setPreviewUrl(URL.createObjectURL(file));
     }
   };
 
@@ -113,12 +109,10 @@ export default function EventModal({
     });
   };
 
-  const isLocalFileEditing =
-    editingImage && !editingImage.src.startsWith("http");
+  const isLocalFileEditing = editingImage && !editingImage.src.startsWith("http");
 
   return (
     <>
-      {/* Modal Principal */}
       <div
         className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/65 backdrop-blur-md p-4 animate-in fade-in duration-200 select-none"
         onClick={onClose}
@@ -127,7 +121,6 @@ export default function EventModal({
           className="bg-white border border-slate-200 rounded-3xl w-full max-w-lg px-6 pt-6 pb-7 shadow-2xl relative flex flex-col max-h-[90vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Cabecera */}
           <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
             <div>
               <h2 className="text-base sm:text-lg font-extrabold text-[#16275d]">
@@ -149,7 +142,6 @@ export default function EventModal({
           </div>
 
           <form onSubmit={handleSubmitForm} className="space-y-4">
-            {/* Vista Previa */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-bold uppercase tracking-wider text-[#16275d]">
                 Vista Previa
@@ -166,7 +158,6 @@ export default function EventModal({
                     <img
                       src={previewUrl}
                       alt="Vista previa"
-                      onError={() => {}}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-[#16275d]/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-white text-xs font-semibold backdrop-blur-[2px]">
@@ -177,15 +168,12 @@ export default function EventModal({
                 ) : (
                   <div className="flex flex-col items-center gap-1.5 text-slate-400">
                     <ImageIcon className="w-8 h-8 stroke-[1.5] text-amber-500" />
-                    <span className="text-xs font-semibold">
-                      Sin imagen seleccionada
-                    </span>
+                    <span className="text-xs font-semibold">Sin imagen seleccionada</span>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Título / Alt */}
             <div>
               <label className="block text-[11px] font-bold uppercase tracking-wider text-[#16275d] mb-1.5">
                 Título del Evento
@@ -200,7 +188,6 @@ export default function EventModal({
               />
             </div>
 
-            {/* Descripción */}
             <div>
               <label className="block text-[11px] font-bold uppercase tracking-wider text-[#16275d] mb-1.5">
                 Descripción detallada
@@ -214,7 +201,6 @@ export default function EventModal({
               />
             </div>
 
-            {/* Selector de Pestañas */}
             <div className="flex gap-1.5 p-1 bg-slate-100 rounded-2xl border border-slate-200">
               <button
                 type="button"
@@ -231,9 +217,7 @@ export default function EventModal({
                 }`}
               >
                 <Upload className="w-4 h-4 shrink-0" />
-                <span>
-                  {editingImage ? "Reemplazar Archivo" : "Subir Archivo"}
-                </span>
+                <span>{editingImage ? "Reemplazar Archivo" : "Subir Archivo"}</span>
               </button>
               <button
                 type="button"
@@ -253,7 +237,6 @@ export default function EventModal({
               </button>
             </div>
 
-            {/* Input Condicional */}
             {inputType === "file" ? (
               <div>
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-[#16275d] mb-1.5">
@@ -286,7 +269,6 @@ export default function EventModal({
               </div>
             )}
 
-            {/* Botones de Acción y Eliminar */}
             <div className="flex items-center justify-between pt-4 border-t border-slate-100 mt-3">
               {editingImage && onDelete ? (
                 <button
@@ -322,7 +304,6 @@ export default function EventModal({
         </div>
       </div>
 
-      {/* Sub-Modal: Confirmación de Eliminación */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4 animate-in fade-in duration-150 select-none">
           <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-sm p-6 shadow-2xl flex flex-col text-center">
@@ -358,7 +339,6 @@ export default function EventModal({
         </div>
       )}
 
-      {/* Sub-Modal: Visor de Imagen Completa (Lightbox) */}
       {showLightbox && previewUrl && (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/90 backdrop-blur-md p-4 animate-in fade-in duration-200 cursor-default"

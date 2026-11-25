@@ -1,4 +1,3 @@
-// frontend/app/syspanel/(protected)/eventos/components/grid/EventFilters.tsx
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
@@ -15,6 +14,20 @@ interface EventFiltersProps {
   sortOption: SortOption;
   onSortChange: (option: SortOption) => void;
 }
+
+const SORT_OPTIONS: ReadonlyArray<{ id: SortOption; label: string }> = [
+  { id: "oldest", label: "Más antiguos primero" },
+  { id: "newest", label: "Más recientes primero" },
+  { id: "az", label: "Nombre (A - Z)" },
+  { id: "za", label: "Nombre (Z - A)" },
+];
+
+const SORT_LABELS: Record<SortOption, string> = {
+  oldest: "Antiguos",
+  newest: "Recientes",
+  az: "A - Z",
+  za: "Z - A",
+};
 
 export default function EventFilters({
   searchQuery,
@@ -37,17 +50,8 @@ export default function EventFilters({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const sortLabels: Record<SortOption, string> = {
-    oldest: "Antiguos",
-    newest: "Recientes",
-    az: "A - Z",
-    za: "Z - A",
-  };
-
   return (
     <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 w-full select-none">
-      
-      {/* Buscador por título */}
       <div className="relative flex-1">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 shrink-0" />
         <input
@@ -59,20 +63,15 @@ export default function EventFilters({
         />
       </div>
 
-      {/* Contenedor para Fecha y Orden */}
       <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
         <div className="w-full sm:w-auto">
-          <CustomDatePicker
-            selectedDate={selectedDate}
-            onChange={onDateChange}
-          />
+          <CustomDatePicker selectedDate={selectedDate} onChange={onDateChange} />
         </div>
 
-        {/* Menú Desplegable de Ordenamiento */}
         <div className="relative w-full sm:w-auto" ref={dropdownRef}>
           <button
             type="button"
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            onClick={() => setIsDropdownOpen((prev) => !prev)}
             className={`w-full sm:w-auto flex items-center justify-between sm:justify-start gap-3 px-3.5 py-3 border rounded-2xl text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-xs bg-white ${
               isDropdownOpen
                 ? "border-[#16275d] text-[#16275d] ring-2 ring-[#16275d]/10"
@@ -81,7 +80,7 @@ export default function EventFilters({
           >
             <div className="flex items-center gap-2 truncate">
               <ArrowUpDown className="w-4 h-4 text-[#16275d] shrink-0" />
-              <span className="truncate">{sortLabels[sortOption]}</span>
+              <span className="truncate">{SORT_LABELS[sortOption]}</span>
             </div>
             <ChevronDown
               className={`w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 ml-auto sm:ml-0 ${
@@ -90,17 +89,9 @@ export default function EventFilters({
             />
           </button>
 
-          {/* Ventana Flotante de Opciones */}
           {isDropdownOpen && (
             <div className="absolute right-0 sm:right-0 left-0 sm:left-auto mt-2 w-full sm:w-56 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-1.5 animate-in fade-in zoom-in-95 duration-150">
-              {(
-                [
-                  { id: "oldest", label: "Más antiguos primero" },
-                  { id: "newest", label: "Más recientes primero" },
-                  { id: "az", label: "Nombre (A - Z)" },
-                  { id: "za", label: "Nombre (Z - A)" },
-                ] as const
-              ).map((option) => {
+              {SORT_OPTIONS.map((option) => {
                 const isSelected = sortOption === option.id;
                 return (
                   <button

@@ -1,4 +1,3 @@
-// frontend/app/syspanel/(protected)/videos/page.tsx
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -6,8 +5,8 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import VideoGrid from "./components/grid/VideoGrid";
 import VideoModal from "./components/modal/VideoModal";
 import VideoHomeConfig from "./components/home-config/VideoHomeConfig";
-import ToastAlertVideo from "./components/home-config/ToastAlertVideo";
-import { SortOption } from "./components/grid/VideoFilters"; 
+import ToastAlert from "../components/ToastAlert";
+import { SortOption } from "./components/grid/VideoFilters";
 
 interface VideoItem {
   id: number;
@@ -18,6 +17,9 @@ interface VideoItem {
   createdAt?: string;
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const ITEMS_PER_PAGE = 20;
+
 export default function AdminVideosPage() {
   const router = useRouter();
   const pathname = usePathname();
@@ -27,7 +29,6 @@ export default function AdminVideosPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingVideo, setEditingVideo] = useState<VideoItem | null>(null);
 
-  // Estado del Toast unificado con soporte para success, error y warning
   const [toastState, setToastState] = useState<{
     visible: boolean;
     type: "success" | "error" | "warning";
@@ -44,8 +45,6 @@ export default function AdminVideosPage() {
     },
     [],
   );
-
-  const itemsPerPage = 20;
 
   const currentPage = Number(searchParams.get("page")) || 1;
   const searchQuery = searchParams.get("search") || "";
@@ -97,9 +96,10 @@ export default function AdminVideosPage() {
 
     const loadVideos = async () => {
       try {
-        const res = await fetch("http://localhost:4000/api/videos");
-        if (!res.ok)
+        const res = await fetch(`${API_URL}/api/videos`);
+        if (!res.ok) {
           throw new Error("Error al obtener los registros del servidor");
+        }
 
         const data = await res.json();
 
@@ -116,7 +116,7 @@ export default function AdminVideosPage() {
       }
     };
 
-    loadVideos();
+    void loadVideos();
 
     return () => {
       isMounted = false;
@@ -157,7 +157,7 @@ export default function AdminVideosPage() {
       const formData = new FormData();
       formData.append("isActive", String(!target.isActive));
 
-      const res = await fetch(`http://localhost:4000/api/videos/${id}`, {
+      const res = await fetch(`${API_URL}/api/videos/${id}`, {
         method: "PUT",
         body: formData,
       });
@@ -175,7 +175,7 @@ export default function AdminVideosPage() {
 
   const handleDelete = async (id: number) => {
     try {
-      const res = await fetch(`http://localhost:4000/api/videos/${id}`, {
+      const res = await fetch(`${API_URL}/api/videos/${id}`, {
         method: "DELETE",
       });
 
@@ -210,10 +210,7 @@ export default function AdminVideosPage() {
         formData.append("videoUrl", videoUrl);
       }
 
-      const url = editingVideo
-        ? `http://localhost:4000/api/videos/${editingVideo.id}`
-        : "http://localhost:4000/api/videos";
-
+      const url = editingVideo ? `${API_URL}/api/videos/${editingVideo.id}` : `${API_URL}/api/videos`;
       const method = editingVideo ? "PUT" : "POST";
 
       const res = await fetch(url, {
@@ -232,16 +229,11 @@ export default function AdminVideosPage() {
         setEditingVideo(null);
         showToast(
           "success",
-          editingVideo
-            ? "Video actualizado con éxito."
-            : "Video guardado con éxito.",
+          editingVideo ? "Video actualizado con éxito." : "Video guardado con éxito.",
         );
       } else {
         const errData = await res.json().catch(() => ({}));
-        showToast(
-          "error",
-          `Error: ${errData.error || "No se pudo guardar el video"}`,
-        );
+        showToast("error", `Error: ${errData.error || "No se pudo guardar el video"}`);
       }
     } catch (error) {
       console.error("Error de red al procesar el formulario:", error);
@@ -251,9 +243,7 @@ export default function AdminVideosPage() {
 
   const filteredAndSortedVideos = videos
     .filter((item) => {
-      const matchesSearch = item.alt
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
+      const matchesSearch = item.alt.toLowerCase().includes(searchQuery.toLowerCase());
 
       let matchesDate = true;
       if (selectedDate && item.createdAt) {
@@ -274,17 +264,20 @@ export default function AdminVideosPage() {
     });
 
   const totalItems = filteredAndSortedVideos.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE) || 1;
 
   useEffect(() => {
     if (currentPage > totalPages && totalPages > 0) {
-      updateQueryString({ page: totalPages });
+      const timer = setTimeout(() => {
+        updateQueryString({ page: totalPages });
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [currentPage, totalPages, updateQueryString]);
 
   const paginatedVideos = filteredAndSortedVideos.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE,
   );
 
   return (
@@ -294,7 +287,8 @@ export default function AdminVideosPage() {
           Gestión de Videos
         </h1>
         <p className="text-slate-500 text-xs md:text-sm font-medium">
-          Sube archivos o añade enlaces de video que se mostrarán en la sección pública del Colegio I.E.P. Cayros.
+          Sube archivos o añade enlaces de video que se mostrarán en la sección pública del Colegio
+          I.E.P. Cayros.
         </p>
       </div>
 
@@ -306,7 +300,6 @@ export default function AdminVideosPage() {
         videos={paginatedVideos}
         onToggleStatus={toggleStatus}
         onOpenEdit={handleOpenEdit}
-        onDelete={handleDelete}
         searchQuery={searchQuery}
         onSearchChange={handleSearchChange}
         selectedDate={selectedDate}
@@ -318,7 +311,7 @@ export default function AdminVideosPage() {
         totalPages={totalPages}
         onPageChange={handlePageChange}
         totalItems={totalItems}
-        itemsPerPage={itemsPerPage}
+        itemsPerPage={ITEMS_PER_PAGE}
       />
 
       <VideoModal
@@ -329,14 +322,11 @@ export default function AdminVideosPage() {
           setEditingVideo(null);
         }}
         onSubmit={handleFormSubmit}
-        onDelete={
-          editingVideo ? () => handleDelete(editingVideo.id) : undefined
-        }
+        onDelete={editingVideo ? () => handleDelete(editingVideo.id) : undefined}
         editingVideo={editingVideo}
       />
 
-      {/* Componente Toast unificado para Videos */}
-      <ToastAlertVideo
+      <ToastAlert
         show={toastState.visible}
         type={toastState.type}
         message={toastState.message}

@@ -1,25 +1,12 @@
-// frontend/app/syspanel/galeria/components/GalleryGrid.tsx
 import { ImageIcon, Plus } from "lucide-react";
-import GalleryCard from "./GalleryCard";
+import GalleryCard, { GalleryItem } from "./GalleryCard";
 import GalleryFilters, { SortOption } from "./GalleryFilters";
 import GalleryPagination from "./GalleryPagination";
-
-interface GalleryItem {
-  id: number;
-  src: string;
-  alt: string;
-  isActive: boolean;
-  isFeatured?: boolean;
-  order?: number;
-  featuredOrder?: number;
-  createdAt?: string;
-}
 
 interface GalleryGridProps {
   images: GalleryItem[];
   onToggleStatus: (id: number) => void;
   onOpenEdit: (item: GalleryItem) => void;
-  onDelete: (id: number) => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
   selectedDate: string;
@@ -53,8 +40,6 @@ export default function GalleryGrid({
 }: GalleryGridProps) {
   return (
     <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-8 shadow-sm space-y-6 w-full select-none transform-gpu">
-      
-      {/* Barra superior unificada: Filtros + Botón Nueva Imagen */}
       <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4 w-full">
         <div className="flex-1 w-full min-w-0">
           <GalleryFilters
@@ -67,7 +52,6 @@ export default function GalleryGrid({
           />
         </div>
 
-        {/* Botón de Nueva Imagen */}
         <button
           type="button"
           onClick={onOpenCreate}
@@ -78,7 +62,6 @@ export default function GalleryGrid({
         </button>
       </div>
 
-      {/* Contenido del Grid o Estado Vacío */}
       {images.length === 0 ? (
         <div className="text-center py-16 sm:py-24 px-4 bg-slate-50/60 rounded-3xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-3">
           <div className="w-14 h-14 rounded-2xl bg-amber-100/60 text-[#16275d] flex items-center justify-center shrink-0 shadow-xs">
@@ -107,7 +90,6 @@ export default function GalleryGrid({
         </div>
       )}
 
-      {/* Componente de Paginación */}
       <div className="w-full pt-4 border-t border-slate-100">
         <GalleryPagination
           currentPage={currentPage}
@@ -117,7 +99,6 @@ export default function GalleryGrid({
           itemsPerPage={itemsPerPage}
         />
       </div>
-
     </div>
   );
 }

@@ -1,4 +1,3 @@
-// frontend/app/syspanel/galeria/components/GalleryPagination.tsx
 import React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -23,13 +22,11 @@ export default function GalleryPagination({
 
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 mt-2 w-full select-none">
-      
-      {/* Total general y rango actual */}
       <div className="text-xs sm:text-sm text-slate-500 font-medium text-center sm:text-left">
-        Mostrando <span className="font-bold text-[#16275d]">{startItem}-{endItem}</span> de <span className="font-bold text-[#16275d]">{totalItems}</span> elementos
+        Mostrando <span className="font-bold text-[#16275d]">{startItem}-{endItem}</span> de{" "}
+        <span className="font-bold text-[#16275d]">{totalItems}</span> elementos
       </div>
 
-      {/* Controles de paginación limpios y responsivos */}
       <div className="flex items-center gap-2 w-full sm:w-auto justify-center">
         <button
           type="button"
@@ -43,7 +40,8 @@ export default function GalleryPagination({
         </button>
 
         <div className="px-4 py-2.5 bg-[#16275d]/5 border border-[#16275d]/20 rounded-2xl shadow-xs text-xs font-extrabold text-[#16275d] tracking-wide">
-          <span>{currentPage}</span> <span className="text-slate-400 font-normal">/</span> <span>{safeTotalPages}</span>
+          <span>{currentPage}</span> <span className="text-slate-400 font-normal">/</span>{" "}
+          <span>{safeTotalPages}</span>
         </div>
 
         <button
@@ -57,7 +55,6 @@ export default function GalleryPagination({
           <ChevronRight className="w-4 h-4 stroke-[2.5]" />
         </button>
       </div>
-
     </div>
   );
 }

@@ -15,6 +15,7 @@ import heroRoutes from './routes/hero.routes';
 import matriculaConfigRoutes from './routes/matriculaConfig.routes';
 import matriculaInscripcionRoutes from './routes/matriculaInscripcion.routes';
 import matriculaGaleriaRoutes from './routes/matriculaGaleria.routes';
+import pagosMatriculaRoutes from "./routes/pagosMatricula.routes";
 
 const app = express();
 
@@ -40,6 +41,7 @@ app.use('/api/hero', heroRoutes);
 app.use('/api/admision-config', matriculaConfigRoutes);
 app.use('/api/matricula-inscripcion', matriculaInscripcionRoutes);
 app.use('/api/matricula-galeria', matriculaGaleriaRoutes);
+app.use('/api/pagos-matricula', pagosMatriculaRoutes);
 
 app.use((req: Request, res: Response) => {
   res.status(404).json({ error: 'Ruta no encontrada en el servidor' });

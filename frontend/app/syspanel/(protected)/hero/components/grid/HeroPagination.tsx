@@ -1,4 +1,3 @@
-// frontend/app/syspanel/hero/components/Grid/HeroPagination.tsx
 import React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -23,13 +22,11 @@ export default function HeroPagination({
 
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-slate-200/80 mt-6 w-full select-none">
-      
-      {/* Total general y rango actual compactos */}
       <div className="text-xs text-slate-500 font-medium text-center sm:text-left">
-        Mostrando <span className="font-bold text-[#16275d]">{startItem}-{endItem}</span> de <span className="font-bold text-[#16275d]">{totalItems}</span>
+        Mostrando <span className="font-bold text-[#16275d]">{startItem}-{endItem}</span> de{" "}
+        <span className="font-bold text-[#16275d]">{totalItems}</span>
       </div>
 
-      {/* Controles de paginación limpios y responsivos */}
       <div className="flex items-center gap-2 w-full sm:w-auto justify-center">
         <button
           type="button"
@@ -43,7 +40,8 @@ export default function HeroPagination({
         </button>
 
         <div className="px-3.5 py-2 bg-slate-50/80 border border-slate-200/60 rounded-xl shadow-2xs text-xs font-bold text-slate-700 tracking-wide">
-          <span className="text-[#16275d]">{currentPage}</span> / <span className="text-slate-900">{safeTotalPages}</span>
+          <span className="text-[#16275d]">{currentPage}</span> /{" "}
+          <span className="text-slate-900">{safeTotalPages}</span>
         </div>
 
         <button
@@ -57,7 +55,6 @@ export default function HeroPagination({
           <ChevronRight className="w-4 h-4 stroke-[2.5]" />
         </button>
       </div>
-
     </div>
   );
 }

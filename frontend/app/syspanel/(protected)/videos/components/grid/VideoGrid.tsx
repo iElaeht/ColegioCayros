@@ -1,4 +1,3 @@
-// frontend/app/syspanel/videos/components/VideoGrid.tsx
 "use client";
 
 import { Video as VideoIcon, Plus } from "lucide-react";
@@ -18,7 +17,6 @@ interface VideoGridProps {
   videos: VideoItem[];
   onToggleStatus: (id: number) => void;
   onOpenEdit: (item: VideoItem) => void;
-  onDelete?: (id: number) => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
   selectedDate: string;
@@ -52,7 +50,6 @@ export default function VideoGrid({
 }: VideoGridProps) {
   return (
     <div className="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-6 shadow-xs space-y-6 w-full select-none">
-      {/* Barra superior unificada: Filtros + Botón Nuevo Video */}
       <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3 w-full">
         <div className="flex-1 w-full min-w-0">
           <VideoFilters
@@ -65,7 +62,6 @@ export default function VideoGrid({
           />
         </div>
 
-        {/* Botón de Nuevo Video optimizado corporativo */}
         <button
           type="button"
           onClick={(e) => {
@@ -79,7 +75,6 @@ export default function VideoGrid({
         </button>
       </div>
 
-      {/* Contenido del Grid o Estado Vacío */}
       {videos.length === 0 ? (
         <div className="text-center py-16 sm:py-20 px-4 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-3">
           <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
@@ -87,24 +82,21 @@ export default function VideoGrid({
           </div>
           <div className="space-y-1">
             <p className="text-slate-800 text-sm font-bold">No hay videos registrados todavía</p>
-            <p className="text-slate-400 text-xs font-medium">Sube un archivo de video o añade un enlace usando el botón superior.</p>
+            <p className="text-slate-400 text-xs font-medium">
+              Sube un archivo de video o añade un enlace usando el botón superior.
+            </p>
           </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 items-start">
           {videos.map((item) => (
             <div key={item.id} className="w-full">
-              <VideoCard
-                item={item}
-                onToggleStatus={onToggleStatus}
-                onOpenEdit={onOpenEdit}
-              />
+              <VideoCard item={item} onToggleStatus={onToggleStatus} onOpenEdit={onOpenEdit} />
             </div>
           ))}
         </div>
       )}
 
-      {/* Componente de Paginación */}
       <div className="w-full pt-2">
         <VideoPagination
           currentPage={currentPage}

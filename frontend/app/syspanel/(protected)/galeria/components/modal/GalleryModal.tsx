@@ -1,4 +1,3 @@
-// frontend/app/syspanel/galeria/components/GalleryModal.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -30,6 +29,8 @@ interface GalleryModalProps {
   onDelete?: () => void;
   editingImage: GalleryItem | null;
 }
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 export default function GalleryModal({
   isOpen,
@@ -78,7 +79,7 @@ export default function GalleryModal({
         setAlt(currentAlt);
         setInitialAlt(currentAlt);
 
-        const isHttpSource = currentImg.startsWith("http") || false;
+        const isHttpSource = currentImg.startsWith("http");
         setInputType(isHttpSource ? "url" : "file");
         setImageUrl(isHttpSource ? currentImg : "");
         setInitialImageUrl(currentImg);
@@ -87,12 +88,7 @@ export default function GalleryModal({
         if (!currentImg) {
           setPreviewUrl("");
         } else {
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-          setPreviewUrl(
-            isHttpSource
-              ? currentImg
-              : `${apiUrl}${currentImg}`
-          );
+          setPreviewUrl(isHttpSource ? currentImg : `${API_URL}${currentImg}`);
         }
       } else {
         setAlt("");
@@ -109,14 +105,21 @@ export default function GalleryModal({
     }
   }, [isOpen, editingImage]);
 
+  useEffect(() => {
+    return () => {
+      if (previewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
   if (!isOpen) return null;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setImageFile(file);
     if (file) {
-      const objectUrl = URL.createObjectURL(file);
-      setPreviewUrl(objectUrl);
+      setPreviewUrl(URL.createObjectURL(file));
     }
   };
 
@@ -128,12 +131,11 @@ export default function GalleryModal({
   const hasChanges = (() => {
     if (!editingImage) {
       return alt.trim() !== "" && (imageFile !== null || imageUrl.trim() !== "");
-    } else {
-      const altChanged = alt.trim() !== initialAlt.trim();
-      const fileAdded = imageFile !== null;
-      const urlChanged = inputType === "url" && imageUrl.trim() !== initialImageUrl;
-      return altChanged || fileAdded || urlChanged;
     }
+    const altChanged = alt.trim() !== initialAlt.trim();
+    const fileAdded = imageFile !== null;
+    const urlChanged = inputType === "url" && imageUrl.trim() !== initialImageUrl;
+    return altChanged || fileAdded || urlChanged;
   })();
 
   const handleSubmitForm = (e: React.FormEvent) => {
@@ -142,24 +144,19 @@ export default function GalleryModal({
     onSubmit({ alt: alt.trim(), imageUrl: imageUrl.trim(), imageFile });
   };
 
-  const isLocalFileEditing =
-    editingImage && !editingImage.src.startsWith("http");
+  const isLocalFileEditing = editingImage && !editingImage.src.startsWith("http");
 
   return (
     <>
-      {/* Modal Principal */}
       <div className="fixed inset-0 z-50 w-screen h-screen flex items-center justify-center bg-slate-950/65 backdrop-blur-md p-3 sm:p-4 animate-in fade-in duration-200 overflow-y-auto transform-gpu select-none">
         <div
           className="bg-white border border-slate-200 rounded-3xl w-full max-w-lg p-6 sm:p-8 shadow-2xl relative flex flex-col my-auto max-h-[92vh] overflow-y-auto transform-gpu custom-scrollbar"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Cabecera y Botón de Cierre */}
           <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
             <div>
               <h2 className="text-base sm:text-lg font-extrabold text-[#16275d]">
-                {editingImage
-                  ? "Editar Imagen de Galería"
-                  : "Subir Nueva Imagen"}
+                {editingImage ? "Editar Imagen de Galería" : "Subir Nueva Imagen"}
               </h2>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
                 {editingImage
@@ -178,7 +175,6 @@ export default function GalleryModal({
           </div>
 
           <form onSubmit={handleSubmitForm} className="space-y-4">
-            {/* Vista Previa */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-bold uppercase tracking-wider text-[#16275d]">
                 Vista Previa
@@ -195,7 +191,6 @@ export default function GalleryModal({
                     <img
                       src={previewUrl}
                       alt="Vista previa"
-                      onError={() => {}}
                       className="w-full h-full object-cover transition-transform duration-300 transform-gpu group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-[#16275d]/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2 text-white text-xs font-semibold backdrop-blur-[2px]">
@@ -214,7 +209,6 @@ export default function GalleryModal({
               </div>
             </div>
 
-            {/* Título / Alt */}
             <div>
               <label className="block text-[11px] font-bold uppercase tracking-wider text-[#16275d] mb-1.5">
                 Título de la Imagen
@@ -229,16 +223,14 @@ export default function GalleryModal({
               />
             </div>
 
-            {/* Selector de Pestañas */}
             <div className="flex gap-1.5 p-1 bg-slate-100 rounded-2xl border border-slate-200">
               <button
                 type="button"
                 onClick={() => {
                   setInputType("file");
                   setImageUrl("");
-                  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
                   if (editingImage && !editingImage.src.startsWith("http")) {
-                    setPreviewUrl(`${apiUrl}${editingImage.src}`);
+                    setPreviewUrl(`${API_URL}${editingImage.src}`);
                   }
                 }}
                 className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 ${
@@ -273,7 +265,6 @@ export default function GalleryModal({
               </button>
             </div>
 
-            {/* Input Condicional */}
             {inputType === "file" ? (
               <div>
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-[#16275d] mb-1.5">
@@ -306,7 +297,6 @@ export default function GalleryModal({
               </div>
             )}
 
-            {/* Botones de Acción y Eliminar */}
             <div className="flex items-center justify-between pt-4 border-t border-slate-100 mt-3">
               {editingImage && onDelete ? (
                 <button
@@ -345,7 +335,6 @@ export default function GalleryModal({
             </div>
           </form>
 
-          {/* Sub-Modal de Confirmación de Eliminación */}
           {showDeleteConfirm && (
             <div className="absolute inset-0 z-20 bg-white/95 backdrop-blur-sm rounded-3xl p-6 flex flex-col items-center justify-center text-center animate-in fade-in duration-150 transform-gpu">
               <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 border border-rose-200 flex items-center justify-center mb-4 shadow-xs">
@@ -381,7 +370,6 @@ export default function GalleryModal({
         </div>
       </div>
 
-      {/* Sub-Modal: Visor de Imagen Completa (Lightbox) */}
       {showLightbox && previewUrl && (
         <div
           className="fixed inset-0 z-[60] w-screen h-screen flex items-center justify-center bg-slate-950/90 backdrop-blur-md p-4 animate-in fade-in duration-200 cursor-default transform-gpu"

@@ -1,22 +1,12 @@
-// frontend/app/syspanel/(protected)/eventos/components/grid/EventGrid.tsx
 import { CalendarDays, Plus } from "lucide-react";
-import EventCard from "./EventCard";
+import EventCard, { EventItem } from "./EventCard";
 import EventFilters, { SortOption } from "./EventFilters";
 import EventPagination from "./EventPagination";
-
-interface EventItem {
-  id: number;
-  src: string;
-  alt: string;
-  isActive: boolean;
-  createdAt?: string;
-}
 
 interface EventGridProps {
   images: EventItem[];
   onToggleStatus: (id: number) => void;
   onOpenEdit: (item: EventItem) => void;
-  onDelete: (id: number) => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
   selectedDate: string;
@@ -50,8 +40,6 @@ export default function EventGrid({
 }: EventGridProps) {
   return (
     <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-8 shadow-sm space-y-6 w-full select-none">
-      
-      {/* Barra superior unificada: Filtros + Botón Nuevo Evento */}
       <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4 w-full">
         <div className="flex-1 w-full">
           <EventFilters
@@ -64,7 +52,6 @@ export default function EventGrid({
           />
         </div>
 
-        {/* Botón de Nuevo Evento */}
         <button
           type="button"
           onClick={onOpenCreate}
@@ -75,7 +62,6 @@ export default function EventGrid({
         </button>
       </div>
 
-      {/* Contenido del Grid o Estado Vacío */}
       {images.length === 0 ? (
         <div className="text-center py-16 sm:py-24 px-4 bg-slate-50/60 rounded-3xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-3">
           <div className="w-14 h-14 rounded-2xl bg-amber-100/60 text-[#16275d] flex items-center justify-center shrink-0 shadow-xs">
@@ -104,7 +90,6 @@ export default function EventGrid({
         </div>
       )}
 
-      {/* Componente de Paginación */}
       <div className="w-full pt-4 border-t border-slate-100">
         <EventPagination
           currentPage={currentPage}
@@ -114,7 +99,6 @@ export default function EventGrid({
           itemsPerPage={itemsPerPage}
         />
       </div>
-
     </div>
   );
 }

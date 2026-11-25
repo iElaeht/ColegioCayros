@@ -1,26 +1,14 @@
-// frontend/app/syspanel/hero/components/Grid/HeroGrid.tsx
 "use client";
 
 import { ImageIcon, Plus } from "lucide-react";
-import HeroCard from "./HeroCard";
+import HeroCard, { HeroSlideItem } from "./HeroCard";
 import HeroFilters, { SortOption } from "./HeroFilters";
 import HeroPagination from "./HeroPagination";
-
-interface HeroSlideItem {
-  id: number;
-  title?: string | null;
-  imageUrl: string;
-  isActive: boolean;
-  isFeatured: boolean;
-  order: number;
-  createdAt?: string;
-}
 
 interface HeroGridProps {
   images: HeroSlideItem[];
   onToggleStatus: (id: number) => void;
   onOpenEdit: (item: HeroSlideItem) => void;
-  onDelete: (id: number) => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
   selectedDate: string;
@@ -39,7 +27,6 @@ export default function HeroGrid({
   images,
   onToggleStatus,
   onOpenEdit,
-  onDelete,
   searchQuery,
   onSearchChange,
   selectedDate,
@@ -55,7 +42,6 @@ export default function HeroGrid({
 }: HeroGridProps) {
   return (
     <div className="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-6 shadow-xs space-y-6 w-full select-none">
-      {/* Barra superior unificada: Filtros + Botón Nuevo Banner */}
       <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3 w-full">
         <div className="flex-1 w-full min-w-0">
           <HeroFilters
@@ -68,7 +54,6 @@ export default function HeroGrid({
           />
         </div>
 
-        {/* Botón de Nuevo Banner optimizado corporativo */}
         <button
           type="button"
           onClick={(e) => {
@@ -82,7 +67,6 @@ export default function HeroGrid({
         </button>
       </div>
 
-      {/* Contenido del Grid o Estado Vacío */}
       {images.length === 0 ? (
         <div className="text-center py-16 sm:py-20 px-4 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-3">
           <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
@@ -90,7 +74,9 @@ export default function HeroGrid({
           </div>
           <div className="space-y-1">
             <p className="text-slate-800 text-sm font-bold">No hay slides en el Hero todavía</p>
-            <p className="text-slate-400 text-xs font-medium">Sube un nuevo banner usando el botón superior.</p>
+            <p className="text-slate-400 text-xs font-medium">
+              Sube un nuevo banner usando el botón superior.
+            </p>
           </div>
         </div>
       ) : (
@@ -101,14 +87,12 @@ export default function HeroGrid({
                 item={item}
                 onToggleStatus={onToggleStatus}
                 onOpenEdit={onOpenEdit}
-                onDelete={onDelete}
               />
             </div>
           ))}
         </div>
       )}
 
-      {/* Componente de Paginación */}
       <div className="w-full pt-2">
         <HeroPagination
           currentPage={currentPage}

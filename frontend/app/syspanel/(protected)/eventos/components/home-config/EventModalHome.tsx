@@ -1,19 +1,9 @@
-// frontend/app/syspanel/(protected)/eventos/components/home-config/EventModalHome.tsx
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import EventCard from "./EventCard";
+import EventCard, { EventItem } from "./EventCard";
 import EventFilterHome from "./EventFilterHome";
 import { Save, X } from "lucide-react";
-
-interface EventItem {
-  id: number;
-  src: string;
-  alt: string;
-  isActive: boolean;
-  isFeatured?: boolean;
-  createdAt?: string;
-}
 
 interface EventModalHomeProps {
   isOpen: boolean;
@@ -24,6 +14,8 @@ interface EventModalHomeProps {
   homeLimit: number;
 }
 
+const ITEMS_PER_PAGE = 16;
+
 export default function EventModalHome({
   isOpen,
   onClose,
@@ -32,12 +24,9 @@ export default function EventModalHome({
   onSaveSelections,
   homeLimit,
 }: EventModalHomeProps) {
-  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<"all" | "selected">("all");
-
-  const ITEMS_PER_PAGE = 16;
-  const [visibleLimit, setVisibleLimit] = useState<number>(ITEMS_PER_PAGE);
-
+  const [visibleLimit, setVisibleLimit] = useState(ITEMS_PER_PAGE);
   const [tempSlots, setTempSlots] = useState<(number | null)[]>([]);
 
   useEffect(() => {
@@ -52,8 +41,7 @@ export default function EventModalHome({
       }
       setTempSlots(initialSlots);
 
-      const scrollbarWidth =
-        window.innerWidth - document.documentElement.clientWidth;
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
       document.body.style.overflow = "hidden";
       document.body.style.position = "fixed";
       document.body.style.width = "100%";
@@ -69,6 +57,7 @@ export default function EventModalHome({
       document.body.style.width = "auto";
       document.body.style.paddingRight = "0px";
     }
+
     return () => {
       document.body.style.overflow = "unset";
       document.body.style.position = "static";
@@ -80,19 +69,18 @@ export default function EventModalHome({
   const handleToggleTempSelect = (id: number) => {
     setTempSlots((prev) => {
       const existingIndex = prev.indexOf(id);
-
       if (existingIndex !== -1) {
-        const newSlots = [...prev];
-        newSlots[existingIndex] = null;
-        return newSlots;
-      } else {
-        const firstEmptyIndex = prev.indexOf(null);
-        if (firstEmptyIndex === -1) return prev;
-
-        const newSlots = [...prev];
-        newSlots[firstEmptyIndex] = id;
-        return newSlots;
+        const next = [...prev];
+        next[existingIndex] = null;
+        return next;
       }
+
+      const firstEmptyIndex = prev.indexOf(null);
+      if (firstEmptyIndex === -1) return prev;
+
+      const next = [...prev];
+      next[firstEmptyIndex] = id;
+      return next;
     });
   };
 
@@ -112,42 +100,36 @@ export default function EventModalHome({
     setVisibleLimit(ITEMS_PER_PAGE);
   };
 
+  const activeSelectedIds = useMemo(
+    () => tempSlots.filter((id): id is number => id !== null),
+    [tempSlots]
+  );
+
   const filteredImages = useMemo(() => {
     const safeImages = Array.isArray(allImages) ? allImages : [];
-    const activeSelectedIds = tempSlots.filter(
-      (id): id is number => id !== null,
-    );
+    const query = (searchTerm || "").toLowerCase();
 
     return safeImages.filter((img) => {
-      const altText = img?.alt || "";
-      const matchesSearch = altText
-        .toLowerCase()
-        .includes((searchTerm || "").toLowerCase());
-      const isSelected = activeSelectedIds.includes(img.id);
-      const matchesTab = activeTab === "all" ? true : isSelected;
+      const altText = (img?.alt || "").toLowerCase();
+      const matchesSearch = altText.includes(query);
+      const matchesTab = activeTab === "all" ? true : activeSelectedIds.includes(img.id);
       return matchesSearch && matchesTab;
     });
-  }, [allImages, searchTerm, activeTab, tempSlots]);
+  }, [allImages, searchTerm, activeTab, activeSelectedIds]);
 
-  const paginatedImages = useMemo(() => {
-    return filteredImages.slice(0, visibleLimit);
-  }, [filteredImages, visibleLimit]);
-
-  const handleLoadMore = () => {
-    setVisibleLimit((prev) => prev + ITEMS_PER_PAGE);
-  };
+  const paginatedImages = useMemo(
+    () => filteredImages.slice(0, visibleLimit),
+    [filteredImages, visibleLimit]
+  );
 
   if (!isOpen) return null;
 
-  const activeSelectedIds = tempSlots.filter((id): id is number => id !== null);
   const safeSelectedCount = activeSelectedIds.length;
   const safeTotalCount = Array.isArray(allImages) ? allImages.length : 0;
 
   return (
     <div className="fixed inset-0 w-screen h-screen z-[99999] flex items-center justify-center bg-slate-950/60 backdrop-blur-[2px] p-3 sm:p-4 animate-in fade-in duration-200 select-none">
       <div className="bg-white w-full max-w-4xl h-[92vh] sm:h-[85vh] max-h-[92vh] rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
-        
-        {/* Cabecera del Modal */}
         <div className="p-4 sm:p-6 border-b border-slate-100 flex flex-col gap-4 bg-slate-50 shrink-0">
           <div className="flex items-center justify-between gap-3">
             <div className="space-y-1">
@@ -184,19 +166,14 @@ export default function EventModalHome({
           </div>
         </div>
 
-        {/* Contenido de Grilla */}
         <div className="p-4 sm:p-6 overflow-y-auto custom-scrollbar flex-1 flex flex-col bg-white">
           {paginatedImages.length > 0 ? (
             <>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                 {paginatedImages.map((img) => {
-                  const currentSelectedIds = tempSlots.filter(
-                    (id): id is number => id !== null,
-                  );
-                  const isSelected = currentSelectedIds.includes(img.id);
+                  const isSelected = activeSelectedIds.includes(img.id);
                   const selectionIndex = tempSlots.indexOf(img.id);
-                  const selectionNumber =
-                    selectionIndex !== -1 ? selectionIndex + 1 : null;
+                  const selectionNumber = selectionIndex !== -1 ? selectionIndex + 1 : null;
 
                   return (
                     <div key={img.id} className="w-full">
@@ -216,11 +193,10 @@ export default function EventModalHome({
                 <div className="flex justify-center mt-6 pt-4 border-t border-slate-100">
                   <button
                     type="button"
-                    onClick={handleLoadMore}
+                    onClick={() => setVisibleLimit((prev) => prev + ITEMS_PER_PAGE)}
                     className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-[#16275d] text-xs sm:text-sm font-bold rounded-2xl transition-all cursor-pointer shadow-xs border border-slate-200 truncate"
                   >
-                    Cargar más eventos ({filteredImages.length - visibleLimit}{" "}
-                    restantes)
+                    Cargar más eventos ({filteredImages.length - visibleLimit} restantes)
                   </button>
                 </div>
               )}
@@ -239,7 +215,6 @@ export default function EventModalHome({
           )}
         </div>
 
-        {/* Pie de Página del Modal */}
         <div className="p-4 sm:p-5 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-3 shrink-0">
           <button
             type="button"
@@ -257,7 +232,6 @@ export default function EventModalHome({
             <span className="truncate">Guardar Selección</span>
           </button>
         </div>
-
       </div>
     </div>
   );

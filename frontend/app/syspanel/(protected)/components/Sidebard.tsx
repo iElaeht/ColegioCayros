@@ -1,20 +1,18 @@
-// frontend/app/syspanel/(protected)/components/Sidebard.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Image from "next/image";
-import { 
-  LayoutDashboard, 
-  MessageSquare, 
-  Image as ImageIcon, 
-  Video, 
-  Calendar, 
-  User, 
+import {
+  LayoutDashboard,
+  MessageSquare,
+  Image as ImageIcon,
+  Video,
+  Calendar,
+  User,
   LogOut,
   Users,
-  GraduationCap,
   FileText,
   CreditCard,
   ChevronDown,
@@ -22,7 +20,9 @@ import {
   FolderKanban,
   Menu,
   X,
-  Layers
+  Layers,
+  Megaphone,
+  FileUp,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -32,13 +32,10 @@ interface SidebarProps {
 
 export default function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
   const pathname = usePathname();
-  const router = useRouter();
 
-  // Estado para controlar el menú móvil (hamburguesa)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  // Estado para el nombre del administrador (inicializa seguro y se actualiza al cargar o recargar F5)
   const [adminName, setAdminName] = useState<string>("Admin");
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -55,7 +52,6 @@ export default function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
     }
   }, []);
 
-  // Bloquear el scroll del body cuando el menú móvil esté abierto
   useEffect(() => {
     if (isMobileMenuOpen) {
       document.body.style.overflow = "hidden";
@@ -67,36 +63,29 @@ export default function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
     };
   }, [isMobileMenuOpen]);
 
-  // Cerrar el menú móvil automáticamente cuando cambia la ruta
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [pathname]);
-
-  const [openGroup, setOpenGroup] = useState<string | null>(null);
 
   const handleGroupClick = (key: string) => {
     if (!isExpanded) {
       setIsExpanded(true);
       setOpenGroup(key);
     } else {
-      setOpenGroup(prev => (prev === key ? null : key));
+      setOpenGroup((prev) => (prev === key ? null : key));
     }
   };
 
-const handleLogout = () => {
+  const handleLogout = () => {
     document.body.style.overflow = "unset";
-    
-    // 1. Limpiamos las cookies de sesión
     document.cookie = "sys_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    
-    // 2. Limpiamos completamente el sessionStorage y cualquier rastro en localStorage
+
     try {
       sessionStorage.clear();
       localStorage.removeItem("sys_token");
       localStorage.removeItem("admin_user");
-    } catch (e) {}
+    } catch {}
 
-    // 3. Forzamos una recarga dura directo al login institucional del syspanel
     window.location.href = "/";
   };
 
@@ -105,11 +94,7 @@ const handleLogout = () => {
       key: "comunidad",
       name: "Atención y Comunidad",
       icon: Users,
-      items: [
-        { name: "Mensajes", href: "/syspanel/mensajes", icon: MessageSquare },
-        { name: "Alumnos", href: "/syspanel/alumnos", icon: GraduationCap },
-        { name: "Docentes", href: "/syspanel/docentes", icon: User },
-      ],
+      items: [{ name: "Mensajes", href: "/syspanel/mensajes", icon: MessageSquare }],
     },
     {
       key: "academico",
@@ -117,7 +102,7 @@ const handleLogout = () => {
       icon: FileText,
       items: [
         { name: "Matrículas", href: "/syspanel/matriculas", icon: FileText },
-        { name: "Pensiones", href: "/syspanel/pensiones", icon: CreditCard },
+        { name: "Pagos Institucionales", href: "/syspanel/pagos", icon: CreditCard },
       ],
     },
     {
@@ -130,61 +115,65 @@ const handleLogout = () => {
         { name: "Galería", href: "/syspanel/galeria", icon: ImageIcon },
         { name: "Videos", href: "/syspanel/videos", icon: Video },
         { name: "Eventos", href: "/syspanel/eventos", icon: Calendar },
+        { name: "Cartel de Matrícula", href: "/syspanel/cartel-matricula", icon: Megaphone },
+        { name: "Boletín PDF", href: "/syspanel/boletin", icon: FileUp },
       ],
     },
   ];
 
   return (
     <>
-      {/* ========================================================= */}
-      {/* 1. NAVBAR MÓVIL (Visible solo en pantallas pequeñas: lg:hidden) */}
-      {/* ========================================================= */}
       <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 z-50">
-        {/* Logo y Título Izquierda */}
         <Link href="/syspanel/dashboard" className="flex items-center gap-2.5 overflow-hidden">
           <div className="w-9 h-9 relative flex-shrink-0 flex items-center justify-center">
-            <Image 
-              src="/images/ui/Cayros-logo.png" 
-              alt="Logo Colegio Cayros" 
-              width={32} 
-              height={32} 
+            <Image
+              src="/images/ui/Cayros-logo.png"
+              alt="Logo Colegio Cayros"
+              width={32}
+              height={32}
               className="object-contain"
               unoptimized
             />
           </div>
           <div className="truncate">
-            <h1 className="text-xs font-bold text-white tracking-wide leading-tight truncate">Colegio Cayros</h1>
+            <h1 className="text-xs font-bold text-white tracking-wide leading-tight truncate">
+              Colegio Cayros
+            </h1>
             <p className="text-[9px] text-slate-400">Panel de Gestión</p>
           </div>
         </Link>
 
-        {/* Botón Hamburguesa Derecha */}
         <button
           type="button"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className="p-2 rounded-xl bg-slate-800/80 text-slate-200 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer border border-slate-700/50"
           title="Menú de navegación"
         >
-          {isMobileMenuOpen ? <X className="w-5 h-5 text-amber-400" /> : <Menu className="w-5 h-5" />}
+          {isMobileMenuOpen ? (
+            <X className="w-5 h-5 text-amber-400" />
+          ) : (
+            <Menu className="w-5 h-5" />
+          )}
         </button>
       </header>
 
-      {/* Menú desplegable móvil (Overlay fijo de pantalla completa debajo del navbar) */}
       {isMobileMenuOpen && (
         <div className="lg:hidden fixed inset-x-0 top-16 bottom-0 bg-slate-950 z-40 flex flex-col p-4 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
-          
-          {/* Info de Usuario Conectado en Móvil */}
           <div className="flex items-center gap-3 px-3.5 py-3 rounded-xl text-slate-300 bg-slate-900 border border-slate-800 mb-4 shrink-0">
             <User className="w-5 h-5 flex-shrink-0 text-amber-400" />
             <div className="truncate">
-              <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold leading-none">Conectado</p>
-              <p suppressHydrationWarning className="text-xs font-bold text-amber-400 truncate mt-0.5">
+              <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold leading-none">
+                Conectado
+              </p>
+              <p
+                suppressHydrationWarning
+                className="text-xs font-bold text-amber-400 truncate mt-0.5"
+              >
                 {adminName}
               </p>
             </div>
           </div>
 
-          {/* Navegación Móvil */}
           <nav className="flex-1 space-y-2 pb-6">
             <Link
               href="/syspanel/dashboard"
@@ -204,7 +193,10 @@ const handleLogout = () => {
               const isOpen = openGroup === group.key || (isGroupActive && openGroup === null);
 
               return (
-                <div key={group.key} className="space-y-1.5 bg-slate-900/40 border border-slate-800/60 rounded-xl p-2">
+                <div
+                  key={group.key}
+                  className="space-y-1.5 bg-slate-900/40 border border-slate-800/60 rounded-xl p-2"
+                >
                   <button
                     type="button"
                     onClick={() => handleGroupClick(group.key)}
@@ -212,9 +204,15 @@ const handleLogout = () => {
                   >
                     <div className="flex items-center gap-3">
                       <GroupIcon className="w-5 h-5 flex-shrink-0 text-amber-400/90" />
-                      <span className="text-xs font-bold uppercase tracking-wider text-slate-300">{group.name}</span>
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                        {group.name}
+                      </span>
                     </div>
-                    <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+                    <ChevronDown
+                      className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
+                        isOpen ? "rotate-180" : ""
+                      }`}
+                    />
                   </button>
 
                   {isOpen && (
@@ -245,7 +243,6 @@ const handleLogout = () => {
             })}
           </nav>
 
-          {/* Botón Cerrar Sesión Móvil */}
           <div className="pt-2 border-t border-slate-800 shrink-0">
             <button
               type="button"
@@ -256,14 +253,10 @@ const handleLogout = () => {
               <span>Cerrar Sesión</span>
             </button>
           </div>
-
         </div>
       )}
 
-      {/* ========================================================= */}
-      {/* 2. SIDEBAR ESCRITORIO (Oculto en mobile, fijo en pantallas lg+) */}
-      {/* ========================================================= */}
-      <aside 
+      <aside
         onClick={() => {
           if (!isExpanded) setIsExpanded(true);
         }}
@@ -272,21 +265,26 @@ const handleLogout = () => {
         }`}
         title={!isExpanded ? "Haz clic para expandir el menú" : undefined}
       >
-        {/* Cabecera y Logo */}
         <div className="p-4 border-b border-slate-800 flex items-center justify-between gap-2 overflow-hidden h-20">
           <div className="flex items-center gap-3 overflow-hidden">
             <div className="w-10 h-10 relative flex-shrink-0 flex items-center justify-center">
-              <Image 
-                src="/images/ui/Cayros-logo.png" 
-                alt="Logo Colegio Cayros" 
-                width={36} 
-                height={36} 
+              <Image
+                src="/images/ui/Cayros-logo.png"
+                alt="Logo Colegio Cayros"
+                width={36}
+                height={36}
                 className="object-contain"
                 unoptimized
               />
             </div>
-            <div className={`whitespace-nowrap overflow-hidden transition-opacity duration-200 ${isExpanded ? "opacity-100" : "opacity-0 pointer-events-none hidden"}`}>
-              <h1 className="text-sm font-bold text-white tracking-wide leading-tight">Colegio Cayros</h1>
+            <div
+              className={`whitespace-nowrap overflow-hidden transition-opacity duration-200 ${
+                isExpanded ? "opacity-100" : "opacity-0 pointer-events-none hidden"
+              }`}
+            >
+              <h1 className="text-sm font-bold text-white tracking-wide leading-tight">
+                Colegio Cayros
+              </h1>
               <p className="text-[10px] text-slate-400">Panel de Gestión</p>
             </div>
           </div>
@@ -306,13 +304,21 @@ const handleLogout = () => {
           )}
         </div>
 
-        {/* Sección de Usuario con el nombre real de la tabla Usuario */}
         <div className="px-3 pt-4 pb-2">
           <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 bg-slate-950/30 border border-slate-800/40 overflow-hidden">
             <User className="w-5 h-5 flex-shrink-0 text-amber-400" />
-            <div className={`whitespace-nowrap overflow-hidden transition-opacity duration-200 ${isExpanded ? "opacity-100" : "opacity-0 pointer-events-none hidden"}`}>
-              <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold leading-none">Conectado</p>
-              <p suppressHydrationWarning className="text-xs font-bold text-amber-400 truncate mt-0.5">
+            <div
+              className={`whitespace-nowrap overflow-hidden transition-opacity duration-200 ${
+                isExpanded ? "opacity-100" : "opacity-0 pointer-events-none hidden"
+              }`}
+            >
+              <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold leading-none">
+                Conectado
+              </p>
+              <p
+                suppressHydrationWarning
+                className="text-xs font-bold text-amber-400 truncate mt-0.5"
+              >
                 {adminName}
               </p>
             </div>
@@ -323,7 +329,6 @@ const handleLogout = () => {
           <hr className="border-slate-800/60" />
         </div>
 
-        {/* Navegación Principal y Agrupada de Escritorio */}
         <nav className="flex-1 p-3 space-y-1.5 overflow-y-auto overflow-x-hidden custom-scrollbar">
           <Link
             href="/syspanel/dashboard"
@@ -338,7 +343,11 @@ const handleLogout = () => {
             }`}
           >
             <LayoutDashboard className="w-5 h-5 flex-shrink-0" />
-            <span className={`whitespace-nowrap transition-opacity duration-200 ${isExpanded ? "opacity-100" : "opacity-0 pointer-events-none hidden"}`}>
+            <span
+              className={`whitespace-nowrap transition-opacity duration-200 ${
+                isExpanded ? "opacity-100" : "opacity-0 pointer-events-none hidden"
+              }`}
+            >
               Inicio
             </span>
           </Link>
@@ -365,20 +374,27 @@ const handleLogout = () => {
                 >
                   <div className="flex items-center gap-3">
                     <GroupIcon className="w-5 h-5 flex-shrink-0" />
-                    <span className={`whitespace-nowrap transition-opacity duration-200 ${isExpanded ? "opacity-100" : "opacity-0 pointer-events-none hidden"}`}>
+                    <span
+                      className={`whitespace-nowrap transition-opacity duration-200 ${
+                        isExpanded ? "opacity-100" : "opacity-0 pointer-events-none hidden"
+                      }`}
+                    >
                       {group.name}
                     </span>
                   </div>
                   {isExpanded && (
-                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+                    <ChevronDown
+                      className={`w-4 h-4 transition-transform duration-200 ${
+                        isOpen ? "rotate-180" : ""
+                      }`}
+                    />
                   )}
                 </button>
 
-                {/* Submenús */}
-                <div 
+                <div
                   className={`grid transition-all duration-300 ease-in-out overflow-hidden ${
-                    isExpanded && isOpen 
-                      ? "grid-rows-[1fr] opacity-100 mt-1 pl-9 space-y-1" 
+                    isExpanded && isOpen
+                      ? "grid-rows-[1fr] opacity-100 mt-1 pl-9 space-y-1"
                       : "grid-rows-[0fr] opacity-0 pl-9 space-y-0"
                   }`}
                 >
@@ -414,7 +430,6 @@ const handleLogout = () => {
           <hr className="border-slate-800/60" />
         </div>
 
-        {/* Botón Cerrar Sesión de Escritorio */}
         <div className="p-3">
           <button
             type="button"
@@ -426,7 +441,11 @@ const handleLogout = () => {
             className="flex items-center gap-3 w-full px-3 py-3 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors cursor-pointer overflow-hidden"
           >
             <LogOut className="w-5 h-5 flex-shrink-0" />
-            <span className={`whitespace-nowrap transition-opacity duration-200 ${isExpanded ? "opacity-100" : "opacity-0 pointer-events-none hidden"}`}>
+            <span
+              className={`whitespace-nowrap transition-opacity duration-200 ${
+                isExpanded ? "opacity-100" : "opacity-0 pointer-events-none hidden"
+              }`}
+            >
               Cerrar Sesión
             </span>
           </button>

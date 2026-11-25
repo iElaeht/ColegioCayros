@@ -1,14 +1,12 @@
-// frontend/app/syspanel/(protected)/galeria/page.tsx
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { createPortal } from "react-dom";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import GalleryGrid from "./components/grid/GalleryGrid";
 import GalleryModal from "./components/modal/GalleryModal";
 import GalleryHomeConfig from "./components/home-config/GalleryHomeConfig";
-import ToastAlertGallery from "./components/home-config/ToastAlertGallery";
-import { SortOption } from "./components/grid/GalleryFilters"; 
+import ToastAlert from "../components/ToastAlert";
+import { SortOption } from "./components/grid/GalleryFilters";
 
 interface GalleryItem {
   id: number;
@@ -19,6 +17,9 @@ interface GalleryItem {
   createdAt?: string;
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const ITEMS_PER_PAGE = 20;
+
 export default function AdminGaleriaPage() {
   const router = useRouter();
   const pathname = usePathname();
@@ -27,8 +28,6 @@ export default function AdminGaleriaPage() {
   const [images, setImages] = useState<GalleryItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingImage, setEditingImage] = useState<GalleryItem | null>(null);
-
-  // Estado del Toast unificado con soporte para success, error y warning
   const [toastState, setToastState] = useState<{
     visible: boolean;
     type: "success" | "error" | "warning";
@@ -45,8 +44,6 @@ export default function AdminGaleriaPage() {
     },
     [],
   );
-
-  const itemsPerPage = 20;
 
   const currentPage = Number(searchParams.get("page")) || 1;
   const searchQuery = searchParams.get("search") || "";
@@ -82,9 +79,7 @@ export default function AdminGaleriaPage() {
       });
 
       const query = params.toString();
-      const newUrl = query ? `${pathname}?${query}` : pathname;
-
-      router.push(newUrl, { scroll: false });
+      router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
     },
     [searchParams, pathname, router],
   );
@@ -98,20 +93,17 @@ export default function AdminGaleriaPage() {
 
     const loadImages = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-        const res = await fetch(`${apiUrl}/api/galeria`);
-        if (!res.ok)
-          throw new Error("Error al obtener los registros del servidor");
+        const res = await fetch(`${API_URL}/api/galeria`);
+        if (!res.ok) throw new Error("Error al obtener los registros del servidor");
 
         const data = await res.json();
-
         if (isMounted && Array.isArray(data)) {
-          const cleanedData = data.map((img: GalleryItem) => ({
-            ...img,
-            alt: img.alt ? img.alt.trim() : "",
-          }));
-
-          setImages(cleanedData);
+          setImages(
+            data.map((img: GalleryItem) => ({
+              ...img,
+              alt: img.alt ? img.alt.trim() : "",
+            })),
+          );
         }
       } catch (error) {
         console.error("Error al cargar la galería:", error);
@@ -119,7 +111,6 @@ export default function AdminGaleriaPage() {
     };
 
     loadImages();
-
     return () => {
       isMounted = false;
     };
@@ -159,8 +150,7 @@ export default function AdminGaleriaPage() {
       const formData = new FormData();
       formData.append("isActive", String(!target.isActive));
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-      const res = await fetch(`${apiUrl}/api/galeria/${id}`, {
+      const res = await fetch(`${API_URL}/api/galeria/${id}`, {
         method: "PUT",
         body: formData,
       });
@@ -178,8 +168,7 @@ export default function AdminGaleriaPage() {
 
   const handleDelete = async (id: number) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-      const res = await fetch(`${apiUrl}/api/galeria/${id}`, {
+      const res = await fetch(`${API_URL}/api/galeria/${id}`, {
         method: "DELETE",
       });
 
@@ -214,10 +203,9 @@ export default function AdminGaleriaPage() {
         formData.append("imageUrl", imageUrl);
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
       const url = editingImage
-        ? `${apiUrl}/api/galeria/${editingImage.id}`
-        : `${apiUrl}/api/galeria`;
+        ? `${API_URL}/api/galeria/${editingImage.id}`
+        : `${API_URL}/api/galeria`;
 
       const method = editingImage ? "PUT" : "POST";
 
@@ -237,16 +225,11 @@ export default function AdminGaleriaPage() {
         setEditingImage(null);
         showToast(
           "success",
-          editingImage
-            ? "Imagen actualizada con éxito."
-            : "Imagen subida con éxito.",
+          editingImage ? "Imagen actualizada con éxito." : "Imagen subida con éxito.",
         );
       } else {
         const errData = await res.json().catch(() => ({}));
-        showToast(
-          "error",
-          `Error: ${errData.error || "No se pudo guardar la imagen"}`,
-        );
+        showToast("error", `Error: ${errData.error || "No se pudo guardar la imagen"}`);
       }
     } catch (error) {
       console.error("Error de red al procesar el formulario:", error);
@@ -256,14 +239,11 @@ export default function AdminGaleriaPage() {
 
   const filteredAndSortedImages = images
     .filter((item) => {
-      const matchesSearch = item.alt
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
+      const matchesSearch = item.alt.toLowerCase().includes(searchQuery.toLowerCase());
 
       let matchesDate = true;
       if (selectedDate && item.createdAt) {
-        const itemDate = item.createdAt.split("T")[0];
-        matchesDate = itemDate === selectedDate;
+        matchesDate = item.createdAt.split("T")[0] === selectedDate;
       }
 
       return matchesSearch && matchesDate;
@@ -279,23 +259,24 @@ export default function AdminGaleriaPage() {
     });
 
   const totalItems = filteredAndSortedImages.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE) || 1;
 
   useEffect(() => {
     if (currentPage > totalPages && totalPages > 0) {
-      updateQueryString({ page: totalPages });
+      const timer = setTimeout(() => {
+        updateQueryString({ page: totalPages });
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [currentPage, totalPages, updateQueryString]);
 
   const paginatedImages = filteredAndSortedImages.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE,
   );
 
   return (
     <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto w-full space-y-6 overflow-x-hidden select-none">
-      
-      {/* Cabecera del Módulo */}
       <div className="space-y-1">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[#16275d] tracking-tight">
           Gestión de Galería
@@ -307,15 +288,12 @@ export default function AdminGaleriaPage() {
 
       <div className="h-[1px] w-full bg-slate-200 my-2" />
 
-      {/* Configuración de Galería en Inicio */}
       <GalleryHomeConfig allImages={images} showToast={showToast} />
 
-      {/* Grilla General de Galería */}
       <GalleryGrid
         images={paginatedImages}
         onToggleStatus={toggleStatus}
         onOpenEdit={handleOpenEdit}
-        onDelete={handleDelete}
         searchQuery={searchQuery}
         onSearchChange={handleSearchChange}
         selectedDate={selectedDate}
@@ -327,10 +305,9 @@ export default function AdminGaleriaPage() {
         totalPages={totalPages}
         onPageChange={handlePageChange}
         totalItems={totalItems}
-        itemsPerPage={itemsPerPage}
+        itemsPerPage={ITEMS_PER_PAGE}
       />
 
-      {/* Modal de Creación / Edición */}
       <GalleryModal
         key={editingImage ? `edit-${editingImage.id}` : "create-new"}
         isOpen={isModalOpen}
@@ -339,26 +316,18 @@ export default function AdminGaleriaPage() {
           setEditingImage(null);
         }}
         onSubmit={handleFormSubmit}
-        onDelete={
-          editingImage ? () => handleDelete(editingImage.id) : undefined
-        }
+        onDelete={editingImage ? () => handleDelete(editingImage.id) : undefined}
         editingImage={editingImage}
       />
 
-      {/* Sistema de Notificaciones Toast unificado */}
-      {toastState.visible &&
-        typeof window !== "undefined" &&
-        createPortal(
-          <ToastAlertGallery
-            show={toastState.visible}
-            message={toastState.message}
-            type={toastState.type}
-            onClose={() =>
-              setToastState((prev) => ({ ...prev, visible: false }))
-            }
-          />,
-          document.body,
-        )}
+      <ToastAlert
+        show={toastState.visible}
+        message={toastState.message}
+        type={toastState.type}
+        onClose={() =>
+          setToastState((prev) => ({ ...prev, visible: false }))
+        }
+      />
     </div>
   );
 }

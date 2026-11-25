@@ -1,16 +1,6 @@
-// frontend/app/syspanel/(protected)/eventos/components/home-config/EventHomeGrid.tsx
 "use client";
 
-import EventCard from "./EventCard";
-
-interface EventItem {
-  id: number;
-  src: string;
-  alt: string;
-  isActive: boolean;
-  isFeatured?: boolean;
-  createdAt?: string;
-}
+import EventCard, { EventItem } from "./EventCard";
 
 interface EventHomeGridProps {
   allImages: EventItem[];
@@ -18,13 +8,13 @@ interface EventHomeGridProps {
   onOpenModal: () => void;
 }
 
+const HOME_LIMIT = 8;
+
 export default function EventHomeGrid({
   allImages,
   selectedIds,
   onOpenModal,
 }: EventHomeGridProps) {
-  const HOME_LIMIT = 8;
-
   const selectedItems = selectedIds
     .map((id) => allImages.find((img) => img.id === id))
     .filter((img): img is EventItem => img !== undefined);
@@ -50,9 +40,7 @@ export default function EventHomeGrid({
         </div>
       ))}
 
-      {Array.from({
-        length: Math.max(0, HOME_LIMIT - selectedItems.length),
-      }).map((_, index) => (
+      {Array.from({ length: Math.max(0, HOME_LIMIT - selectedItems.length) }).map((_, index) => (
         <div
           key={`empty-${index}`}
           onClick={onOpenModal}

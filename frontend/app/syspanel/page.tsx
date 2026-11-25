@@ -1,10 +1,11 @@
-// frontend/app/syspanel/page.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Lock, User, HelpCircle, X, Phone, Mail, MapPin, Eye, EyeOff } from "lucide-react";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,14 +21,15 @@ export default function LoginPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // DEFENSA 1: Si ya hay sesión activa y tratan de entrar al login, los mandamos al dashboard
   useEffect(() => {
     try {
       const token = sessionStorage.getItem("sys_token");
       if (token) {
         router.replace("/syspanel/dashboard");
       }
-    } catch (e) {}
+    } catch {
+      // Ignorar errores de almacenamiento en contextos restringidos
+    }
   }, [router]);
 
   useEffect(() => {
@@ -64,7 +66,7 @@ export default function LoginPage() {
     setGeneralError("");
 
     try {
-      const response = await fetch("http://localhost:4000/api/auth/login", {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -90,17 +92,17 @@ export default function LoginPage() {
         return;
       }
 
-      // Guardado seguro por pestaña con sessionStorage
       try {
         sessionStorage.clear();
         sessionStorage.setItem("sys_token", "active_session");
         sessionStorage.setItem("admin_user", JSON.stringify(data.usuario));
         document.cookie = "sys_token=active_session; path=/; max-age=86400; SameSite=Lax";
-      } catch (storageErr) {}
+      } catch {
+        // Continuar con la redirección aunque el almacenamiento local falle
+      }
 
-      // Redirección dura al dashboard
       window.location.href = "/syspanel/dashboard";
-    } catch (err) {
+    } catch {
       setGeneralError("No se pudo establecer conexión con el servidor.");
       setLoading(false);
     }
@@ -122,7 +124,7 @@ export default function LoginPage() {
               priority
             />
           </div>
-          <span className="w-2.5 h-2.5 bg-yellow-400 inline-block mb-1 rounded-full animate-pulse"></span>
+          <span className="w-2.5 h-2.5 bg-yellow-400 inline-block mb-1 rounded-full animate-pulse" />
           <h1 className="text-xl font-extrabold text-white tracking-wide">
             INTRANET CAYROS
           </h1>
@@ -153,11 +155,15 @@ export default function LoginPage() {
                 required
                 disabled={loading}
                 className={`w-full bg-slate-900 text-white text-xs pl-10 pr-3.5 py-3 rounded-xl border outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-                  errorDni ? "border-red-500" : "border-slate-700 focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/20"
+                  errorDni
+                    ? "border-red-500"
+                    : "border-slate-700 focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/20"
                 }`}
               />
             </div>
-            {errorDni && <p className="text-red-400 text-[11px] mt-1 font-medium pl-1">{errorDni}</p>}
+            {errorDni && (
+              <p className="text-red-400 text-[11px] mt-1 font-medium pl-1">{errorDni}</p>
+            )}
           </div>
 
           <div>
@@ -175,7 +181,9 @@ export default function LoginPage() {
                 required
                 disabled={loading}
                 className={`w-full bg-slate-900 text-white text-xs pl-10 pr-10 py-3 rounded-xl border outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-                  errorPassword ? "border-red-500" : "border-slate-700 focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/20"
+                  errorPassword
+                    ? "border-red-500"
+                    : "border-slate-700 focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/20"
                 }`}
               />
               <button
@@ -187,7 +195,9 @@ export default function LoginPage() {
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
-            {errorPassword && <p className="text-red-400 text-[11px] mt-1 font-medium pl-1">{errorPassword}</p>}
+            {errorPassword && (
+              <p className="text-red-400 text-[11px] mt-1 font-medium pl-1">{errorPassword}</p>
+            )}
           </div>
 
           <button
@@ -226,8 +236,12 @@ export default function LoginPage() {
                   <HelpCircle className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-extrabold text-white tracking-tight">Soporte Administrativo</h3>
-                  <p className="text-[10px] text-slate-400">Recuperación de acceso institucional</p>
+                  <h3 className="text-sm font-extrabold text-white tracking-tight">
+                    Soporte Administrativo
+                  </h3>
+                  <p className="text-[10px] text-slate-400">
+                    Recuperación de acceso institucional
+                  </p>
                 </div>
               </div>
               <button
@@ -241,7 +255,9 @@ export default function LoginPage() {
 
             <div className="space-y-3.5 text-xs text-slate-300">
               <p className="leading-relaxed font-medium">
-                Si no recuerdas tus credenciales de acceso o presentas inconvenientes con tu cuenta, comunícate con el área administrativa acercándote a la institución o a través de los siguientes canales oficiales:
+                Si no recuerdas tus credenciales de acceso o presentas inconvenientes con tu cuenta,
+                comunícate con el área administrativa acercándote a la institución o a través de los
+                siguientes canales oficiales:
               </p>
               <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
                 <div className="flex items-center gap-3">
@@ -249,8 +265,12 @@ export default function LoginPage() {
                     <MapPin className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="block text-[9px] uppercase font-bold text-slate-500">Ubicación</span>
-                    <span className="font-semibold text-slate-200 text-xs">Chincha Alta, Ica - Perú</span>
+                    <span className="block text-[9px] uppercase font-bold text-slate-500">
+                      Ubicación
+                    </span>
+                    <span className="font-semibold text-slate-200 text-xs">
+                      Chincha Alta, Ica - Perú
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -258,8 +278,12 @@ export default function LoginPage() {
                     <Phone className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="block text-[9px] uppercase font-bold text-slate-500">Teléfono / Celular de Soporte</span>
-                    <span className="font-semibold text-slate-200 text-xs">(+51) 956 411 538 (Datos de prueba)</span>
+                    <span className="block text-[9px] uppercase font-bold text-slate-500">
+                      Teléfono / Celular de Soporte
+                    </span>
+                    <span className="font-semibold text-slate-200 text-xs">
+                      (+51) 956 411 538 (Datos de prueba)
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -267,13 +291,17 @@ export default function LoginPage() {
                     <Mail className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="block text-[9px] uppercase font-bold text-slate-500">Correo Electrónico</span>
-                    <span className="font-semibold text-slate-200 text-xs">soporte@colegiocayros.edu.pe</span>
+                    <span className="block text-[9px] uppercase font-bold text-slate-500">
+                      Correo Electrónico
+                    </span>
+                    <span className="font-semibold text-slate-200 text-xs">
+                      soporte@colegiocayros.edu.pe
+                    </span>
                   </div>
                 </div>
               </div>
               <p className="text-[10px] text-slate-500 italic text-center">
-                * Nota: Estos datos son de prueba/testeo y serán actualizados próximamente.
+                Nota: Estos datos son de prueba/testeo y serán actualizados próximamente.
               </p>
             </div>
 

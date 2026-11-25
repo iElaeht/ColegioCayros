@@ -1,8 +1,17 @@
-// frontend/app/syspanel/mensajes/components/ContactGrid.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { FileText, Trash2, Phone, Calendar, User, ShieldCheck, MessageSquare, X, AlertTriangle } from "lucide-react";
+import {
+  FileText,
+  Trash2,
+  Phone,
+  Calendar,
+  User,
+  ShieldCheck,
+  MessageSquare,
+  X,
+  AlertTriangle,
+} from "lucide-react";
 import { Mensaje } from "../page";
 
 interface ContactGridProps {
@@ -14,22 +23,28 @@ interface ContactGridProps {
   onDelete: (id: string) => void;
 }
 
-export default function ContactGrid({ 
-  mensajes, 
-  loading, 
-  error, 
-  currentPage, 
-  itemsPerPage,
-  onDelete
-}: ContactGridProps) {
-  // Estado para el Modal de Detalle
-  const [selectedMensaje, setSelectedMensaje] = useState<Mensaje | null>(null);
-  
-  // Estado interno para el Modal de Confirmación de Eliminación
-  const [mensajeToDelete, setMensajeToDelete] = useState<Mensaje | null>(null);
-  const [isDeleting, setIsDeleting] = useState<boolean>(false);
+function formatLocalDate(fechaStr?: string): string {
+  if (!fechaStr) return "N/A";
+  const dateOnly = fechaStr.split("T")[0];
+  const parts = dateOnly.split("-");
+  if (parts.length === 3) {
+    const [year, month, day] = parts;
+    return `${day}/${month}/${year}`;
+  }
+  return fechaStr;
+}
 
-  // Manejo de bloqueo de scroll seguro y tecla ESC en los modales
+export default function ContactGrid({
+  mensajes,
+  loading,
+  error,
+  currentPage,
+  itemsPerPage,
+  onDelete,
+}: ContactGridProps) {
+  const [selectedMensaje, setSelectedMensaje] = useState<Mensaje | null>(null);
+  const [mensajeToDelete, setMensajeToDelete] = useState<Mensaje | null>(null);
+
   useEffect(() => {
     if (!selectedMensaje && !mensajeToDelete) return;
 
@@ -59,21 +74,9 @@ export default function ContactGrid({
 
   const handleConfirmDelete = () => {
     if (!mensajeToDelete) return;
-    setIsDeleting(true);
-    onDelete(mensajeToDelete.id);
-    setIsDeleting(false);
+    const targetId = mensajeToDelete.id;
     setMensajeToDelete(null);
-  };
-
-  const formatLocalDate = (fechaStr?: string) => {
-    if (!fechaStr) return "N/A";
-    const dateOnly = fechaStr.split("T")[0];
-    const parts = dateOnly.split("-");
-    if (parts.length === 3) {
-      const [year, month, day] = parts;
-      return `${day}/${month}/${year}`;
-    }
-    return fechaStr;
+    onDelete(targetId);
   };
 
   if (loading) {
@@ -90,7 +93,13 @@ export default function ContactGrid({
     return (
       <div className="p-8 text-center bg-rose-50 rounded-3xl border border-rose-100 select-none">
         <p className="text-rose-600 font-bold text-xs">No se pudieron cargar los mensajes.</p>
-        <button onClick={() => window.location.reload()} className="mt-2 text-xs text-rose-400 underline cursor-pointer font-medium">Intentar de nuevo</button>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="mt-2 text-xs text-rose-400 underline cursor-pointer font-medium"
+        >
+          Intentar de nuevo
+        </button>
       </div>
     );
   }
@@ -98,7 +107,9 @@ export default function ContactGrid({
   if (mensajes.length === 0) {
     return (
       <div className="p-12 text-center border border-dashed border-slate-300 rounded-3xl select-none">
-        <p className="text-slate-400 text-xs font-medium">No se encontraron mensajes con los filtros seleccionados.</p>
+        <p className="text-slate-400 text-xs font-medium">
+          No se encontraron mensajes con los filtros seleccionados.
+        </p>
       </div>
     );
   }
@@ -128,13 +139,22 @@ export default function ContactGrid({
                     {numeroSerie}
                   </td>
                   <td className="px-6 py-4 font-bold text-slate-900">{msg.dni}</td>
-                  <td className="px-6 py-4 text-slate-800 font-semibold truncate max-w-[180px]" title={msg.nombre}>{msg.nombre}</td>
+                  <td
+                    className="px-6 py-4 text-slate-800 font-semibold truncate max-w-[180px]"
+                    title={msg.nombre}
+                  >
+                    {msg.nombre}
+                  </td>
                   <td className="px-6 py-4 text-slate-700 hidden md:table-cell">{msg.telefono}</td>
-                  <td className="px-6 py-4 text-slate-500 truncate max-w-[200px]" title={msg.asunto}>{msg.asunto}</td>
+                  <td
+                    className="px-6 py-4 text-slate-500 truncate max-w-[200px]"
+                    title={msg.asunto}
+                  >
+                    {msg.asunto}
+                  </td>
                   <td className="px-6 py-4 text-slate-500 text-[11px] whitespace-nowrap hidden sm:table-cell">
                     {formatLocalDate(msg.fecha)}
                   </td>
-                  {/* ACCIONES */}
                   <td className="px-4 py-4 text-center">
                     <div className="flex items-center justify-center gap-1">
                       <button
@@ -152,7 +172,7 @@ export default function ContactGrid({
                         type="button"
                         onClick={(e) => {
                           e.currentTarget.blur();
-                          setMensajeToDelete(msg); // Abre el modal de confirmación interno
+                          setMensajeToDelete(msg);
                         }}
                         className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer outline-none"
                         title="Eliminar mensaje"
@@ -168,7 +188,6 @@ export default function ContactGrid({
         </table>
       </div>
 
-      {/* MODAL DE DETALLE DEL MENSAJE */}
       {selectedMensaje && (
         <div className="fixed inset-0 z-[99999] overflow-y-auto bg-slate-950/65 backdrop-blur-md flex min-h-full items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden my-auto flex flex-col">
@@ -179,7 +198,9 @@ export default function ContactGrid({
                 </div>
                 <div>
                   <h3 className="text-base font-extrabold tracking-tight">Detalle del Mensaje</h3>
-                  <p className="text-xs text-slate-300 font-medium">ID Mensaje #{selectedMensaje.id}</p>
+                  <p className="text-xs text-slate-300 font-medium">
+                    ID Mensaje #{selectedMensaje.id}
+                  </p>
                 </div>
               </div>
               <button
@@ -198,12 +219,16 @@ export default function ContactGrid({
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center gap-2.5">
                 <Calendar className="w-4 h-4 text-[#16275d] shrink-0" />
                 <div>
-                  <span className="block text-[10px] uppercase font-bold text-slate-400">Fecha de Recepción</span>
+                  <span className="block text-[10px] uppercase font-bold text-slate-400">
+                    Fecha de Recepción
+                  </span>
                   <span className="text-xs font-bold text-slate-800">
-                    {selectedMensaje.fecha ? new Date(selectedMensaje.fecha).toLocaleString("es-PE", {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    }) : "N/A"}
+                    {selectedMensaje.fecha
+                      ? new Date(selectedMensaje.fecha).toLocaleString("es-PE", {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        })
+                      : "N/A"}
                   </span>
                 </div>
               </div>
@@ -261,11 +286,9 @@ export default function ContactGrid({
         </div>
       )}
 
-      {/* MODAL DE CONFIRMACIÓN DE ELIMINACIÓN INTERNO */}
       {mensajeToDelete && (
         <div className="fixed inset-0 z-[99999] overflow-y-auto bg-slate-950/65 backdrop-blur-md flex min-h-full items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden my-auto flex flex-col">
-            
             <div className="bg-rose-600 text-white px-6 py-4.5 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white">
@@ -273,7 +296,9 @@ export default function ContactGrid({
                 </div>
                 <div>
                   <h3 className="text-base font-extrabold tracking-tight">Confirmar Eliminación</h3>
-                  <p className="text-xs text-rose-100 font-medium">Esta acción no se puede deshacer</p>
+                  <p className="text-xs text-rose-100 font-medium">
+                    Esta acción no se puede deshacer
+                  </p>
                 </div>
               </div>
               <button
@@ -290,7 +315,9 @@ export default function ContactGrid({
 
             <div className="p-6 sm:p-7 space-y-4">
               <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
-                ¿Estás seguro de eliminar el mensaje enviado por <strong className="text-slate-900">{mensajeToDelete.nombre}</strong> (DNI: {mensajeToDelete.dni})?
+                ¿Estás seguro de eliminar el mensaje enviado por{" "}
+                <strong className="text-slate-900">{mensajeToDelete.nombre}</strong> (DNI:{" "}
+                {mensajeToDelete.dni})?
               </p>
               <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-xs text-slate-500 italic">
                 &quot;{mensajeToDelete.asunto}&quot;
@@ -304,8 +331,7 @@ export default function ContactGrid({
                   e.currentTarget.blur();
                   setMensajeToDelete(null);
                 }}
-                disabled={isDeleting}
-                className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold transition-all border border-slate-200 shadow-2xs cursor-pointer outline-none disabled:opacity-50"
+                className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold transition-all border border-slate-200 shadow-2xs cursor-pointer outline-none"
               >
                 Cancelar
               </button>
@@ -315,18 +341,15 @@ export default function ContactGrid({
                   e.currentTarget.blur();
                   handleConfirmDelete();
                 }}
-                disabled={isDeleting}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all shadow-sm cursor-pointer outline-none disabled:opacity-50"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all shadow-sm cursor-pointer outline-none"
               >
                 <Trash2 className="w-4 h-4" />
-                {isDeleting ? "Eliminando..." : "Sí, eliminar"}
+                <span>Sí, eliminar</span>
               </button>
             </div>
-
           </div>
         </div>
       )}
-
     </div>
   );
 }

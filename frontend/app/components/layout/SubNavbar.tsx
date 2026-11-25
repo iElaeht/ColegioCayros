@@ -19,6 +19,7 @@ import {
   CheckCircle,
   Shield,
   ScrollText,
+  CreditCard,
   Menu,
   X
 } from "lucide-react";
@@ -32,7 +33,6 @@ export default function SubNavbar() {
 
   const isHome = pathname === "/";
 
-  // Control de scroll para la página de inicio
   useEffect(() => {
     if (!isHome) {
       setActiveSection("");
@@ -63,7 +63,6 @@ export default function SubNavbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [isHome]);
 
-  // Cerrar menú móvil al cambiar de ruta
   useEffect(() => {
     setMobileMenuOpen(false);
     setOpenDropdownMobile(null);
@@ -142,6 +141,7 @@ export default function SubNavbar() {
       hasDropdown: true,
       items: [
         { label: "Zona de Matrícula", href: "/matricula", icon: CheckCircle },
+        { label: "Pagos Institucionales", href: "/pagos-institucional", icon: CreditCard },
         { label: "Boletín Informativo", href: "/boletin", icon: FileText },
       ]
     },
@@ -166,15 +166,12 @@ export default function SubNavbar() {
     <div className="sticky top-[73px] sm:top-[77px] z-40 w-full bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs select-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Barra para Desktop y Botón Toggle para Móvil */}
         <div className="flex items-center justify-between lg:justify-center h-14">
           
-          {/* Logo o Texto corto en móvil para identificar el menú */}
           <span className="lg:hidden text-xs font-extrabold text-[#16275d] uppercase tracking-wider flex items-center gap-1.5">
             Menú Institucional
           </span>
 
-          {/* Menú de Escritorio (Oculto en móvil/tablet) */}
           <div className="hidden lg:flex items-center gap-1 xl:gap-2">
             {menuCategories.map((menu) => {
               const Icon = menu.icon;
@@ -246,7 +243,6 @@ export default function SubNavbar() {
             })}
           </div>
 
-          {/* Botón Hamburguesa para Móviles y Tablets (< lg) */}
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -259,7 +255,6 @@ export default function SubNavbar() {
         </div>
       </div>
 
-      {/* Menú Desplegable Móvil / Tablet (Acordeón conectado directamente bajo la barra) */}
       {mobileMenuOpen && (
         <div className="lg:hidden absolute top-full left-0 right-0 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xl p-4 space-y-2 max-h-[75vh] overflow-y-auto animate-in slide-in-from-top-2 duration-200 z-50">
           {menuCategories.map((menu) => {

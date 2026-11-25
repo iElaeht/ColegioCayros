@@ -1,14 +1,12 @@
-// frontend/app/syspanel/(protected)/eventos/page.tsx
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { createPortal } from "react-dom";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import EventGrid from "./components/grid/EventGrid";
 import EventModal from "./components/modal/EventModal";
 import EventHomeConfig from "./components/home-config/EventHomeConfig";
 import { SortOption } from "./components/grid/EventFilters";
-import { CheckCircle2, AlertCircle } from "lucide-react";
+import ToastAlert, { ToastType } from "../components/ToastAlert";
 
 interface EventItem {
   id: number;
@@ -19,6 +17,9 @@ interface EventItem {
   createdAt?: string;
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const ITEMS_PER_PAGE = 20;
+
 export default function AdminEventosPage() {
   const router = useRouter();
   const pathname = usePathname();
@@ -27,23 +28,23 @@ export default function AdminEventosPage() {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<EventItem | null>(null);
-
   const [toast, setToast] = useState<{
-    type: "success" | "error";
+    show: boolean;
+    type: ToastType;
     message: string;
-  } | null>(null);
+  }>({
+    show: false,
+    type: "success",
+    message: "",
+  });
 
-  const showToast = useCallback(
-    (type: "success" | "error", message: string) => {
-      setToast({ type, message });
-      setTimeout(() => {
-        setToast(null);
-      }, 3500);
-    },
-    [],
-  );
+  const showToast = useCallback((type: ToastType, message: string) => {
+    setToast({ show: true, type, message });
+  }, []);
 
-  const itemsPerPage = 20;
+  const hideToast = useCallback(() => {
+    setToast((prev) => ({ ...prev, show: false }));
+  }, []);
 
   const currentPage = Number(searchParams.get("page")) || 1;
   const searchQuery = searchParams.get("search") || "";
@@ -79,9 +80,7 @@ export default function AdminEventosPage() {
       });
 
       const query = params.toString();
-      const newUrl = query ? `${pathname}?${query}` : pathname;
-
-      router.push(newUrl, { scroll: false });
+      router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
     },
     [searchParams, pathname, router],
   );
@@ -95,20 +94,17 @@ export default function AdminEventosPage() {
 
     const loadEvents = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-        const res = await fetch(`${apiUrl}/api/eventos`);
-        if (!res.ok)
-          throw new Error("Error al obtener los registros del servidor");
+        const res = await fetch(`${API_URL}/api/eventos`);
+        if (!res.ok) throw new Error("Error al obtener los registros del servidor");
 
         const data = await res.json();
-
         if (isMounted && Array.isArray(data)) {
-          const cleanedData = data.map((item: EventItem) => ({
-            ...item,
-            alt: item.alt ? item.alt.trim() : "",
-          }));
-
-          setEvents(cleanedData);
+          setEvents(
+            data.map((item: EventItem) => ({
+              ...item,
+              alt: item.alt ? item.alt.trim() : "",
+            })),
+          );
         }
       } catch (error) {
         console.error("Error al cargar los eventos:", error);
@@ -116,7 +112,6 @@ export default function AdminEventosPage() {
     };
 
     loadEvents();
-
     return () => {
       isMounted = false;
     };
@@ -156,8 +151,7 @@ export default function AdminEventosPage() {
       const formData = new FormData();
       formData.append("isActive", String(!target.isActive));
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-      const res = await fetch(`${apiUrl}/api/eventos/${id}`, {
+      const res = await fetch(`${API_URL}/api/eventos/${id}`, {
         method: "PUT",
         body: formData,
       });
@@ -165,9 +159,7 @@ export default function AdminEventosPage() {
       if (!res.ok) throw new Error("No se pudo actualizar el estado");
 
       const updated = await res.json();
-      setEvents((prev) =>
-        prev.map((item) => (item.id === id ? updated : item)),
-      );
+      setEvents((prev) => prev.map((item) => (item.id === id ? updated : item)));
       showToast("success", "Estado actualizado correctamente.");
     } catch (error) {
       console.error("Error al cambiar el estado del evento:", error);
@@ -177,8 +169,7 @@ export default function AdminEventosPage() {
 
   const handleDelete = async (id: number) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-      const res = await fetch(`${apiUrl}/api/eventos/${id}`, {
+      const res = await fetch(`${API_URL}/api/eventos/${id}`, {
         method: "DELETE",
       });
 
@@ -222,10 +213,9 @@ export default function AdminEventosPage() {
         formData.append("imageUrl", imageUrl);
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
       const url = editingEvent
-        ? `${apiUrl}/api/eventos/${editingEvent.id}`
-        : `${apiUrl}/api/eventos`;
+        ? `${API_URL}/api/eventos/${editingEvent.id}`
+        : `${API_URL}/api/eventos`;
 
       const method = editingEvent ? "PUT" : "POST";
 
@@ -238,25 +228,18 @@ export default function AdminEventosPage() {
         const resultItem = await res.json();
         setEvents((prev) =>
           editingEvent
-            ? prev.map((item) =>
-                item.id === resultItem.id ? resultItem : item,
-              )
+            ? prev.map((item) => (item.id === resultItem.id ? resultItem : item))
             : [resultItem, ...prev],
         );
         setIsModalOpen(false);
         setEditingEvent(null);
         showToast(
           "success",
-          editingEvent
-            ? "Evento actualizado con éxito."
-            : "Evento creado con éxito.",
+          editingEvent ? "Evento actualizado con éxito." : "Evento creado con éxito.",
         );
       } else {
         const errData = await res.json().catch(() => ({}));
-        showToast(
-          "error",
-          `Error: ${errData.error || "No se pudo guardar el evento"}`,
-        );
+        showToast("error", `Error: ${errData.error || "No se pudo guardar el evento"}`);
       }
     } catch (error) {
       console.error("Error de red al procesar el formulario:", error);
@@ -266,14 +249,11 @@ export default function AdminEventosPage() {
 
   const filteredAndSortedEvents = events
     .filter((item) => {
-      const matchesSearch = item.alt
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
+      const matchesSearch = item.alt.toLowerCase().includes(searchQuery.toLowerCase());
 
       let matchesDate = true;
       if (selectedDate && item.createdAt) {
-        const itemDate = item.createdAt.split("T")[0];
-        matchesDate = itemDate === selectedDate;
+        matchesDate = item.createdAt.split("T")[0] === selectedDate;
       }
 
       return matchesSearch && matchesDate;
@@ -289,23 +269,24 @@ export default function AdminEventosPage() {
     });
 
   const totalItems = filteredAndSortedEvents.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE) || 1;
 
   useEffect(() => {
     if (currentPage > totalPages && totalPages > 0) {
-      updateQueryString({ page: totalPages });
+      const timer = setTimeout(() => {
+        updateQueryString({ page: totalPages });
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [currentPage, totalPages, updateQueryString]);
 
   const paginatedEvents = filteredAndSortedEvents.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE,
   );
 
   return (
     <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto w-full space-y-6 overflow-x-hidden select-none">
-      
-      {/* Cabecera del Módulo */}
       <div className="space-y-1">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[#16275d] tracking-tight">
           Gestión de Eventos
@@ -317,15 +298,12 @@ export default function AdminEventosPage() {
 
       <div className="h-[1px] w-full bg-slate-200 my-2" />
 
-      {/* Configuración de Destacados en Inicio */}
       <EventHomeConfig allImages={events} showToast={showToast} />
 
-      {/* Grilla General de Eventos */}
       <EventGrid
         images={paginatedEvents}
         onToggleStatus={toggleStatus}
         onOpenEdit={handleOpenEdit}
-        onDelete={handleDelete}
         searchQuery={searchQuery}
         onSearchChange={handleSearchChange}
         selectedDate={selectedDate}
@@ -337,10 +315,9 @@ export default function AdminEventosPage() {
         totalPages={totalPages}
         onPageChange={handlePageChange}
         totalItems={totalItems}
-        itemsPerPage={itemsPerPage}
+        itemsPerPage={ITEMS_PER_PAGE}
       />
 
-      {/* Modal de Creación / Edición */}
       <EventModal
         key={editingEvent ? `edit-${editingEvent.id}` : "create-new"}
         isOpen={isModalOpen}
@@ -349,26 +326,16 @@ export default function AdminEventosPage() {
           setEditingEvent(null);
         }}
         onSubmit={handleFormSubmit}
-        onDelete={
-          editingEvent ? () => handleDelete(editingEvent.id) : undefined
-        }
+        onDelete={editingEvent ? () => handleDelete(editingEvent.id) : undefined}
         editingImage={editingEvent}
       />
 
-      {/* Sistema de Notificaciones Toast */}
-      {toast &&
-        typeof window !== "undefined" &&
-        createPortal(
-          <div className="fixed top-6 right-6 z-[99999] flex items-center gap-3 px-5 py-3.5 bg-[#16275d] text-white text-xs sm:text-sm font-bold rounded-2xl shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-3 duration-200 border border-[#16275d]/60">
-            {toast.type === "success" ? (
-              <CheckCircle2 className="w-5 h-5 text-amber-400 shrink-0" />
-            ) : (
-              <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
-            )}
-            <span>{toast.message}</span>
-          </div>,
-          document.body,
-        )}
+      <ToastAlert
+        show={toast.show}
+        type={toast.type}
+        message={toast.message}
+        onClose={hideToast}
+      />
     </div>
   );
 }

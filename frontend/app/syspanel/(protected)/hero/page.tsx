@@ -1,4 +1,3 @@
-// frontend/app/syspanel/(protected)/hero/page.tsx
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -6,7 +5,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import HeroGrid from "./components/grid/HeroGrid";
 import HeroModal from "./components/modal/HeroModal";
 import HeroHomeConfig from "./components/home-config/HeroHomeConfig";
-import ToastAlertHero from "./components/home-config/ToastAlertHero";
+import ToastAlert from "../components/ToastAlert";
 import { SortOption } from "./components/grid/HeroFilters";
 
 interface HeroSlideItem {
@@ -19,6 +18,9 @@ interface HeroSlideItem {
   createdAt?: string;
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const ITEMS_PER_PAGE = 20;
+
 export default function AdminHeroPage() {
   const router = useRouter();
   const pathname = usePathname();
@@ -27,8 +29,6 @@ export default function AdminHeroPage() {
   const [items, setItems] = useState<HeroSlideItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<HeroSlideItem | null>(null);
-
-  // Estado del Toast con soporte para success, error y warning
   const [toastState, setToastState] = useState<{
     visible: boolean;
     type: "success" | "error" | "warning";
@@ -45,8 +45,6 @@ export default function AdminHeroPage() {
     },
     [],
   );
-
-  const itemsPerPage = 20;
 
   const currentPage = Number(searchParams.get("page")) || 1;
   const searchQuery = searchParams.get("search") || "";
@@ -82,9 +80,7 @@ export default function AdminHeroPage() {
       });
 
       const query = params.toString();
-      const newUrl = query ? `${pathname}?${query}` : pathname;
-
-      router.push(newUrl, { scroll: false });
+      router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
     },
     [searchParams, pathname, router],
   );
@@ -98,19 +94,17 @@ export default function AdminHeroPage() {
 
     const loadItems = async () => {
       try {
-        const res = await fetch("http://localhost:4000/api/hero");
-        if (!res.ok)
-          throw new Error("Error al obtener los registros del servidor");
+        const res = await fetch(`${API_URL}/api/hero`);
+        if (!res.ok) throw new Error("Error al obtener los registros del servidor");
 
         const data = await res.json();
-
         if (isMounted && Array.isArray(data)) {
-          const cleanedData = data.map((item: HeroSlideItem) => ({
-            ...item,
-            title: item.title ? item.title.trim() : "",
-          }));
-
-          setItems(cleanedData);
+          setItems(
+            data.map((item: HeroSlideItem) => ({
+              ...item,
+              title: item.title ? item.title.trim() : "",
+            })),
+          );
         }
       } catch (error) {
         console.error("Error al cargar los banners del hero:", error);
@@ -118,7 +112,6 @@ export default function AdminHeroPage() {
     };
 
     loadItems();
-
     return () => {
       isMounted = false;
     };
@@ -158,7 +151,7 @@ export default function AdminHeroPage() {
       const formData = new FormData();
       formData.append("isActive", String(!target.isActive));
 
-      const res = await fetch(`http://localhost:4000/api/hero/${id}`, {
+      const res = await fetch(`${API_URL}/api/hero/${id}`, {
         method: "PUT",
         body: formData,
       });
@@ -176,7 +169,7 @@ export default function AdminHeroPage() {
 
   const handleDelete = async (id: number) => {
     try {
-      const res = await fetch(`http://localhost:4000/api/hero/${id}`, {
+      const res = await fetch(`${API_URL}/api/hero/${id}`, {
         method: "DELETE",
       });
 
@@ -212,8 +205,8 @@ export default function AdminHeroPage() {
       }
 
       const url = editingItem
-        ? `http://localhost:4000/api/hero/${editingItem.id}`
-        : "http://localhost:4000/api/hero";
+        ? `${API_URL}/api/hero/${editingItem.id}`
+        : `${API_URL}/api/hero`;
 
       const method = editingItem ? "PUT" : "POST";
 
@@ -233,16 +226,11 @@ export default function AdminHeroPage() {
         setEditingItem(null);
         showToast(
           "success",
-          editingItem
-            ? "Banner actualizado con éxito."
-            : "Banner subido con éxito.",
+          editingItem ? "Banner actualizado con éxito." : "Banner subido con éxito.",
         );
       } else {
         const errData = await res.json().catch(() => ({}));
-        showToast(
-          "error",
-          `Error: ${errData.error || "No se pudo guardar el banner"}`,
-        );
+        showToast("error", `Error: ${errData.error || "No se pudo guardar el banner"}`);
       }
     } catch (error) {
       console.error("Error de red al procesar el formulario:", error);
@@ -253,9 +241,7 @@ export default function AdminHeroPage() {
   const filteredAndSortedItems = items
     .filter((item) => {
       const itemTitle = item.title || "";
-      const matchesSearch = itemTitle
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
+      const matchesSearch = itemTitle.toLowerCase().includes(searchQuery.toLowerCase());
 
       let matchesDate = true;
       if (selectedDate && item.createdAt) {
@@ -276,17 +262,20 @@ export default function AdminHeroPage() {
     });
 
   const totalItems = filteredAndSortedItems.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE) || 1;
 
   useEffect(() => {
     if (currentPage > totalPages && totalPages > 0) {
-      updateQueryString({ page: totalPages });
+      const timer = setTimeout(() => {
+        updateQueryString({ page: totalPages });
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [currentPage, totalPages, updateQueryString]);
 
   const paginatedItems = filteredAndSortedItems.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE,
   );
 
   return (
@@ -302,14 +291,12 @@ export default function AdminHeroPage() {
 
       <div className="h-px w-full bg-slate-200/90 my-2" />
 
-      {/* Configuración de banners destacados para el inicio */}
       <HeroHomeConfig allImages={items} showToast={showToast} />
 
       <HeroGrid
         images={paginatedItems}
         onToggleStatus={toggleStatus}
         onOpenEdit={handleOpenEdit}
-        onDelete={handleDelete}
         searchQuery={searchQuery}
         onSearchChange={handleSearchChange}
         selectedDate={selectedDate}
@@ -321,7 +308,7 @@ export default function AdminHeroPage() {
         totalPages={totalPages}
         onPageChange={handlePageChange}
         totalItems={totalItems}
-        itemsPerPage={itemsPerPage}
+        itemsPerPage={ITEMS_PER_PAGE}
       />
 
       <HeroModal
@@ -332,14 +319,11 @@ export default function AdminHeroPage() {
           setEditingItem(null);
         }}
         onSubmit={handleFormSubmit}
-        onDelete={
-          editingItem ? () => handleDelete(editingItem.id) : undefined
-        }
+        onDelete={editingItem ? () => handleDelete(editingItem.id) : undefined}
         editingItem={editingItem}
       />
 
-      {/* Componente Toast unificado para el Hero */}
-      <ToastAlertHero
+      <ToastAlert
         show={toastState.visible}
         type={toastState.type}
         message={toastState.message}

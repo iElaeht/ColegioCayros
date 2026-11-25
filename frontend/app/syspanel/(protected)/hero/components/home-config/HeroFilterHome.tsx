@@ -1,4 +1,3 @@
-// frontend/app/syspanel/hero/components/home-config/HeroFilterHome.tsx
 "use client";
 
 import { Search, X } from "lucide-react";
@@ -22,7 +21,6 @@ export default function HeroFilterHome({
 }: HeroFilterHomeProps) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full select-none">
-      {/* Buscador y botón limpiar */}
       <div className="relative w-full sm:max-w-md">
         <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
           <Search className="w-4 h-4" />
@@ -46,7 +44,6 @@ export default function HeroFilterHome({
         )}
       </div>
 
-      {/* Pestañas de filtrado (Todos / Destacados) */}
       <div className="grid grid-cols-2 sm:flex items-center gap-1 bg-slate-100/80 p-1.5 rounded-xl border border-slate-200/60 shrink-0">
         <button
           type="button"

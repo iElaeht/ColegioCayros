@@ -1,11 +1,9 @@
-// frontend/app/syspanel/(protected)/hero/components/home-config/HeroHomeCard.tsx
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
 import { Calendar, Star } from "lucide-react";
 
-interface HeroSlideItem {
+export interface HeroSlideItem {
   id: number;
   title?: string | null;
   imageUrl: string;
@@ -24,6 +22,8 @@ interface HeroHomeCardProps {
   onClick?: () => void;
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+
 export default function HeroHomeCard({
   item,
   isSelected = false,
@@ -32,8 +32,6 @@ export default function HeroHomeCard({
   hideDetails = false,
   onClick,
 }: HeroHomeCardProps) {
-  const [, setIsHovered] = useState(false);
-
   if (!item || !item.imageUrl) {
     return (
       <div className="rounded-xl border border-slate-100 bg-slate-50 aspect-[16/10] w-full flex items-center justify-center text-xs text-slate-400 select-none">
@@ -42,9 +40,9 @@ export default function HeroHomeCard({
     );
   }
 
-  const imageSrc = item.imageUrl.startsWith('http')  
-    ? item.imageUrl 
-    : `http://localhost:4000${item.imageUrl}`;
+  const imageSrc = item.imageUrl.startsWith("http")
+    ? item.imageUrl
+    : `${API_URL}${item.imageUrl}`;
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return "Reciente";
@@ -61,36 +59,34 @@ export default function HeroHomeCard({
     }
   };
 
-  const titleText = item.title && item.title.trim() !== "" ? item.title : "Banner sin título";
+  const titleText =
+    item.title && item.title.trim() !== "" ? item.title : "Banner sin título";
 
   return (
-    <div 
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+    <div
       onClick={onClick}
       className={`group bg-white rounded-xl transition-all duration-200 flex flex-col cursor-pointer border shadow-xs hover:shadow-md select-none ${
-        isSelected 
-          ? "border-[#16275d] ring-2 ring-[#16275d]/10 bg-amber-50/20" 
+        isSelected
+          ? "border-[#16275d] ring-2 ring-[#16275d]/10 bg-amber-50/20"
           : "border-slate-200/80 hover:border-[#16275d]/40"
-      } ${
-        hideDetails ? "p-1 gap-0" : "p-2 gap-2.5"
-      }`}
+      } ${hideDetails ? "p-1 gap-0" : "p-2 gap-2.5"}`}
     >
-      <div className={`relative w-full rounded-lg bg-slate-100 overflow-hidden flex items-center justify-center ${
-        hideDetails ? "aspect-[4/3] rounded-lg" : "aspect-[16/10]"
-      }`}>
-        <Image 
-          src={imageSrc} 
-          alt={titleText} 
-          fill 
+      <div
+        className={`relative w-full rounded-lg bg-slate-100 overflow-hidden flex items-center justify-center ${
+          hideDetails ? "aspect-[4/3] rounded-lg" : "aspect-[16/10]"
+        }`}
+      >
+        <Image
+          src={imageSrc}
+          alt={titleText}
+          fill
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          className="object-cover transition-transform duration-300 group-hover:scale-105" 
+          className="object-cover transition-transform duration-300 group-hover:scale-105"
           unoptimized
         />
 
         <div className="absolute inset-0 bg-slate-950/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none" />
 
-        {/* Indicador de Slot / Destacado o Número de Selección */}
         {isInteractive && isSelected && selectionNumber !== null ? (
           <div className="absolute top-2.5 right-2.5 z-30">
             <div className="w-6 h-6 rounded-full bg-[#16275d] text-amber-400 flex items-center justify-center text-[11px] font-bold shadow-md border border-amber-400/40">
@@ -99,7 +95,11 @@ export default function HeroHomeCard({
           </div>
         ) : (
           <div className="absolute top-2 left-2 z-20 flex items-center gap-1 bg-slate-900/70 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
-            <Star className={`w-3 h-3 ${item.isFeatured ? "text-amber-400 fill-amber-400" : "text-slate-400"}`} />
+            <Star
+              className={`w-3 h-3 ${
+                item.isFeatured ? "text-amber-400 fill-amber-400" : "text-slate-400"
+              }`}
+            />
             <span>{item.isFeatured && item.order ? `#${item.order}` : "Libre"}</span>
           </div>
         )}
@@ -107,7 +107,7 @@ export default function HeroHomeCard({
 
       {!hideDetails && (
         <div className="flex flex-col gap-1 px-1 pb-0.5">
-          <h3 
+          <h3
             title={titleText}
             className="text-xs font-bold text-[#16275d] tracking-tight truncate group-hover:text-amber-600 transition-colors duration-200"
           >

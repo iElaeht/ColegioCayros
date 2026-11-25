@@ -1,8 +1,6 @@
-// frontend/app/syspanel/(protected)/hero/components/home-config/HeroHomeGrid.tsx
 "use client";
 
-import HeroHomeCard from "./HeroHomeCard";
-import { HeroSlideItem } from "./HeroHomeConfig";
+import HeroHomeCard, { HeroSlideItem } from "./HeroHomeCard";
 
 interface HeroHomeGridProps {
   allImages: HeroSlideItem[];
@@ -10,13 +8,13 @@ interface HeroHomeGridProps {
   onOpenModal: () => void;
 }
 
+const HOME_LIMIT = 8;
+
 export default function HeroHomeGrid({
   allImages,
   selectedIds,
   onOpenModal,
 }: HeroHomeGridProps) {
-  const HOME_LIMIT = 8;
-
   const selectedItems = selectedIds
     .map((id) => allImages.find((img) => img.id === id))
     .filter((img): img is HeroSlideItem => img !== undefined);
@@ -40,9 +38,7 @@ export default function HeroHomeGrid({
         </div>
       ))}
 
-      {Array.from({
-        length: Math.max(0, HOME_LIMIT - selectedItems.length),
-      }).map((_, index) => (
+      {Array.from({ length: Math.max(0, HOME_LIMIT - selectedItems.length) }).map((_, index) => (
         <div
           key={`empty-${index}`}
           onClick={(e) => {

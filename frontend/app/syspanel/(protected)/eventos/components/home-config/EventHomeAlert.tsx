@@ -1,4 +1,3 @@
-// frontend/app/syspanel/(protected)/eventos/components/home-config/EventHomeAlert.tsx
 "use client";
 
 import { AlertTriangle } from "lucide-react";
@@ -19,7 +18,6 @@ export default function EventHomeAlert({
   return (
     <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-[2px] animate-in fade-in duration-200 select-none">
       <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl border border-slate-200 p-6 sm:p-7 flex flex-col items-center text-center space-y-4 animate-in zoom-in-95 duration-150">
-        
         <div className="w-14 h-14 rounded-2xl bg-amber-100/60 text-amber-600 border border-amber-200 flex items-center justify-center shadow-xs shrink-0">
           <AlertTriangle className="w-7 h-7 stroke-[2.5]" />
         </div>
@@ -40,7 +38,6 @@ export default function EventHomeAlert({
         >
           Entendido
         </button>
-
       </div>
     </div>
   );

@@ -1,11 +1,10 @@
-// frontend/app/syspanel/(protected)/eventos/components/home-config/EventCard.tsx
 "use client";
 
 import { useState } from "react";
 import Image from "next/image";
 import { Calendar } from "lucide-react";
 
-interface EventItem {
+export interface EventItem {
   id: number;
   src: string;
   alt: string;
@@ -21,6 +20,8 @@ interface EventCardProps {
   hideDetails?: boolean;
   onClick?: () => void;
 }
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 export default function EventCard({
   item,
@@ -40,9 +41,7 @@ export default function EventCard({
     );
   }
 
-  const imageSrc = item.src.startsWith('http') 
-    ? item.src 
-    : `http://localhost:4000${item.src}`;
+  const imageSrc = item.src.startsWith("http") ? item.src : `${API_URL}${item.src}`;
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return "Reciente";
@@ -62,29 +61,35 @@ export default function EventCard({
   const titleText = item.alt && item.alt.trim() !== "" ? item.alt : "Evento sin título";
 
   return (
-    <div 
+    <div
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={onClick}
       className={`group bg-white rounded-2xl transition-all duration-300 flex flex-col cursor-pointer border shadow-xs hover:shadow-lg select-none ${
-        isSelected 
-          ? "border-[#16275d] ring-2 ring-[#16275d]/20 bg-[#16275d]/5" 
+        isSelected
+          ? "border-[#16275d] ring-2 ring-[#16275d]/20 bg-[#16275d]/5"
           : "border-slate-200 hover:border-[#16275d]/40"
       } ${hideDetails ? "p-1.5 gap-0" : "p-3 gap-3"}`}
     >
-      <div className={`relative w-full rounded-xl bg-slate-100 overflow-hidden isolate ${
-        hideDetails ? "aspect-[4/3] rounded-xl" : "aspect-[16/10]"
-      }`}>
-        <Image 
-          src={imageSrc} 
-          alt={titleText} 
-          fill 
+      <div
+        className={`relative w-full rounded-xl bg-slate-100 overflow-hidden isolate ${
+          hideDetails ? "aspect-[4/3] rounded-xl" : "aspect-[16/10]"
+        }`}
+      >
+        <Image
+          src={imageSrc}
+          alt={titleText}
+          fill
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          className="object-cover transition-transform duration-500 group-hover:scale-105" 
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
           unoptimized
         />
 
-        <div className="absolute inset-0 bg-[#16275d]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+        <div
+          className={`absolute inset-0 bg-[#16275d]/20 transition-opacity duration-300 pointer-events-none ${
+            isHovered ? "opacity-100" : "opacity-0"
+          }`}
+        />
 
         {isInteractive && isSelected && selectionNumber !== null && (
           <div className="absolute top-2.5 right-2.5 z-30">
@@ -97,7 +102,7 @@ export default function EventCard({
 
       {!hideDetails && (
         <div className="flex flex-col gap-1.5 px-1 pb-1">
-          <h3 
+          <h3
             title={titleText}
             className="text-xs sm:text-sm font-bold text-[#16275d] tracking-tight truncate group-hover:text-amber-600 transition-colors"
           >

@@ -1,4 +1,3 @@
-// frontend/app/syspanel/(protected)/hero/components/HeroModal.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -34,6 +33,8 @@ interface HeroModalProps {
   editingItem: HeroSlideItem | null;
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+
 export default function HeroModal({
   isOpen,
   onClose,
@@ -53,7 +54,6 @@ export default function HeroModal({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showLightbox, setShowLightbox] = useState(false);
 
-  // Bloqueo de scroll seguro y manejo de la tecla ESC jerárquico
   useEffect(() => {
     if (!isOpen) return;
 
@@ -93,7 +93,7 @@ export default function HeroModal({
         setTitle(currentTitle);
         setInitialTitle(currentTitle);
 
-        const isHttpSource = currentImg.startsWith("http") || false;
+        const isHttpSource = currentImg.startsWith("http");
         setInputType(isHttpSource ? "url" : "file");
         setImageUrl(isHttpSource ? currentImg : "");
         setInitialImageUrl(currentImg);
@@ -102,11 +102,7 @@ export default function HeroModal({
         if (!currentImg) {
           setPreviewUrl("");
         } else {
-          setPreviewUrl(
-            isHttpSource
-              ? currentImg
-              : `http://localhost:4000${currentImg}`
-          );
+          setPreviewUrl(isHttpSource ? currentImg : `${API_URL}${currentImg}`);
         }
       } else {
         setTitle("");
@@ -123,14 +119,21 @@ export default function HeroModal({
     }
   }, [isOpen, editingItem]);
 
+  useEffect(() => {
+    return () => {
+      if (previewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
   if (!isOpen) return null;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setImageFile(file);
     if (file) {
-      const objectUrl = URL.createObjectURL(file);
-      setPreviewUrl(objectUrl);
+      setPreviewUrl(URL.createObjectURL(file));
     }
   };
 
@@ -142,12 +145,11 @@ export default function HeroModal({
   const hasChanges = (() => {
     if (!editingItem) {
       return title.trim() !== "" && (imageFile !== null || imageUrl.trim() !== "");
-    } else {
-      const titleChanged = title.trim() !== initialTitle.trim();
-      const fileAdded = imageFile !== null;
-      const urlChanged = inputType === "url" && imageUrl.trim() !== initialImageUrl;
-      return titleChanged || fileAdded || urlChanged;
     }
+    const titleChanged = title.trim() !== initialTitle.trim();
+    const fileAdded = imageFile !== null;
+    const urlChanged = inputType === "url" && imageUrl.trim() !== initialImageUrl;
+    return titleChanged || fileAdded || urlChanged;
   })();
 
   const handleSubmitForm = (e: React.FormEvent) => {
@@ -156,18 +158,15 @@ export default function HeroModal({
     onSubmit({ title: title.trim(), imageUrl: imageUrl.trim(), imageFile });
   };
 
-  const isLocalFileEditing =
-    editingItem && !editingItem.imageUrl.startsWith("http");
+  const isLocalFileEditing = editingItem && !editingItem.imageUrl.startsWith("http");
 
   return (
     <>
-      {/* Modal Principal */}
       <div className="fixed inset-0 z-[99999] overflow-y-auto bg-slate-950/65 backdrop-blur-md flex min-h-full items-center justify-center p-3 sm:p-6 select-none animate-in fade-in duration-200">
         <div
           className="bg-white border border-slate-200 rounded-3xl w-full max-w-md p-6 shadow-2xl relative flex flex-col my-auto max-h-[85vh] overflow-y-auto custom-scrollbar"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Botón de Cierre Absoluto */}
           <button
             type="button"
             onClick={(e) => {
@@ -180,12 +179,9 @@ export default function HeroModal({
             <X className="w-4 h-4 stroke-[2.5]" />
           </button>
 
-          {/* Cabecera */}
           <div className="pb-4 border-b border-slate-100 mb-4 pr-8">
             <h2 className="text-base font-extrabold text-[#16275d] tracking-tight">
-              {editingItem
-                ? "Editar Banner de Hero"
-                : "Subir Nuevo Banner"}
+              {editingItem ? "Editar Banner de Hero" : "Subir Nuevo Banner"}
             </h2>
             <p className="text-xs text-slate-500 mt-0.5 font-medium">
               {editingItem
@@ -195,7 +191,6 @@ export default function HeroModal({
           </div>
 
           <form onSubmit={handleSubmitForm} className="space-y-4">
-            {/* Vista Previa */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
                 Vista Previa
@@ -230,7 +225,6 @@ export default function HeroModal({
               </div>
             </div>
 
-            {/* Título */}
             <div>
               <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
                 Título
@@ -245,7 +239,6 @@ export default function HeroModal({
               />
             </div>
 
-            {/* Selector de Pestañas */}
             <div className="flex gap-1 p-1 bg-slate-100 rounded-xl border border-slate-200/80">
               <button
                 type="button"
@@ -254,7 +247,7 @@ export default function HeroModal({
                   setInputType("file");
                   setImageUrl("");
                   if (editingItem && !editingItem.imageUrl.startsWith("http")) {
-                    setPreviewUrl(`http://localhost:4000${editingItem.imageUrl}`);
+                    setPreviewUrl(`${API_URL}${editingItem.imageUrl}`);
                   }
                 }}
                 className={`flex-1 py-2 text-xs font-bold rounded-lg transition-colors duration-200 cursor-pointer flex items-center justify-center gap-1.5 outline-none ${
@@ -290,7 +283,6 @@ export default function HeroModal({
               </button>
             </div>
 
-            {/* Input Condicional */}
             {inputType === "file" ? (
               <div>
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
@@ -323,7 +315,6 @@ export default function HeroModal({
               </div>
             )}
 
-            {/* Botones de Acción y Eliminar */}
             <div className="flex items-center justify-between pt-4 border-t border-slate-100 mt-2">
               {editingItem && onDelete ? (
                 <button
@@ -368,7 +359,6 @@ export default function HeroModal({
             </div>
           </form>
 
-          {/* Sub-Modal de Confirmación de Eliminación */}
           {showDeleteConfirm && (
             <div className="absolute inset-0 z-20 bg-white/95 backdrop-blur-sm rounded-3xl p-6 flex flex-col items-center justify-center text-center animate-in fade-in duration-150">
               <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mb-3 shadow-sm border border-rose-100">
@@ -408,7 +398,6 @@ export default function HeroModal({
         </div>
       </div>
 
-      {/* Sub-Modal: Visor de Imagen Completa (Lightbox) */}
       {showLightbox && previewUrl && (
         <div
           className="fixed inset-0 z-[99999] w-screen h-screen flex items-center justify-center bg-slate-950/90 backdrop-blur-md p-4 animate-in fade-in duration-200 cursor-default"

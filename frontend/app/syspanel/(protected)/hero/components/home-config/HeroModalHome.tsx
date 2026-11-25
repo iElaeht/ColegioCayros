@@ -1,10 +1,8 @@
-// frontend/app/syspanel/(protected)/hero/components/home-config/HeroModalHome.tsx
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
-import HeroHomeCard from "./HeroHomeCard";
+import HeroHomeCard, { HeroSlideItem } from "./HeroHomeCard";
 import HeroFilterHome from "./HeroFilterHome";
-import { HeroSlideItem } from "./HeroHomeConfig";
 import { Save, X } from "lucide-react";
 
 interface HeroModalHomeProps {
@@ -17,6 +15,8 @@ interface HeroModalHomeProps {
   onLimitReached?: () => void;
 }
 
+const ITEMS_PER_PAGE = 16;
+
 export default function HeroModalHome({
   isOpen,
   onClose,
@@ -26,19 +26,14 @@ export default function HeroModalHome({
   homeLimit,
   onLimitReached,
 }: HeroModalHomeProps) {
-  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<"all" | "selected">("all");
-  
-  const ITEMS_PER_PAGE = 16;
-  const [visibleLimit, setVisibleLimit] = useState<number>(ITEMS_PER_PAGE);
-
+  const [visibleLimit, setVisibleLimit] = useState(ITEMS_PER_PAGE);
   const [tempSlots, setTempSlots] = useState<(number | null)[]>([]);
-  
-  // Referencia para el contenedor de scroll inteligente
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [hasScroll, setHasScroll] = useState<boolean>(false);
 
-  // Efecto limpio para el bloqueo de scroll y la escucha de la tecla ESC
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [hasScroll, setHasScroll] = useState(false);
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -62,7 +57,6 @@ export default function HeroModalHome({
     setActiveTab("all");
     setVisibleLimit(ITEMS_PER_PAGE);
 
-    // Manejador para cerrar con la tecla ESC
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         onClose();
@@ -81,32 +75,29 @@ export default function HeroModalHome({
   const handleToggleTempSelect = (id: number) => {
     setTempSlots((prev) => {
       const existingIndex = prev.indexOf(id);
-      
       if (existingIndex !== -1) {
-        const newSlots = [...prev];
-        newSlots[existingIndex] = null;
-        return newSlots;
-      } else {
-        const firstEmptyIndex = prev.indexOf(null);
-        if (firstEmptyIndex === -1) {
-          if (onLimitReached) onLimitReached();
-          return prev; 
-        }
-
-        const newSlots = [...prev];
-        newSlots[firstEmptyIndex] = id;
-        return newSlots;
+        const next = [...prev];
+        next[existingIndex] = null;
+        return next;
       }
+
+      const firstEmptyIndex = prev.indexOf(null);
+      if (firstEmptyIndex === -1) {
+        onLimitReached?.();
+        return prev;
+      }
+
+      const next = [...prev];
+      next[firstEmptyIndex] = id;
+      return next;
     });
   };
 
-  // DETECCIÓN INTELIGENTE DE CAMBIOS
   const hasChanges = useMemo(() => {
     const cleanOriginal = (selectedIds || []).filter((id): id is number => id !== null);
     const cleanCurrent = tempSlots.filter((id): id is number => id !== null);
 
     if (cleanOriginal.length !== cleanCurrent.length) return true;
-
     return cleanOriginal.some((id, index) => id !== cleanCurrent[index]);
   }, [selectedIds, tempSlots]);
 
@@ -127,24 +118,28 @@ export default function HeroModalHome({
     setVisibleLimit(ITEMS_PER_PAGE);
   };
 
+  const activeSelectedIds = useMemo(
+    () => tempSlots.filter((id): id is number => id !== null),
+    [tempSlots],
+  );
+
   const filteredImages = useMemo(() => {
     const safeImages = Array.isArray(allImages) ? allImages : [];
-    const activeSelectedIds = tempSlots.filter((id): id is number => id !== null);
+    const query = (searchTerm || "").toLowerCase();
 
     return safeImages.filter((img) => {
-      const titleText = img?.title || "";
-      const matchesSearch = titleText.toLowerCase().includes((searchTerm || "").toLowerCase());
-      const isSelected = activeSelectedIds.includes(img.id);
-      const matchesTab = activeTab === "all" ? true : isSelected;
+      const titleText = (img?.title || "").toLowerCase();
+      const matchesSearch = titleText.includes(query);
+      const matchesTab = activeTab === "all" ? true : activeSelectedIds.includes(img.id);
       return matchesSearch && matchesTab;
     });
-  }, [allImages, searchTerm, activeTab, tempSlots]);
+  }, [allImages, searchTerm, activeTab, activeSelectedIds]);
 
-  const paginatedImages = useMemo(() => {
-    return filteredImages.slice(0, visibleLimit);
-  }, [filteredImages, visibleLimit]);
+  const paginatedImages = useMemo(
+    () => filteredImages.slice(0, visibleLimit),
+    [filteredImages, visibleLimit],
+  );
 
-  // Chequeo de scroll inteligente: verifica si el contenido excede la altura visible del contenedor
   useEffect(() => {
     const checkScroll = () => {
       if (scrollContainerRef.current) {
@@ -158,21 +153,14 @@ export default function HeroModalHome({
     return () => clearTimeout(timer);
   }, [paginatedImages, visibleLimit]);
 
-  const handleLoadMore = () => {
-    setVisibleLimit((prev) => prev + ITEMS_PER_PAGE);
-  };
-
   if (!isOpen) return null;
 
-  const activeSelectedIds = tempSlots.filter((id): id is number => id !== null);
   const safeSelectedCount = activeSelectedIds.length;
   const safeTotalCount = Array.isArray(allImages) ? allImages.length : 0;
 
   return (
     <div className="fixed inset-0 z-[99999] overflow-y-auto bg-slate-950/65 backdrop-blur-md flex min-h-full items-center justify-center p-3 sm:p-6 select-none animate-in fade-in duration-200">
       <div className="bg-white w-full max-w-4xl max-h-[85vh] rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col my-auto">
-        
-        {/* Cabecera del Modal */}
         <div className="p-4 sm:p-6 border-b border-slate-100 flex flex-col gap-3.5 bg-slate-50/80 shrink-0">
           <div className="flex items-center justify-between gap-2">
             <div className="space-y-0.5">
@@ -212,8 +200,7 @@ export default function HeroModalHome({
           </div>
         </div>
 
-        {/* Contenedor con scroll inteligente condicional */}
-        <div 
+        <div
           ref={scrollContainerRef}
           className={`p-4 sm:p-6 flex-1 flex flex-col bg-white ${
             hasScroll ? "overflow-y-auto custom-scrollbar" : "overflow-y-hidden"
@@ -223,8 +210,7 @@ export default function HeroModalHome({
             <>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                 {paginatedImages.map((img) => {
-                  const currentSelectedIds = tempSlots.filter((id): id is number => id !== null);
-                  const isSelected = currentSelectedIds.includes(img.id);
+                  const isSelected = activeSelectedIds.includes(img.id);
                   const selectionIndex = tempSlots.indexOf(img.id);
                   const selectionNumber = selectionIndex !== -1 ? selectionIndex + 1 : null;
 
@@ -248,7 +234,7 @@ export default function HeroModalHome({
                     type="button"
                     onClick={(e) => {
                       e.currentTarget.blur();
-                      handleLoadMore();
+                      setVisibleLimit((prev) => prev + ITEMS_PER_PAGE);
                     }}
                     className="px-4.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-[#16275d] text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs truncate outline-none"
                   >
@@ -259,7 +245,9 @@ export default function HeroModalHome({
             </>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center text-slate-400 my-auto space-y-2">
-              <p className="text-sm font-bold text-[#16275d]">No se encontraron banners en esta vista.</p>
+              <p className="text-sm font-bold text-[#16275d]">
+                No se encontraron banners en esta vista.
+              </p>
               {searchTerm && (
                 <p className="text-xs text-slate-500 font-medium">
                   Intenta buscando con otro término o limpia el buscador.
@@ -269,7 +257,6 @@ export default function HeroModalHome({
           )}
         </div>
 
-        {/* Footer del Modal */}
         <div className="p-4 sm:p-5 border-t border-slate-100 bg-slate-50/80 flex items-center justify-end gap-3 shrink-0">
           <button
             type="button"
@@ -281,8 +268,7 @@ export default function HeroModalHome({
           >
             Cancelar
           </button>
-          
-          {/* Botón Guardar Inteligente con estilo corporativo */}
+
           <button
             type="button"
             onClick={(e) => {
@@ -296,11 +282,14 @@ export default function HeroModalHome({
                 : "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none border border-transparent"
             }`}
           >
-            <Save className={`w-4 h-4 shrink-0 ${hasChanges ? "text-amber-400" : "text-slate-400"}`} />
+            <Save
+              className={`w-4 h-4 shrink-0 ${
+                hasChanges ? "text-amber-400" : "text-slate-400"
+              }`}
+            />
             <span className="truncate">Guardar</span>
           </button>
         </div>
-
       </div>
     </div>
   );

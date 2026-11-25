@@ -1,7 +1,6 @@
-// frontend/app/syspanel/videos/components/VideoModal.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import {
   X,
@@ -34,8 +33,24 @@ interface VideoModalProps {
   editingVideo: VideoItem | null;
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 const tiktokThumbnailCache: Record<string, string> = {};
 const youtubeThumbnailCache: Record<string, string> = {};
+
+function extractYoutubeThumb(url: string): string {
+  if (!url) return "";
+  let videoId = "";
+  if (url.includes("youtu.be/")) {
+    videoId = url.split("youtu.be/")[1]?.split("?")[0]?.split("/")[0] || "";
+  } else if (url.includes("watch?v=")) {
+    videoId = url.split("watch?v=")[1]?.split("&")[0] || "";
+  } else if (url.includes("embed/")) {
+    videoId = url.split("embed/")[1]?.split("?")[0]?.split("/")[0] || "";
+  } else if (url.includes("shorts/")) {
+    videoId = url.split("shorts/")[1]?.split("?")[0]?.split("/")[0] || "";
+  }
+  return videoId ? `https://img.youtube.com/vi/${videoId}/hq720.jpg` : "";
+}
 
 export default function VideoModal({
   isOpen,
@@ -49,6 +64,7 @@ export default function VideoModal({
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [inputType, setInputType] = useState<"file" | "url">("file");
   const [previewUrl, setPreviewUrl] = useState("");
+  const [objectPreviewUrl, setObjectPreviewUrl] = useState<string | null>(null);
 
   const [initialAlt, setInitialAlt] = useState("");
   const [initialVideoUrl, setInitialVideoUrl] = useState("");
@@ -58,7 +74,18 @@ export default function VideoModal({
   const [tiktokThumb, setTiktokThumb] = useState("");
   const [youtubeThumb, setYoutubeThumb] = useState("");
 
-  // Manejo de la tecla ESC y bloqueo de scroll limpio
+  const revokeObjectPreview = useCallback((urlToRevoke: string | null) => {
+    if (urlToRevoke) {
+      URL.revokeObjectURL(urlToRevoke);
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      revokeObjectPreview(objectPreviewUrl);
+    };
+  }, [objectPreviewUrl, revokeObjectPreview]);
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -90,117 +117,134 @@ export default function VideoModal({
   }, [isOpen, showLightbox, showDeleteConfirm, onClose]);
 
   useEffect(() => {
-    if (isOpen) {
-      if (editingVideo) {
-        const currentAlt = editingVideo.alt || "";
-        const isHttpSource = editingVideo.src?.startsWith("http") || false;
-        const currentUrl = isHttpSource ? editingVideo.src : "";
+    const timer = setTimeout(() => {
+      if (isOpen) {
+        if (editingVideo) {
+          const currentAlt = editingVideo.alt || "";
+          const isHttpSource = editingVideo.src?.startsWith("http") || false;
+          const currentUrl = isHttpSource ? editingVideo.src : "";
 
-        setAlt(currentAlt);
-        setInitialAlt(currentAlt);
+          setAlt(currentAlt);
+          setInitialAlt(currentAlt);
 
-        setInputType(isHttpSource ? "url" : "file");
-        setVideoUrl(currentUrl);
-        setInitialVideoUrl(currentUrl);
-        setVideoFile(null);
+          setInputType(isHttpSource ? "url" : "file");
+          setVideoUrl(currentUrl);
+          setInitialVideoUrl(currentUrl);
+          setVideoFile(null);
 
-        if (!editingVideo.src) {
-          setPreviewUrl("");
-        } else {
-          const resolvedUrl = isHttpSource
-            ? editingVideo.src
-            : `http://localhost:4000${editingVideo.src}`;
-          setPreviewUrl(resolvedUrl);
+          if (!editingVideo.src) {
+            setPreviewUrl("");
+          } else {
+            const resolvedUrl = isHttpSource ? editingVideo.src : `${API_URL}${editingVideo.src}`;
+            setPreviewUrl(resolvedUrl);
 
-          if (isHttpSource) {
-            if (editingVideo.src.includes("tiktok.com")) {
-              setTiktokThumb(tiktokThumbnailCache[editingVideo.src] || "");
-              setYoutubeThumb("");
-            } else if (editingVideo.src.includes("youtube.com") || editingVideo.src.includes("youtu.be")) {
-              setYoutubeThumb(youtubeThumbnailCache[editingVideo.src] || extractYoutubeThumb(editingVideo.src));
-              setTiktokThumb("");
-            } else {
-              setTiktokThumb("");
-              setYoutubeThumb("");
+            if (isHttpSource) {
+              if (editingVideo.src.includes("tiktok.com")) {
+                setTiktokThumb(tiktokThumbnailCache[editingVideo.src] || "");
+                setYoutubeThumb("");
+              } else if (
+                editingVideo.src.includes("youtube.com") ||
+                editingVideo.src.includes("youtu.be")
+              ) {
+                setYoutubeThumb(
+                  youtubeThumbnailCache[editingVideo.src] ||
+                    extractYoutubeThumb(editingVideo.src),
+                );
+                setTiktokThumb("");
+              } else {
+                setTiktokThumb("");
+                setYoutubeThumb("");
+              }
             }
           }
+        } else {
+          setAlt("");
+          setInitialAlt("");
+          setVideoUrl("");
+          setInitialVideoUrl("");
+          setVideoFile(null);
+          setInputType("file");
+          setPreviewUrl("");
+          setTiktokThumb("");
+          setYoutubeThumb("");
         }
       } else {
-        setAlt("");
-        setInitialAlt("");
-        setVideoUrl("");
-        setInitialVideoUrl("");
-        setVideoFile(null);
-        setInputType("file");
-        setPreviewUrl("");
-        setTiktokThumb("");
-        setYoutubeThumb("");
+        setShowLightbox(false);
+        setShowDeleteConfirm(false);
       }
-    } else {
-      setShowLightbox(false);
-      setShowDeleteConfirm(false);
-    }
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, [isOpen, editingVideo]);
 
-  const extractYoutubeThumb = (url: string) => {
-    if (!url) return "";
-    let videoId = "";
-    if (url.includes("youtu.be/")) {
-      videoId = url.split("youtu.be/")[1]?.split("?")[0]?.split("/")[0];
-    } else if (url.includes("watch?v=")) {
-      videoId = url.split("watch?v=")[1]?.split("&")[0];
-    } else if (url.includes("embed/")) {
-      videoId = url.split("embed/")[1]?.split("?")[0]?.split("/")[0];
-    } else if (url.includes("shorts/")) {
-      videoId = url.split("shorts/")[1]?.split("?")[0]?.split("/")[0];
-    }
-    return videoId ? `https://img.youtube.com/vi/${videoId}/hq720.jpg` : "";
-  };
-
   useEffect(() => {
-    const isHttpUrl = previewUrl.startsWith('http://') || previewUrl.startsWith('https://');
-    const isTikTok = isHttpUrl && previewUrl.includes('tiktok.com');
-    const isYouTube = isHttpUrl && (previewUrl.includes('youtube.com') || previewUrl.includes('youtu.be'));
+    const isHttpUrl = previewUrl.startsWith("http://") || previewUrl.startsWith("https://");
+    const isTikTok = isHttpUrl && previewUrl.includes("tiktok.com");
+    const isYouTube =
+      isHttpUrl && (previewUrl.includes("youtube.com") || previewUrl.includes("youtu.be"));
+
+    const controller = new AbortController();
 
     if (isTikTok) {
-      if (!tiktokThumb && !tiktokThumbnailCache[previewUrl]) {
-        fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(previewUrl)}`)
-          .then((res) => res.json())
-          .then((data) => {
-            if (data && data.thumbnail_url) {
-              tiktokThumbnailCache[previewUrl] = data.thumbnail_url;
-              setTiktokThumb(data.thumbnail_url);
-            }
-          })
-          .catch(() => {});
-      } else if (tiktokThumbnailCache[previewUrl]) {
-        setTiktokThumb(tiktokThumbnailCache[previewUrl]);
+      if (tiktokThumbnailCache[previewUrl]) {
+        const cached = tiktokThumbnailCache[previewUrl];
+        const t = setTimeout(() => setTiktokThumb(cached), 0);
+        return () => clearTimeout(t);
       }
+
+      fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(previewUrl)}`, {
+        signal: controller.signal,
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data?.thumbnail_url) {
+            tiktokThumbnailCache[previewUrl] = data.thumbnail_url;
+            setTiktokThumb(data.thumbnail_url);
+          }
+        })
+        .catch(() => {});
     } else {
-      setTiktokThumb("");
+      const t = setTimeout(() => setTiktokThumb(""), 0);
+      if (!isYouTube) {
+        return () => clearTimeout(t);
+      }
     }
 
     if (isYouTube) {
       const generatedThumb = extractYoutubeThumb(previewUrl);
       if (generatedThumb) {
         youtubeThumbnailCache[previewUrl] = generatedThumb;
-        setYoutubeThumb(generatedThumb);
       }
-    } else {
-      setYoutubeThumb("");
+      const t = setTimeout(() => setYoutubeThumb(generatedThumb), 0);
+      return () => {
+        clearTimeout(t);
+        controller.abort();
+      };
     }
-  }, [previewUrl, tiktokThumb]);
+
+    const t = setTimeout(() => setYoutubeThumb(""), 0);
+    return () => {
+      clearTimeout(t);
+      controller.abort();
+    };
+  }, [previewUrl]);
 
   if (!isOpen) return null;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
+    revokeObjectPreview(objectPreviewUrl);
     setVideoFile(file);
+
     if (file) {
-      const objectUrl = URL.createObjectURL(file);
-      setPreviewUrl(objectUrl);
+      const nextObjectUrl = URL.createObjectURL(file);
+      setObjectPreviewUrl(nextObjectUrl);
+      setPreviewUrl(nextObjectUrl);
       setTiktokThumb("");
       setYoutubeThumb("");
+    } else {
+      setObjectPreviewUrl(null);
+      setPreviewUrl("");
     }
   };
 
@@ -222,12 +266,11 @@ export default function VideoModal({
   const hasChanges = (() => {
     if (!editingVideo) {
       return alt.trim() !== "" && (videoFile !== null || videoUrl.trim() !== "");
-    } else {
-      const titleChanged = alt.trim() !== initialAlt.trim();
-      const fileAdded = videoFile !== null;
-      const urlChanged = inputType === "url" && videoUrl.trim() !== initialVideoUrl;
-      return titleChanged || fileAdded || urlChanged;
     }
+    const titleChanged = alt.trim() !== initialAlt.trim();
+    const fileAdded = videoFile !== null;
+    const urlChanged = inputType === "url" && videoUrl.trim() !== initialVideoUrl;
+    return titleChanged || fileAdded || urlChanged;
   })();
 
   const handleSubmitForm = (e: React.FormEvent) => {
@@ -236,24 +279,20 @@ export default function VideoModal({
     onSubmit({ alt: alt.trim(), videoUrl: videoUrl.trim(), videoFile });
   };
 
-  const isLocalFileEditing =
-    editingVideo && !editingVideo.src.startsWith("http");
-
-  const isHttpUrl = previewUrl.startsWith('http://') || previewUrl.startsWith('https://');
-  const isYouTube = isHttpUrl && (previewUrl.includes('youtube.com') || previewUrl.includes('youtu.be'));
-  const isTikTok = isHttpUrl && previewUrl.includes('tiktok.com');
-
+  const isLocalFileEditing = editingVideo && !editingVideo.src.startsWith("http");
+  const isHttpUrl = previewUrl.startsWith("http://") || previewUrl.startsWith("https://");
+  const isYouTube =
+    isHttpUrl && (previewUrl.includes("youtube.com") || previewUrl.includes("youtu.be"));
+  const isTikTok = isHttpUrl && previewUrl.includes("tiktok.com");
   const activeThumb = tiktokThumb || youtubeThumb;
 
   return (
     <>
-      {/* Modal Principal centrado con scroll seguro */}
       <div className="fixed inset-0 z-[99999] overflow-y-auto bg-slate-950/65 backdrop-blur-md flex min-h-full items-center justify-center p-3 sm:p-6 select-none animate-in fade-in duration-200">
         <div
           className="bg-white border border-slate-200 rounded-3xl w-full max-w-md p-6 shadow-2xl relative flex flex-col my-auto max-h-[85vh] overflow-y-auto custom-scrollbar"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Botón de Cierre Absoluto */}
           <button
             type="button"
             onClick={onClose}
@@ -263,7 +302,6 @@ export default function VideoModal({
             <X className="w-4 h-4 stroke-[2.5]" />
           </button>
 
-          {/* Cabecera */}
           <div className="pb-4 border-b border-slate-100 mb-4 pr-8">
             <h2 className="text-base font-extrabold text-[#16275d] tracking-tight">
               {editingVideo ? "Editar Video" : "Subir Nuevo Video"}
@@ -276,7 +314,6 @@ export default function VideoModal({
           </div>
 
           <form onSubmit={handleSubmitForm} className="space-y-4">
-            {/* Vista Previa */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
                 Vista Previa
@@ -314,7 +351,11 @@ export default function VideoModal({
                         )}
                       </div>
                       <span className="text-[11px] font-medium text-slate-300 line-clamp-1 px-2">
-                        {isYouTube ? "Cargando miniatura de YouTube..." : isTikTok ? "Cargando miniatura de TikTok..." : "Enlace Externo"}
+                        {isYouTube
+                          ? "Cargando miniatura de YouTube..."
+                          : isTikTok
+                          ? "Cargando miniatura de TikTok..."
+                          : "Enlace Externo"}
                       </span>
                       <div className="absolute top-3 left-3 bg-slate-950/80 backdrop-blur-md border border-white/10 text-white px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-lg">
                         <Globe className="w-3.5 h-3.5 text-amber-400" />
@@ -346,7 +387,6 @@ export default function VideoModal({
               </div>
             </div>
 
-            {/* Título / Alt */}
             <div>
               <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
                 Título
@@ -361,11 +401,12 @@ export default function VideoModal({
               />
             </div>
 
-            {/* Selector de Pestañas */}
             <div className="flex gap-1 p-1 bg-slate-100 rounded-xl border border-slate-200/80">
               <button
                 type="button"
                 onClick={() => {
+                  revokeObjectPreview(objectPreviewUrl);
+                  setObjectPreviewUrl(null);
                   setInputType("file");
                   setVideoUrl("");
                   setVideoFile(null);
@@ -373,7 +414,7 @@ export default function VideoModal({
                     setPreviewUrl("");
                   } else {
                     const isHttp = editingVideo.src?.startsWith("http");
-                    setPreviewUrl(isHttp ? "" : `http://localhost:4000${editingVideo.src}`);
+                    setPreviewUrl(isHttp ? "" : `${API_URL}${editingVideo.src}`);
                   }
                   setTiktokThumb("");
                   setYoutubeThumb("");
@@ -390,15 +431,20 @@ export default function VideoModal({
               <button
                 type="button"
                 onClick={() => {
+                  revokeObjectPreview(objectPreviewUrl);
+                  setObjectPreviewUrl(null);
                   setInputType("url");
                   setVideoFile(null);
-                  const targetUrl = editingVideo && editingVideo.src?.startsWith("http") ? editingVideo.src : "";
+                  const targetUrl =
+                    editingVideo && editingVideo.src?.startsWith("http") ? editingVideo.src : "";
                   setVideoUrl(targetUrl);
                   setPreviewUrl(targetUrl);
                   if (targetUrl.includes("tiktok.com")) {
                     setTiktokThumb(tiktokThumbnailCache[targetUrl] || "");
                   } else if (targetUrl.includes("youtube.com") || targetUrl.includes("youtu.be")) {
-                    setYoutubeThumb(youtubeThumbnailCache[targetUrl] || extractYoutubeThumb(targetUrl));
+                    setYoutubeThumb(
+                      youtubeThumbnailCache[targetUrl] || extractYoutubeThumb(targetUrl),
+                    );
                   }
                 }}
                 className={`flex-1 py-2 text-xs font-bold rounded-lg transition-colors duration-200 cursor-pointer flex items-center justify-center gap-1.5 outline-none ${
@@ -412,7 +458,6 @@ export default function VideoModal({
               </button>
             </div>
 
-            {/* Input Condicional */}
             {inputType === "file" ? (
               <div>
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
@@ -445,7 +490,6 @@ export default function VideoModal({
               </div>
             )}
 
-            {/* Botones de Acción y Eliminar */}
             <div className="flex items-center justify-between pt-4 border-t border-slate-100 mt-2">
               {editingVideo && onDelete ? (
                 <button
@@ -484,15 +528,12 @@ export default function VideoModal({
             </div>
           </form>
 
-          {/* Sub-Modal de Confirmación de Eliminación */}
           {showDeleteConfirm && (
             <div className="absolute inset-0 z-20 bg-white/95 backdrop-blur-sm rounded-3xl p-6 flex flex-col items-center justify-center text-center animate-in fade-in duration-150">
               <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mb-3 shadow-sm border border-rose-100">
                 <AlertTriangle className="w-6 h-6" />
               </div>
-              <h3 className="text-sm font-bold text-slate-800 mb-1">
-                ¿Eliminar este video?
-              </h3>
+              <h3 className="text-sm font-bold text-slate-800 mb-1">¿Eliminar este video?</h3>
               <p className="text-xs text-slate-500 max-w-xs mb-5 font-medium">
                 Esta acción es irreversible y se removerá del sistema permanentemente.
               </p>
@@ -520,7 +561,6 @@ export default function VideoModal({
         </div>
       </div>
 
-      {/* Sub-Modal: Visor de Video Completa (Lightbox) */}
       {showLightbox && previewUrl && !isHttpUrl && (
         <div
           className="fixed inset-0 z-[99999] w-screen h-screen flex items-center justify-center bg-slate-950/90 backdrop-blur-md p-4 animate-in fade-in duration-200 cursor-default"

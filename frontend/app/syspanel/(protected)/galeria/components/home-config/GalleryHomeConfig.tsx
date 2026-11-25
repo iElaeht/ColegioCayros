@@ -1,25 +1,18 @@
-// frontend/app/syspanel/(protected)/galeria/components/home-config/GalleryHomeConfig.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import GalleryHomeGrid from "./GalleryHomeGrid";
 import GalleryModalHome from "./GalleryModalHome";
+import { GalleryHomeItem } from "./GalleryHomeCard";
 import { Pencil, Save, Loader2 } from "lucide-react";
 
-interface GalleryItem {
-  id: number;
-  src: string;
-  alt: string;
-  isActive: boolean;
-  isFeatured?: boolean;
-  order?: number;
-  createdAt?: string;
-}
-
 interface GalleryHomeConfigProps {
-  allImages: GalleryItem[];
+  allImages: GalleryHomeItem[];
   showToast: (type: "success" | "error" | "warning", message: string) => void;
 }
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const HOME_LIMIT = 8;
 
 export default function GalleryHomeConfig({
   allImages,
@@ -30,34 +23,24 @@ export default function GalleryHomeConfig({
   const [initialSelectedIds, setInitialSelectedIds] = useState<number[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
-  const HOME_LIMIT = 8;
-
   useEffect(() => {
-    const slots = Array(HOME_LIMIT).fill(null);
+    const slots: (number | null)[] = Array(HOME_LIMIT).fill(null);
     allImages.forEach((img) => {
       if (img.isFeatured && img.order && img.order >= 1 && img.order <= HOME_LIMIT) {
         slots[img.order - 1] = img.id;
       }
     });
 
-    let computedFeatured: number[] = [];
-    slots.forEach((id) => {
-      if (id !== null) computedFeatured.push(id);
-    });
-
-    if (computedFeatured.length === 0) {
-      computedFeatured = allImages
-        .filter((img) => img.isFeatured)
-        .map((img) => img.id);
-    } else {
-      computedFeatured = slots.filter((id): id is number => id !== null);
-    }
+    const orderedFeatured = slots.filter((id): id is number => id !== null);
+    const computedFeatured =
+      orderedFeatured.length > 0
+        ? orderedFeatured
+        : allImages.filter((img) => img.isFeatured).map((img) => img.id);
 
     setSelectedIds(computedFeatured);
     setInitialSelectedIds(computedFeatured);
   }, [allImages]);
 
-  // Comparamos si hay cambios reales (orden o IDs seleccionados)
   const hasChanges =
     selectedIds.length !== initialSelectedIds.length ||
     selectedIds.some((id, index) => id !== initialSelectedIds[index]);
@@ -65,21 +48,14 @@ export default function GalleryHomeConfig({
   const handleSaveChanges = async () => {
     setIsSaving(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-      const res = await fetch(`${apiUrl}/api/galeria/featured`, {
+      const res = await fetch(`${API_URL}/api/galeria/featured`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ featuredIds: selectedIds }),
       });
 
       if (res.ok) {
-        showToast(
-          "success",
-          "¡Imágenes destacadas actualizadas correctamente!"
-        );
-        // Actualizamos el estado inicial para reflejar que ya están guardados los cambios actuales
+        showToast("success", "¡Imágenes destacadas actualizadas correctamente!");
         setInitialSelectedIds([...selectedIds]);
       } else {
         showToast("error", "Error al guardar los cambios en el servidor.");
@@ -94,8 +70,6 @@ export default function GalleryHomeConfig({
 
   return (
     <div className="bg-white rounded-3xl border border-slate-200 p-5 sm:p-8 shadow-sm space-y-6 w-full select-none">
-      
-      {/* Cabecera y Botones de Acción */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
         <div className="space-y-1">
           <h2 className="text-base sm:text-lg font-extrabold text-[#16275d] tracking-tight">
@@ -107,17 +81,17 @@ export default function GalleryHomeConfig({
         </div>
 
         <div className="grid grid-cols-2 sm:flex items-center gap-2.5 sm:gap-3 w-full sm:w-auto shrink-0">
-          {/* Botón Editar */}
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
             className="flex items-center justify-center gap-2 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-[#16275d] text-xs sm:text-sm font-bold rounded-2xl transition-all cursor-pointer shadow-xs border border-slate-200/80 truncate"
           >
             <Pencil className="w-4 h-4 shrink-0" />
-            <span className="truncate">Editar ({selectedIds.length}/{HOME_LIMIT})</span>
+            <span className="truncate">
+              Editar ({selectedIds.length}/{HOME_LIMIT})
+            </span>
           </button>
 
-          {/* Botón Guardar */}
           <button
             type="button"
             onClick={handleSaveChanges}
@@ -129,9 +103,7 @@ export default function GalleryHomeConfig({
             ) : (
               <Save className="w-4 h-4 shrink-0 text-amber-400" />
             )}
-            <span className="truncate">
-              {isSaving ? "Guardando..." : "Guardar"}
-            </span>
+            <span className="truncate">{isSaving ? "Guardando..." : "Guardar"}</span>
           </button>
         </div>
       </div>
@@ -147,12 +119,12 @@ export default function GalleryHomeConfig({
         onClose={() => setIsModalOpen(false)}
         allImages={allImages}
         selectedIds={selectedIds}
-        onSaveSelections={(newIds) => setSelectedIds(newIds)}
+        onSaveSelections={setSelectedIds}
         homeLimit={HOME_LIMIT}
         onLimitReached={() => {
           showToast(
             "warning",
-            `Límite de ${HOME_LIMIT} imágenes alcanzado. Desmarca una para seleccionar otra.`
+            `Límite de ${HOME_LIMIT} imágenes alcanzado. Desmarca una para seleccionar otra.`,
           );
         }}
       />

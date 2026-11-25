@@ -1,12 +1,33 @@
-// frontend/app/syspanel/matriculas/components/MatriculaSolicitudesTable.tsx
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Trash2, FileText, Mail, Phone, Calendar, User, BookOpen, X, Building, ShieldCheck, AlertTriangle, School } from "lucide-react";
-import ToastAlertMatricula from "./ToastAlertMatricula";
+import {
+  Trash2,
+  FileText,
+  Mail,
+  Phone,
+  Calendar,
+  User,
+  X,
+  Building,
+  ShieldCheck,
+  AlertTriangle,
+  School,
+  KeyRound,
+} from "lucide-react";
 import MatriculaFilter from "./MatriculaFilter";
 import Pagination from "./Pagination";
-import ExportImportModal from "../../components/ExportImport"; // Importamos el modal genérico
+
+export interface PagoMatriculaResumen {
+  id: number;
+  codigoPago: string;
+  estado: string;
+  accesoHabilitado: boolean;
+  habilitadoHasta: string | null;
+  numeroOperacion: string | null;
+  montoPagado: string | number | null;
+  fechaSubidaVoucher: string | null;
+}
 
 export interface SolicitudMatricula {
   id: number;
@@ -20,62 +41,83 @@ export interface SolicitudMatricula {
   telefono: string;
   email?: string | null;
   mensaje?: string | null;
-  tieneOpcion?: string | null;     // Nuevo: "Si" o "No" (¿Vienes de otro colegio?)
-  detalleOpcion?: string | null;   // Nuevo: Institución de procedencia
+  tieneOpcion?: string | null;
+  detalleOpcion?: string | null;
   createdAt: string;
+  pagoMatricula?: PagoMatriculaResumen | null;
   [key: string]: unknown;
 }
 
-interface Props {
-  onCountChange?: (count: number) => void;
+interface MatriculaSolicitudesTableProps {
+  solicitudes: SolicitudMatricula[];
+  loading: boolean;
+  isRefreshing: boolean;
+  onRefresh: () => Promise<void> | void;
+  onDeleteOne: (id: number) => Promise<boolean>;
+  onDeleteSelected: (ids: number[]) => Promise<void>;
+  onImportData: (importedJson: Record<string, unknown>[]) => Promise<void>;
 }
 
-export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
-  const [solicitudes, setSolicitudes] = useState<SolicitudMatricula[]>([]);
-  const [loading, setLoading] = useState(true);
-  
-  // Estados de Filtros y Orden
+const ITEMS_PER_PAGE = 10;
+
+function toLocalDateKey(dateValue: string): string {
+  const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) return "";
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+export default function MatriculaSolicitudesTable({
+  solicitudes,
+  loading,
+  isRefreshing,
+  onRefresh,
+  onDeleteOne,
+  onDeleteSelected,
+  onImportData,
+}: MatriculaSolicitudesTableProps) {
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [sortOrder, setSortOrder] = useState("recientes");
-
-  // Paginación
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
 
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
-
-  // Estados para Modales (Detalle, Eliminación y Exportar/Importar)
   const [selectedSolicitud, setSelectedSolicitud] = useState<SolicitudMatricula | null>(null);
   const [solicitudToDelete, setSolicitudToDelete] = useState<SolicitudMatricula | null>(null);
-  const [isExportImportModalOpen, setIsExportImportModalOpen] = useState(false);
 
-  const fetchSolicitudes = useCallback(async () => {
-    setLoading(true);
+  useEffect(() => {
+    setSelectedIds((prev) => prev.filter((id) => solicitudes.some((item) => item.id === id)));
+  }, [solicitudes]);
+
+  const confirmDelete = useCallback(async () => {
+    if (!solicitudToDelete || deletingId !== null) return;
+    const id = solicitudToDelete.id;
+    setDeletingId(id);
+
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-      const res = await fetch(`${apiUrl}/api/matricula-inscripcion`);
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        setSolicitudes(data);
-        if (onCountChange) onCountChange(data.length);
+      const ok = await onDeleteOne(id);
+      if (ok) {
+        setSelectedIds((prev) => prev.filter((itemId) => itemId !== id));
+        setSolicitudToDelete(null);
       }
-    } catch (err) {
-      console.error("Error al cargar solicitudes:", err);
-      setToast({ message: "Error al conectar con el servidor.", type: "error" });
     } finally {
-      setLoading(false);
+      setDeletingId(null);
     }
-  }, [onCountChange]);
+  }, [solicitudToDelete, deletingId, onDeleteOne]);
+
+  const handleBatchDelete = useCallback(
+    async (ids: number[]) => {
+      await onDeleteSelected(ids);
+      setSelectedIds((prev) => prev.filter((id) => !ids.includes(id)));
+    },
+    [onDeleteSelected],
+  );
 
   useEffect(() => {
-    fetchSolicitudes();
-  }, [fetchSolicitudes]);
-
-  // Manejo de bloqueo de scroll seguro y tecla ESC en los modales
-  useEffect(() => {
-    if (!selectedSolicitud && !solicitudToDelete && !isExportImportModalOpen) return;
+    if (!selectedSolicitud && !solicitudToDelete) return;
 
     const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
     document.body.style.overflow = "hidden";
@@ -89,7 +131,15 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
         e.stopPropagation();
         setSelectedSolicitud(null);
         setSolicitudToDelete(null);
-        setIsExportImportModalOpen(false);
+        return;
+      }
+
+      if (e.key === "Enter" && solicitudToDelete && deletingId === null) {
+        const target = e.target as HTMLElement | null;
+        if (target?.dataset?.cancelDelete === "true") return;
+        e.preventDefault();
+        e.stopPropagation();
+        confirmDelete();
       }
     };
 
@@ -100,79 +150,25 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
       document.body.style.overflow = "unset";
       document.body.style.paddingRight = "0px";
     };
-  }, [selectedSolicitud, solicitudToDelete, isExportImportModalOpen]);
+  }, [selectedSolicitud, solicitudToDelete, deletingId, confirmDelete]);
 
-  const confirmDelete = async () => {
-    if (!solicitudToDelete) return;
-    const id = solicitudToDelete.id;
-    setDeletingId(id);
-
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-      const res = await fetch(`${apiUrl}/api/matricula-inscripcion/${id}`, {
-        method: "DELETE",
-      });
-      if (res.ok) {
-        const updated = solicitudes.filter((item) => item.id !== id);
-        setSolicitudes(updated);
-        if (onCountChange) onCountChange(updated.length);
-        setToast({ message: "Solicitud eliminada con éxito.", type: "success" });
-        setSolicitudToDelete(null);
-      } else {
-        setToast({ message: "No se pudo eliminar la solicitud.", type: "error" });
-      }
-    } catch (err) {
-      console.error("Error al eliminar la solicitud:", err);
-      setToast({ message: "Error de red al intentar eliminar.", type: "error" });
-    } finally {
-      setDeletingId(null);
-    }
-  };
-
-  // Manejador de importación masiva real conectada al backend
-  const handleImportData = async (importedJson: Record<string, unknown>[]) => {
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-      const res = await fetch(`${apiUrl}/api/matricula-inscripcion/importar`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ matriculas: importedJson }),
-      });
-
-      if (res.ok) {
-        await fetchSolicitudes();
-        setToast({ message: "¡Matrículas importadas y guardadas con éxito!", type: "success" });
-      } else {
-        setToast({ message: "Error al guardar las matrículas importadas.", type: "error" });
-      }
-    } catch (err) {
-      console.error("Error al importar matrículas:", err);
-      setToast({ message: "Error de red al intentar importar.", type: "error" });
-    }
-  };
-
-  // Filtrado por buscador y fecha
   const filtered = solicitudes.filter((item) => {
     const q = searchTerm.toLowerCase();
     const fullName = `${item.nombresEstudiante} ${item.apellidosEstudiante}`.toLowerCase();
+    const codigoPago = item.pagoMatricula?.codigoPago?.toLowerCase() || "";
     const matchesSearch =
       fullName.includes(q) ||
+      codigoPago.includes(q) ||
       item.nombresApoderado.toLowerCase().includes(q) ||
       item.dniEstudiante.includes(q) ||
       item.sede.toLowerCase().includes(q) ||
       item.telefono.includes(q) ||
       (item.detalleOpcion && item.detalleOpcion.toLowerCase().includes(q));
 
-    let matchesDate = true;
-    if (selectedDate) {
-      const itemDate = new Date(item.createdAt).toISOString().split("T")[0];
-      matchesDate = itemDate === selectedDate;
-    }
-
+    const matchesDate = !selectedDate || toLocalDateKey(item.createdAt) === selectedDate;
     return matchesSearch && matchesDate;
   });
 
-  // Ordenamiento
   const sorted = [...filtered].sort((a, b) => {
     if (sortOrder === "recientes") {
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -181,35 +177,45 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
       return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
     }
     if (sortOrder === "az") {
-      return `${a.nombresEstudiante} ${a.apellidosEstudiante}`.localeCompare(`${b.nombresEstudiante} ${b.apellidosEstudiante}`);
+      return `${a.nombresEstudiante} ${a.apellidosEstudiante}`.localeCompare(
+        `${b.nombresEstudiante} ${b.apellidosEstudiante}`,
+      );
     }
     if (sortOrder === "za") {
-      return `${b.nombresEstudiante} ${b.apellidosEstudiante}`.localeCompare(`${a.nombresEstudiante} ${a.apellidosEstudiante}`);
+      return `${b.nombresEstudiante} ${b.apellidosEstudiante}`.localeCompare(
+        `${a.nombresEstudiante} ${a.apellidosEstudiante}`,
+      );
     }
     return 0;
   });
 
-  // Paginación final
-  const totalPages = Math.ceil(sorted.length / itemsPerPage);
-  const paginatedData = sorted.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(sorted.length / ITEMS_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedData = sorted.slice(
+    (safePage - 1) * ITEMS_PER_PAGE,
+    safePage * ITEMS_PER_PAGE,
+  );
 
-  // Reiniciar a página 1 si cambia el filtro
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, selectedDate, sortOrder]);
+  const pageIds = paginatedData.map((item) => item.id);
+  const allPageSelected =
+    pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
+
+  const toggleSelectAllPage = () => {
+    if (allPageSelected) {
+      setSelectedIds((prev) => prev.filter((id) => !pageIds.includes(id)));
+    } else {
+      setSelectedIds((prev) => Array.from(new Set([...prev, ...pageIds])));
+    }
+  };
+
+  const toggleSelectRow = (id: number) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id],
+    );
+  };
 
   return (
     <div className="space-y-4 relative select-none">
-      {/* Toast flotante */}
-      {toast && (
-        <ToastAlertMatricula
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
-
-      {/* Componente de Filtros con Apertura del Modal de Exportar/Importar */}
       <MatriculaFilter
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
@@ -217,11 +223,16 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
         setSelectedDate={setSelectedDate}
         sortOrder={sortOrder}
         setSortOrder={setSortOrder}
+        currentPage={safePage}
+        setCurrentPage={setCurrentPage}
         exportData={sorted}
-        onImportData={handleImportData}
+        onImportData={onImportData}
+        onRefresh={onRefresh}
+        isRefreshing={isRefreshing}
+        selectedIds={selectedIds}
+        onDeleteSelected={handleBatchDelete}
       />
 
-      {/* Tabla de registros */}
       <div className="bg-white border border-slate-200/85 rounded-3xl shadow-sm overflow-hidden">
         {loading ? (
           <div className="p-12 text-center text-slate-400 text-xs font-medium">
@@ -234,63 +245,79 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs min-w-[700px]">
+              <table className="w-full text-left border-collapse text-xs min-w-[680px]">
                 <thead>
                   <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
-                    <th className="py-3.5 px-3 w-12 text-center">#</th>
-                    <th className="py-3.5 px-4 w-[28%]">Estudiante</th>
-                    <th className="py-3.5 px-4 w-40">Nivel / Grado</th>
-                    <th className="py-3.5 px-4 w-[22%] hidden md:table-cell">Apoderado</th>
-                    <th className="py-3.5 px-4 w-36 hidden lg:table-cell">Contacto</th>
-                    <th className="py-3.5 px-4 w-28 hidden sm:table-cell">Fecha</th>
+                    <th className="py-3.5 px-4 w-12 text-center">
+                      <input
+                        type="checkbox"
+                        checked={allPageSelected}
+                        onChange={toggleSelectAllPage}
+                        aria-label="Seleccionar todas las filas de la página"
+                        className="w-4 h-4 rounded border-slate-300 text-[#16275d] focus:ring-[#16275d] cursor-pointer accent-[#16275d]"
+                      />
+                    </th>
+                    <th className="py-3.5 px-4">Estudiante</th>
+                    <th className="py-3.5 px-4">ID Pago</th>
+                    <th className="py-3.5 px-4">Apoderado</th>
+                    <th className="py-3.5 px-4">Fecha</th>
                     <th className="py-3.5 px-4 w-24 text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-                  {paginatedData.map((item, index) => {
-                    const absoluteIndex = (currentPage - 1) * itemsPerPage + index + 1;
+                  {paginatedData.map((item) => {
                     const nombreCompleto = `${item.nombresEstudiante} ${item.apellidosEstudiante}`;
+                    const isChecked = selectedIds.includes(item.id);
+
                     return (
-                      <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
-                        
-                        <td className="py-4 px-3 text-center text-slate-400 font-bold">
-                          {absoluteIndex}
+                      <tr
+                        key={item.id}
+                        className={`transition-colors ${
+                          isChecked ? "bg-amber-50/40" : "hover:bg-slate-50/80"
+                        }`}
+                      >
+                        <td className="py-4 px-4 text-center">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => toggleSelectRow(item.id)}
+                            aria-label={`Seleccionar a ${nombreCompleto}`}
+                            className="w-4 h-4 rounded border-slate-300 text-[#16275d] focus:ring-[#16275d] cursor-pointer accent-[#16275d]"
+                          />
                         </td>
 
-                        <td className="py-4 px-4 font-bold text-slate-900 truncate" title={nombreCompleto}>
+                        <td
+                          className="py-4 px-4 font-bold text-slate-900 truncate max-w-[240px]"
+                          title={nombreCompleto}
+                        >
                           <div className="flex items-center gap-2 truncate">
                             <User className="w-4 h-4 text-[#16275d] shrink-0" />
                             <span className="truncate">{nombreCompleto}</span>
                           </div>
                         </td>
 
-                        <td className="py-4 px-4 truncate">
-                          <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-900 font-bold px-2.5 py-1 rounded-lg border border-amber-200/60 truncate">
-                            <BookOpen className="w-3 h-3 text-amber-600 shrink-0" />
-                            <span className="truncate">{item.nivel} - {item.grado}</span>
-                          </span>
-                        </td>
-
-                        <td className="py-4 px-4 text-slate-800 font-semibold truncate hidden md:table-cell" title={item.nombresApoderado}>
-                          <span className="truncate block">{item.nombresApoderado}</span>
-                        </td>
-
-                        <td className="py-4 px-4 space-y-0.5 truncate hidden lg:table-cell">
-                          <div className="flex items-center gap-1.5 text-slate-700 truncate" title={item.telefono}>
-                            <Phone className="w-3 h-3 text-slate-400 shrink-0" />
-                            <span className="truncate">{item.telefono}</span>
-                          </div>
-                          {item.email && (
-                            <div className="flex items-center gap-1.5 text-slate-500 text-[11px] truncate" title={item.email}>
-                              <Mail className="w-3 h-3 text-slate-400 shrink-0" />
-                              <span className="truncate">{item.email}</span>
-                            </div>
+                        <td className="py-4 px-4 whitespace-nowrap">
+                          {item.pagoMatricula?.codigoPago ? (
+                            <span className="font-mono font-bold text-[#111c38] text-[11px] bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200/70">
+                              {item.pagoMatricula.codigoPago}
+                            </span>
+                          ) : (
+                            <span className="text-[11px] text-slate-400 italic">
+                              Sin ID asignado
+                            </span>
                           )}
                         </td>
 
-                        <td className="py-4 px-4 text-slate-500 text-[11px] whitespace-nowrap hidden sm:table-cell">
+                        <td
+                          className="py-4 px-4 text-slate-800 font-semibold truncate max-w-[220px]"
+                          title={item.nombresApoderado}
+                        >
+                          <span className="truncate block">{item.nombresApoderado}</span>
+                        </td>
+
+                        <td className="py-4 px-4 text-slate-500 text-[11px] whitespace-nowrap">
                           <div className="flex items-center gap-1.5">
-                            <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
+                            <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                             {new Date(item.createdAt).toLocaleDateString("es-PE", {
                               day: "2-digit",
                               month: "short",
@@ -299,7 +326,6 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
                           </div>
                         </td>
 
-                        {/* ACCIONES */}
                         <td className="py-4 px-4 text-center">
                           <div className="flex items-center justify-center gap-1">
                             <button
@@ -327,7 +353,6 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
                             </button>
                           </div>
                         </td>
-
                       </tr>
                     );
                   })}
@@ -335,42 +360,32 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
               </table>
             </div>
 
-            {/* Componente de Paginación */}
             <Pagination
-              currentPage={currentPage}
+              currentPage={safePage}
               totalPages={totalPages}
-              itemsPerPage={itemsPerPage}
+              itemsPerPage={ITEMS_PER_PAGE}
               totalItems={sorted.length}
-              onPageChange={(page) => setCurrentPage(page)}
+              onPageChange={setCurrentPage}
             />
           </>
         )}
       </div>
 
-      {/* MODAL DE EXPORTACIÓN E IMPORTACIÓN */}
-      <ExportImportModal
-        isOpen={isExportImportModalOpen}
-        onClose={() => setIsExportImportModalOpen(false)}
-        title="Gestión de Matrículas"
-        data={sorted}
-        filename="reporte-matriculas"
-        onImportData={handleImportData}
-      />
-
-      {/* MODAL DE DETALLE DE LA SOLICITUD */}
       {selectedSolicitud && (
         <div className="fixed inset-0 z-[99999] overflow-y-auto bg-slate-950/65 backdrop-blur-md flex min-h-full items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden my-auto flex flex-col">
-            
-            {/* Cabecera del Modal */}
             <div className="bg-[#16275d] text-white px-6 py-4.5 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-amber-400">
                   <FileText className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-extrabold tracking-tight">Detalle de Pre-Inscripción</h3>
-                  <p className="text-xs text-slate-300 font-medium">ID Solicitud #{selectedSolicitud.id}</p>
+                  <h3 className="text-base font-extrabold tracking-tight">
+                    Detalle de Pre-Inscripción
+                  </h3>
+                  <p className="text-xs text-slate-300 font-medium">
+                    ID Solicitud #{selectedSolicitud.id}
+                  </p>
                 </div>
               </div>
               <button
@@ -385,22 +400,42 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
               </button>
             </div>
 
-            {/* Contenido del Modal */}
             <div className="p-6 sm:p-8 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar">
-              
-              {/* Sede y Fecha */}
+              <div className="bg-[#111c38] text-white p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <KeyRound className="w-4 h-4 text-amber-400 shrink-0" />
+                  <div>
+                    <span className="block text-[10px] uppercase font-bold tracking-wider text-amber-400">
+                      ID Único de Pago Generado
+                    </span>
+                    <span className="font-mono text-sm font-bold text-white">
+                      {selectedSolicitud.pagoMatricula?.codigoPago || "No asignado"}
+                    </span>
+                  </div>
+                </div>
+                {selectedSolicitud.pagoMatricula?.estado && (
+                  <span className="inline-block self-start sm:self-center text-[11px] font-bold px-3 py-1 rounded-full bg-white/10 text-amber-300">
+                    {selectedSolicitud.pagoMatricula.estado.replace("_", " ")}
+                  </span>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                 <div className="flex items-center gap-2.5">
                   <Building className="w-4 h-4 text-amber-600 shrink-0" />
                   <div>
                     <span className="block text-[10px] uppercase font-bold text-slate-400">Sede</span>
-                    <span className="text-xs font-bold text-slate-800">{selectedSolicitud.sede}</span>
+                    <span className="text-xs font-bold text-slate-800">
+                      {selectedSolicitud.sede}
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <Calendar className="w-4 h-4 text-[#16275d] shrink-0" />
                   <div>
-                    <span className="block text-[10px] uppercase font-bold text-slate-400">Fecha de Registro</span>
+                    <span className="block text-[10px] uppercase font-bold text-slate-400">
+                      Fecha de Registro
+                    </span>
                     <span className="text-xs font-bold text-slate-800">
                       {new Date(selectedSolicitud.createdAt).toLocaleString("es-PE", {
                         dateStyle: "medium",
@@ -411,7 +446,6 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
                 </div>
               </div>
 
-              {/* Datos del Estudiante */}
               <div className="space-y-3">
                 <h4 className="text-xs font-extrabold uppercase tracking-wider text-[#16275d] flex items-center gap-2 border-b border-slate-100 pb-2">
                   <User className="w-4 h-4 text-amber-500" />
@@ -420,7 +454,9 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <div>
                     <span className="text-slate-400 block font-medium">Nombres y Apellidos</span>
-                    <span className="font-bold text-slate-900">{selectedSolicitud.nombresEstudiante} {selectedSolicitud.apellidosEstudiante}</span>
+                    <span className="font-bold text-slate-900">
+                      {selectedSolicitud.nombresEstudiante} {selectedSolicitud.apellidosEstudiante}
+                    </span>
                   </div>
                   <div>
                     <span className="text-slate-400 block font-medium">DNI del Estudiante</span>
@@ -442,7 +478,6 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
                 </div>
               </div>
 
-              {/* Procedencia (Nuevo Bloque Traslado) */}
               <div className="space-y-3">
                 <h4 className="text-xs font-extrabold uppercase tracking-wider text-[#16275d] flex items-center gap-2 border-b border-slate-100 pb-2">
                   <School className="w-4 h-4 text-amber-600" />
@@ -451,20 +486,29 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs bg-slate-50 p-4 rounded-2xl border border-slate-100">
                   <div>
                     <span className="text-slate-400 block font-medium">¿Viene de otro colegio?</span>
-                    <span className={`inline-block font-bold px-2.5 py-0.5 rounded-md mt-0.5 ${selectedSolicitud.tieneOpcion === "Si" ? "bg-amber-100 text-amber-900 border border-amber-200" : "bg-slate-200 text-slate-700"}`}>
+                    <span
+                      className={`inline-block font-bold px-2.5 py-0.5 rounded-md mt-0.5 ${
+                        selectedSolicitud.tieneOpcion === "Si"
+                          ? "bg-amber-100 text-amber-900 border border-amber-200"
+                          : "bg-slate-200 text-slate-700"
+                      }`}
+                    >
                       {selectedSolicitud.tieneOpcion === "Si" ? "Sí" : "No / No especificado"}
                     </span>
                   </div>
                   {selectedSolicitud.tieneOpcion === "Si" && (
                     <div className="sm:col-span-2">
-                      <span className="text-slate-400 block font-medium">Institución de Procedencia (Traslado)</span>
-                      <span className="font-bold text-slate-900 text-sm">{selectedSolicitud.detalleOpcion || "No especificado"}</span>
+                      <span className="text-slate-400 block font-medium">
+                        Institución de Procedencia (Traslado)
+                      </span>
+                      <span className="font-bold text-slate-900 text-sm">
+                        {selectedSolicitud.detalleOpcion || "No especificado"}
+                      </span>
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Datos del Apoderado y Contacto */}
               <div className="space-y-3">
                 <h4 className="text-xs font-extrabold uppercase tracking-wider text-[#16275d] flex items-center gap-2 border-b border-slate-100 pb-2">
                   <Phone className="w-4 h-4 text-[#16275d]" />
@@ -473,7 +517,9 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <div className="sm:col-span-2">
                     <span className="text-slate-400 block font-medium">Nombre del Apoderado</span>
-                    <span className="font-bold text-slate-900">{selectedSolicitud.nombresApoderado}</span>
+                    <span className="font-bold text-slate-900">
+                      {selectedSolicitud.nombresApoderado}
+                    </span>
                   </div>
                   <div>
                     <span className="text-slate-400 block font-medium">Teléfono / Celular</span>
@@ -492,19 +538,17 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
                 </div>
               </div>
 
-              {/* Mensaje o Comentarios Adicionales */}
               <div className="space-y-2">
                 <h4 className="text-xs font-extrabold uppercase tracking-wider text-[#16275d] flex items-center gap-2 border-b border-slate-100 pb-2">
                   Mensaje / Comentarios
                 </h4>
                 <p className="text-xs text-slate-600 bg-slate-50 p-3.5 rounded-xl border border-slate-200/60 italic font-medium">
-                  {selectedSolicitud.mensaje || "Sin comentarios adicionales registrados en la solicitud."}
+                  {selectedSolicitud.mensaje ||
+                    "Sin comentarios adicionales registrados en la solicitud."}
                 </p>
               </div>
-
             </div>
 
-            {/* Pie del Modal */}
             <div className="bg-slate-50 px-6 py-4 border-t border-slate-100 flex justify-end">
               <button
                 type="button"
@@ -517,17 +561,13 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
                 Cerrar Detalle
               </button>
             </div>
-
           </div>
         </div>
       )}
 
-      {/* MODAL MINIMALISTA DE CONFIRMACIÓN DE ELIMINACIÓN */}
       {solicitudToDelete && (
         <div className="fixed inset-0 z-[99999] overflow-y-auto bg-slate-950/65 backdrop-blur-md flex min-h-full items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden my-auto flex flex-col">
-            
-            {/* Cabecera del Modal */}
             <div className="bg-rose-600 text-white px-6 py-4.5 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white">
@@ -535,7 +575,9 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
                 </div>
                 <div>
                   <h3 className="text-base font-extrabold tracking-tight">Confirmar Eliminación</h3>
-                  <p className="text-xs text-rose-100 font-medium">Esta acción no se puede deshacer</p>
+                  <p className="text-xs text-rose-100 font-medium">
+                    Presiona Enter para confirmar o Esc para cancelar
+                  </p>
                 </div>
               </div>
               <button
@@ -550,21 +592,33 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
               </button>
             </div>
 
-            {/* Contenido del Modal */}
             <div className="p-6 sm:p-7 space-y-4">
               <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
-                ¿Estás seguro de eliminar la solicitud de pre-inscripción de <strong className="text-slate-900">{solicitudToDelete.nombresEstudiante} {solicitudToDelete.apellidosEstudiante}</strong>?
+                ¿Estás seguro de eliminar la solicitud de pre-inscripción de{" "}
+                <strong className="text-slate-900">
+                  {solicitudToDelete.nombresEstudiante} {solicitudToDelete.apellidosEstudiante}
+                </strong>
+                ?
               </p>
-              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-xs text-slate-500">
-                <span className="block font-bold text-slate-700">DNI: {solicitudToDelete.dniEstudiante}</span>
-                <span className="block text-[11px] text-slate-400 mt-0.5">Nivel: {solicitudToDelete.nivel} - {solicitudToDelete.grado}</span>
+              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-xs text-slate-500 space-y-1">
+                <span className="block font-bold text-slate-700">
+                  DNI: {solicitudToDelete.dniEstudiante}
+                </span>
+                {solicitudToDelete.pagoMatricula?.codigoPago && (
+                  <span className="block font-mono font-bold text-[#16275d] text-[11px]">
+                    ID Pago: {solicitudToDelete.pagoMatricula.codigoPago}
+                  </span>
+                )}
+                <span className="block text-[11px] text-slate-400">
+                  Nivel: {solicitudToDelete.nivel} - {solicitudToDelete.grado}
+                </span>
               </div>
             </div>
 
-            {/* Pie del Modal con Botones de Acción */}
             <div className="bg-slate-50 px-6 py-4 border-t border-slate-100 flex items-center justify-end gap-3">
               <button
                 type="button"
+                data-cancel-delete="true"
                 onClick={(e) => {
                   e.currentTarget.blur();
                   setSolicitudToDelete(null);
@@ -587,11 +641,9 @@ export default function MatriculaSolicitudesTable({ onCountChange }: Props) {
                 {deletingId === solicitudToDelete.id ? "Eliminando..." : "Sí, eliminar"}
               </button>
             </div>
-
           </div>
         </div>
       )}
-
     </div>
   );
 }

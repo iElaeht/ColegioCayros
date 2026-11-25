@@ -2,16 +2,29 @@
 // CONFIGURACIÓN DE PRISMA Y BASE DE DATOS
 // ==========================================
 
-
 datasource db {
   provider = "postgresql"
 }
-
 
 generator client {
   provider = "prisma-client-js"
 }
 
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum EstadoPagoMatricula {
+  PENDIENTE_SUBIDA      // Recién matriculado: ID y clave activos para subir el voucher
+  EN_REVISION           // Voucher subido: ID cerrado mientras administración verifica
+  OBSERVADO_RECHAZADO   // Rechazado: habilitado por 48h mostrando motivo del admin
+  CONFIRMADO            // Aprobado: muestra directamente el mensaje de aprobación
+  COMPLETADO            // Trámite cerrado definitivamente
+}
+
+// ==========================================
+// MODELOS
+// ==========================================
 
 model MensajeContacto {
   id       String   @id @default(uuid())
@@ -22,14 +35,12 @@ model MensajeContacto {
   fecha    DateTime @default(now())
 }
 
-
 model Usuario {
   id       Int    @id @default(autoincrement())
   usuario  String
   password String
   dni      String @unique
 }
-
 
 model Galeria {
   id         Int      @id @default(autoincrement())
@@ -42,7 +53,6 @@ model Galeria {
 
   @@map("galeria")
 }
-
 
 model Evento {
   id          Int      @id @default(autoincrement())
@@ -58,7 +68,6 @@ model Evento {
   @@map("eventos")
 }
 
-
 model Video {
   id         Int      @id @default(autoincrement())
   src        String   @db.Text
@@ -71,22 +80,21 @@ model Video {
   @@map("videos")
 }
 
-
 model Hero {
-  id           Int      @id @default(autoincrement())
-  title        String?  @db.Text // Título de referencia interna (opcional)
-  imageUrl     String   @db.Text @map("image_url")
-  isActive     Boolean  @default(true) @map("is_active")
-  isFeatured   Boolean  @default(false) @map("is_featured")
-  order        Int      @default(0) @map("order")
-  createdAt    DateTime @default(now()) @map("created_at")
+  id         Int      @id @default(autoincrement())
+  title      String?  @db.Text
+  imageUrl   String   @db.Text @map("image_url")
+  isActive   Boolean  @default(true) @map("is_active")
+  isFeatured Boolean  @default(false) @map("is_featured")
+  order      Int      @default(0) @map("order")
+  createdAt  DateTime @default(now()) @map("created_at")
 
   @@map("hero")
 }
 
 model AdmisionConfig {
   id          String   @id @default(uuid())
-  year        String   // Ej: "2026", "2027", etc. Administrable en el Panel
+  year        String
   badgeText   String   @default("MATRICULAS")
   title       String   @default("MATRICULAS ABIERTAS")
   description String   @default("Quiero empezar la matricula y conocer los requisitos del proceso.")
@@ -97,20 +105,46 @@ model AdmisionConfig {
 }
 
 model MatriculaInscripcion {
-  id                  Int      @id @default(autoincrement())
-  sede                String   @default("Colegio Cayros") // Colegio Cayros / Cayros School
+  id                  Int            @id @default(autoincrement())
+  anioEscolar         String         @default("2026") @map("anio_escolar")
+  sede                String         @default("Colegio Cayros")
   nombresEstudiante   String
   apellidosEstudiante String
-  dniEstudiante       String   // DNI del estudiante (8 dígitos)
-  nivel               String   // Inicial, Primaria, Secundaria
-  grado               String   // Ej: 3 Años, 1er Grado, etc.
+  dniEstudiante       String
+  nivel               String
+  grado               String
   nombresApoderado    String
-  telefono            String   // Celular(9 dígitos)
+  telefono            String
   email               String?
   mensaje             String?
-  tieneOpcion         String?  // Nuevo: "Si" o "No" (¿Vienes de otro colegio?)
-  detalleOpcion       String?  // Nuevo: Institución de procedencia (Obligatorio si es "Si")
-  createdAt           DateTime @default(now())
+  tieneOpcion         String?
+  detalleOpcion       String?
+  createdAt           DateTime       @default(now())
+  pagoMatricula       PagoMatricula?
+}
+
+model PagoMatricula {
+  id                 Int                  @id @default(autoincrement())
+  codigoPago         String               @unique @map("codigo_pago")
+  passwordPago       String               @map("password_pago")
+  estado             EstadoPagoMatricula  @default(PENDIENTE_SUBIDA)
+  accesoHabilitado   Boolean              @default(true) @map("acceso_habilitado")
+  habilitadoHasta    DateTime?            @map("habilitado_hasta")
+  voucherUrl         String?              @db.Text @map("voucher_url")
+  numeroOperacion    String?              @unique @map("numero_operacion")
+  bancoOrigen        String?              @map("banco_origen")
+  montoPagado        Decimal?             @db.Decimal(10, 2) @map("monto_pagado")
+  fechaSubidaVoucher DateTime?            @map("fecha_subida_voucher")
+  mensajeAdmin       String?              @db.Text @map("mensaje_admin")
+  revisadoPor        String?              @map("revisado_por")
+  fechaRevision      DateTime?            @map("fecha_revision")
+  cerradoEn          DateTime?            @map("cerrado_en")
+  matriculaId        Int                  @unique @map("matricula_id")
+  matricula          MatriculaInscripcion @relation(fields: [matriculaId], references: [id], onDelete: Cascade)
+  createdAt          DateTime             @default(now()) @map("created_at")
+  updatedAt          DateTime             @updatedAt @map("updated_at")
+
+  @@map("pagos_matricula")
 }
 
 model MatriculaGaleria {
@@ -122,8 +156,6 @@ model MatriculaGaleria {
   createdAt DateTime @default(now())
 }
 
-
-// Tabla para almacenar parámetros globales de la Home (Límites, preferencias, etc.)
 model ConfiguracionHome {
   id                Int @id @default(1)
   limiteGaleriaHome Int @default(6) @map("limite_galeria_home")

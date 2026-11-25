@@ -1,4 +1,3 @@
-// frontend/app/syspanel/hero/components/Grid/HeroFilters.tsx
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
@@ -16,6 +15,20 @@ interface HeroFiltersProps {
   onSortChange: (option: SortOption) => void;
 }
 
+const SORT_OPTIONS: ReadonlyArray<{ id: SortOption; label: string }> = [
+  { id: "oldest", label: "Más antiguos primero" },
+  { id: "newest", label: "Más recientes primero" },
+  { id: "az", label: "Nombre (A - Z)" },
+  { id: "za", label: "Nombre (Z - A)" },
+];
+
+const SORT_LABELS: Record<SortOption, string> = {
+  oldest: "Antiguos",
+  newest: "Recientes",
+  az: "A - Z",
+  za: "Z - A",
+};
+
 export default function HeroFilters({
   searchQuery,
   onSearchChange,
@@ -27,12 +40,10 @@ export default function HeroFilters({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Cierre seguro encapsulado
   const closeDropdown = useCallback(() => {
     setIsDropdownOpen(false);
   }, []);
 
-  // Manejo de clics fuera y tecla ESC limpia
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -57,16 +68,8 @@ export default function HeroFilters({
     };
   }, [isDropdownOpen, closeDropdown]);
 
-  const sortLabels: Record<SortOption, string> = {
-    oldest: "Antiguos",
-    newest: "Recientes",
-    az: "A - Z",
-    za: "Z - A",
-  };
-
   return (
     <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 w-full select-none">
-      {/* Buscador por título */}
       <div className="relative flex-1">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 shrink-0 pointer-events-none" />
         <input
@@ -78,16 +81,11 @@ export default function HeroFilters({
         />
       </div>
 
-      {/* Contenedor para Fecha y Orden */}
       <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
         <div className="w-full sm:w-auto">
-          <CustomDatePicker
-            selectedDate={selectedDate}
-            onChange={onDateChange}
-          />
+          <CustomDatePicker selectedDate={selectedDate} onChange={onDateChange} />
         </div>
 
-        {/* Menú Desplegable de Ordenamiento */}
         <div className="relative w-full sm:w-auto" ref={dropdownRef}>
           <button
             type="button"
@@ -107,7 +105,7 @@ export default function HeroFilters({
           >
             <div className="flex items-center gap-2 truncate">
               <ArrowUpDown className="w-3.5 h-3.5 text-[#16275d] shrink-0" />
-              <span className="truncate">{sortLabels[sortOption]}</span>
+              <span className="truncate">{SORT_LABELS[sortOption]}</span>
             </div>
             <ChevronDown
               className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ml-auto sm:ml-0 ${
@@ -116,17 +114,9 @@ export default function HeroFilters({
             />
           </button>
 
-          {/* Ventana Flotante con z-index extremadamente alto */}
           {isDropdownOpen && (
             <div className="absolute right-0 sm:right-0 mt-2 w-full sm:w-56 bg-white border border-slate-200 rounded-2xl shadow-2xl z-[99999] p-1.5 animate-in fade-in zoom-in-95 duration-150">
-              {(
-                [
-                  { id: "oldest", label: "Más antiguos primero" },
-                  { id: "newest", label: "Más recientes primero" },
-                  { id: "az", label: "Nombre (A - Z)" },
-                  { id: "za", label: "Nombre (Z - A)" },
-                ] as const
-              ).map((option) => {
+              {SORT_OPTIONS.map((option) => {
                 const isSelected = sortOption === option.id;
                 return (
                   <button

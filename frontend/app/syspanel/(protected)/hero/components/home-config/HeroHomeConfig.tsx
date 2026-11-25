@@ -1,25 +1,18 @@
-// frontend/app/syspanel/(protected)/hero/components/home-config/HeroHomeConfig.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import HeroHomeGrid from "./HeroHomeGrid";
 import HeroModalHome from "./HeroModalHome";
+import { HeroSlideItem } from "./HeroHomeCard";
 import { Pencil, Save } from "lucide-react";
-
-export interface HeroSlideItem {
-  id: number;
-  title?: string | null;
-  imageUrl: string;
-  isActive: boolean;
-  isFeatured?: boolean;
-  order?: number;
-  createdAt?: string;
-}
 
 interface HeroHomeConfigProps {
   allImages: HeroSlideItem[];
   showToast: (type: "success" | "error" | "warning", message: string) => void;
 }
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const HOME_LIMIT = 8;
 
 export default function HeroHomeConfig({
   allImages,
@@ -30,34 +23,24 @@ export default function HeroHomeConfig({
   const [initialSelectedIds, setInitialSelectedIds] = useState<number[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
-  const HOME_LIMIT = 8;
-
   useEffect(() => {
-    const slots = Array(HOME_LIMIT).fill(null);
+    const slots: (number | null)[] = Array(HOME_LIMIT).fill(null);
     allImages.forEach((img) => {
       if (img.isFeatured && img.order && img.order >= 1 && img.order <= HOME_LIMIT) {
         slots[img.order - 1] = img.id;
       }
     });
 
-    let computedFeatured: number[] = [];
-    slots.forEach((id) => {
-      if (id !== null) computedFeatured.push(id);
-    });
-
-    if (computedFeatured.length === 0) {
-      computedFeatured = allImages
-        .filter((img) => img.isFeatured)
-        .map((img) => img.id);
-    } else {
-      computedFeatured = slots.filter((id): id is number => id !== null);
-    }
+    const orderedFeatured = slots.filter((id): id is number => id !== null);
+    const computedFeatured =
+      orderedFeatured.length > 0
+        ? orderedFeatured
+        : allImages.filter((img) => img.isFeatured).map((img) => img.id);
 
     setSelectedIds(computedFeatured);
     setInitialSelectedIds(computedFeatured);
   }, [allImages]);
 
-  // Comparamos si hay cambios (orden de los elementos o IDs seleccionados)
   const hasChanges =
     selectedIds.length !== initialSelectedIds.length ||
     selectedIds.some((id, index) => id !== initialSelectedIds[index]);
@@ -65,20 +48,14 @@ export default function HeroHomeConfig({
   const handleSaveChanges = async () => {
     setIsSaving(true);
     try {
-      const res = await fetch("http://localhost:4000/api/hero/featured", {
+      const res = await fetch(`${API_URL}/api/hero/featured`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ featuredIds: selectedIds }),
       });
 
       if (res.ok) {
-        showToast(
-          "success",
-          "¡Banners destacados actualizados correctamente!"
-        );
-        // Actualizamos el estado inicial para reflejar que ya están guardados los cambios actuales
+        showToast("success", "¡Banners destacados actualizados correctamente!");
         setInitialSelectedIds([...selectedIds]);
       } else {
         showToast("error", "Error al guardar los cambios en el servidor.");
@@ -99,13 +76,11 @@ export default function HeroHomeConfig({
             Configuración de Banners del Hero
           </h2>
           <p className="text-xs text-slate-500 leading-relaxed font-medium">
-            Selecciona hasta {HOME_LIMIT} banners para mostrar en la sección
-            principal del sitio web.
+            Selecciona hasta {HOME_LIMIT} banners para mostrar en la sección principal del sitio web.
           </p>
         </div>
 
         <div className="grid grid-cols-2 sm:flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
-          {/* Botón Editar optimizado */}
           <button
             type="button"
             onClick={(e) => {
@@ -115,10 +90,11 @@ export default function HeroHomeConfig({
             className="flex items-center justify-center gap-2 px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-xs truncate focus:outline-none focus-visible:ring-2 focus-visible:ring-[#16275d]/20 active:scale-[0.98]"
           >
             <Pencil className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">Editar ({selectedIds.length}/{HOME_LIMIT})</span>
+            <span className="truncate">
+              Editar ({selectedIds.length}/{HOME_LIMIT})
+            </span>
           </button>
 
-          {/* Botón Guardar optimizado con identidad corporativa */}
           <button
             type="button"
             onClick={(e) => {
@@ -132,10 +108,12 @@ export default function HeroHomeConfig({
                 : "bg-slate-100 text-slate-400 cursor-not-allowed border border-transparent shadow-none"
             }`}
           >
-            <Save className={`w-3.5 h-3.5 shrink-0 ${hasChanges && !isSaving ? "text-amber-400" : "text-slate-400"}`} />
-            <span className="truncate">
-              {isSaving ? "Guardando..." : "Guardar"}
-            </span>
+            <Save
+              className={`w-3.5 h-3.5 shrink-0 ${
+                hasChanges && !isSaving ? "text-amber-400" : "text-slate-400"
+              }`}
+            />
+            <span className="truncate">{isSaving ? "Guardando..." : "Guardar"}</span>
           </button>
         </div>
       </div>
@@ -151,12 +129,12 @@ export default function HeroHomeConfig({
         onClose={() => setIsModalOpen(false)}
         allImages={allImages}
         selectedIds={selectedIds}
-        onSaveSelections={(newIds) => setSelectedIds(newIds)}
+        onSaveSelections={setSelectedIds}
         homeLimit={HOME_LIMIT}
         onLimitReached={() => {
           showToast(
             "warning",
-            `Límite de ${HOME_LIMIT} banners alcanzado. Desmarca uno para seleccionar otro.`
+            `Límite de ${HOME_LIMIT} banners alcanzado. Desmarca uno para seleccionar otro.`,
           );
         }}
       />

@@ -1,33 +1,23 @@
-// frontend/app/syspanel/(protected)/galeria/components/home-config/GalleryHomeGrid.tsx
 "use client";
 
-import GalleryHomeCard from "./GalleryHomeCard";
-
-interface GalleryItem {
-  id: number;
-  src: string;
-  alt: string;
-  isActive: boolean;
-  isFeatured?: boolean;
-  createdAt?: string;
-}
+import GalleryHomeCard, { GalleryHomeItem } from "./GalleryHomeCard";
 
 interface GalleryHomeGridProps {
-  allImages: GalleryItem[];
+  allImages: GalleryHomeItem[];
   selectedIds: number[];
   onOpenModal: () => void;
 }
+
+const HOME_LIMIT = 8;
 
 export default function GalleryHomeGrid({
   allImages,
   selectedIds,
   onOpenModal,
 }: GalleryHomeGridProps) {
-  const HOME_LIMIT = 8;
-
   const selectedItems = selectedIds
     .map((id) => allImages.find((img) => img.id === id))
-    .filter((img): img is GalleryItem => img !== undefined);
+    .filter((img): img is GalleryHomeItem => img !== undefined);
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 pt-2 select-none transform-gpu">
@@ -51,9 +41,7 @@ export default function GalleryHomeGrid({
         </div>
       ))}
 
-      {Array.from({
-        length: Math.max(0, HOME_LIMIT - selectedItems.length),
-      }).map((_, index) => (
+      {Array.from({ length: Math.max(0, HOME_LIMIT - selectedItems.length) }).map((_, index) => (
         <div
           key={`empty-${index}`}
           onClick={onOpenModal}

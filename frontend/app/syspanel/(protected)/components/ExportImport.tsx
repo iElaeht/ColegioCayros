@@ -1,10 +1,18 @@
-// frontend/components/syspanel/ExportImportModal.tsx
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
 import * as XLSX from "xlsx";
 import Papa from "papaparse";
-import { Upload, Download, FileSpreadsheet, X, ArrowLeftRight, FileText, CheckCircle2, Loader2 } from "lucide-react";
+import {
+  Upload,
+  Download,
+  FileSpreadsheet,
+  X,
+  ArrowLeftRight,
+  FileText,
+  CheckCircle2,
+  Loader2,
+} from "lucide-react";
 
 interface ExportImportModalProps {
   isOpen: boolean;
@@ -28,22 +36,26 @@ export default function ExportImportModal({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState<boolean>(false);
 
-  // Restablecer el estado base del modal cada vez que se abre o cierra
   useEffect(() => {
+    let resetTimer: ReturnType<typeof setTimeout> | undefined;
+
     if (isOpen) {
       document.body.style.overflow = "hidden";
-      setCustomFilename(filename);
-      setSelectedFile(null);
-      setIsImporting(false);
+      resetTimer = setTimeout(() => {
+        setCustomFilename(filename);
+        setSelectedFile(null);
+        setIsImporting(false);
+      }, 0);
     } else {
       document.body.style.overflow = "unset";
     }
+
     return () => {
+      if (resetTimer) clearTimeout(resetTimer);
       document.body.style.overflow = "unset";
     };
   }, [isOpen, filename]);
 
-  // Cálculo dinámico estimado del peso y tamaño del archivo a exportar
   const estimatedExportInfo = useMemo(() => {
     if (!data || data.length === 0) return { count: 0, sizeText: "0 KB" };
 
@@ -72,25 +84,23 @@ export default function ExportImportModal({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
-  // Lógica de Exportación Profesional con Estilos para Excel
   const handleExport = () => {
     if (!data || data.length === 0) {
       alert("No hay datos disponibles para exportar.");
       return;
     }
 
-    const finalName = customFilename.trim() || filename;
+    const finalName = customFilename.trim() || filename.trim() || "Reporte_Datos";
+
+    const formattedData = data.map((item) => {
+      const newItem: Record<string, unknown> = {};
+      Object.keys(item).forEach((key) => {
+        newItem[key.toUpperCase()] = item[key];
+      });
+      return newItem;
+    });
 
     if (exportFormat === "xlsx") {
-      const formattedData = data.map((item) => {
-        const newItem: Record<string, unknown> = {};
-        Object.keys(item).forEach((key) => {
-          const upperKey = key.toUpperCase();
-          newItem[upperKey] = item[key];
-        });
-        return newItem;
-      });
-
       const worksheet = XLSX.utils.json_to_sheet(formattedData);
       const workbook = XLSX.utils.book_new();
 
@@ -117,21 +127,13 @@ export default function ExportImportModal({
         worksheet[cellAddress].s = {
           font: { bold: true, color: { rgb: "FFFFFF" }, name: "Calibri", sz: 11 },
           fill: { fgColor: { rgb: "16275D" } },
-          alignment: { horizontal: "center", vertical: "center" }
+          alignment: { horizontal: "center", vertical: "center" },
         };
       }
 
       XLSX.utils.book_append_sheet(workbook, worksheet, "Datos");
       XLSX.writeFile(workbook, `${finalName}.xlsx`);
     } else {
-      const formattedData = data.map((item) => {
-        const newItem: Record<string, unknown> = {};
-        Object.keys(item).forEach((key) => {
-          newItem[key.toUpperCase()] = item[key];
-        });
-        return newItem;
-      });
-
       const csv = Papa.unparse(formattedData);
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
@@ -141,6 +143,7 @@ export default function ExportImportModal({
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     }
   };
 
@@ -150,7 +153,6 @@ export default function ExportImportModal({
     setSelectedFile(file);
   };
 
-  // Función auxiliar para normalizar las llaves importadas
   const normalizeImportedData = (rawRows: Record<string, unknown>[]) => {
     return rawRows.map((row) => {
       const normalizedRow: Record<string, unknown> = {};
@@ -162,7 +164,6 @@ export default function ExportImportModal({
     });
   };
 
-  // Procesar Importación con barra de carga y manejo asíncrono
   const handleConfirmImport = async () => {
     if (!selectedFile) return;
 
@@ -185,7 +186,7 @@ export default function ExportImportModal({
           console.error("Error al parsear CSV:", err);
           setIsImporting(false);
           alert("Error al leer el archivo CSV.");
-        }
+        },
       });
     } else if (fileExtension === "xlsx" || fileExtension === "xls") {
       const reader = new FileReader();
@@ -218,10 +219,9 @@ export default function ExportImportModal({
   return (
     <div className="fixed inset-0 z-[999999] min-h-screen w-full flex items-center justify-center bg-black/70 backdrop-blur-xs select-none p-4 overflow-y-auto">
       <div className="bg-white rounded-3xl p-6 sm:p-8 w-full max-w-xl shadow-2xl relative border border-slate-100 animate-in fade-in zoom-in-95 duration-150 my-auto">
-        
-        {/* Botón Cerrar (Deshabilitado si está cargando) */}
         {!isImporting && (
-          <button 
+          <button
+            type="button"
             onClick={onClose}
             className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer outline-none p-1"
           >
@@ -229,7 +229,6 @@ export default function ExportImportModal({
           </button>
         )}
 
-        {/* Cabecera del Modal */}
         <div className="flex items-center gap-3 mb-6 pr-8">
           <div className="w-12 h-12 rounded-2xl bg-[#16275d]/10 flex items-center justify-center text-[#16275d] shrink-0">
             <ArrowLeftRight className="w-6 h-6" />
@@ -245,8 +244,6 @@ export default function ExportImportModal({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          
-          {/* SECCIÓN EXPORTAR */}
           <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col justify-between space-y-4">
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-xs font-bold text-[#16275d] uppercase tracking-wider">
@@ -255,7 +252,9 @@ export default function ExportImportModal({
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-slate-600">Nombre del archivo:</label>
+                <label className="text-[11px] font-semibold text-slate-600">
+                  Nombre del archivo:
+                </label>
                 <input
                   type="text"
                   value={customFilename}
@@ -280,12 +279,18 @@ export default function ExportImportModal({
               </div>
 
               <div className="bg-white border border-slate-200/80 rounded-xl p-2.5 flex items-center justify-between text-[11px]">
-                <span className="text-slate-500 font-medium">Registros: <strong className="text-slate-800">{estimatedExportInfo.count}</strong></span>
-                <span className="text-slate-500 font-medium">Peso Est.: <strong className="text-amber-600 font-bold">{estimatedExportInfo.sizeText}</strong></span>
+                <span className="text-slate-500 font-medium">
+                  Registros: <strong className="text-slate-800">{estimatedExportInfo.count}</strong>
+                </span>
+                <span className="text-slate-500 font-medium">
+                  Peso Est.:{" "}
+                  <strong className="text-amber-600 font-bold">{estimatedExportInfo.sizeText}</strong>
+                </span>
               </div>
             </div>
 
             <button
+              type="button"
               onClick={handleExport}
               disabled={isImporting}
               className="w-full bg-[#16275d] hover:bg-blue-900 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-colors shadow-sm cursor-pointer outline-none flex items-center justify-center gap-2"
@@ -295,7 +300,6 @@ export default function ExportImportModal({
             </button>
           </div>
 
-          {/* SECCIÓN IMPORTAR */}
           <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col justify-between space-y-4">
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-xs font-bold text-[#16275d] uppercase tracking-wider">
@@ -303,25 +307,28 @@ export default function ExportImportModal({
                 Importar Archivo
               </div>
 
-              {/* Si está importando, mostramos barra/spinner de carga interactiva */}
               {isImporting ? (
                 <div className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center space-y-3">
                   <Loader2 className="w-8 h-8 text-[#16275d] animate-spin" />
                   <div className="text-center">
                     <p className="text-xs font-bold text-slate-800">Procesando datos...</p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Guardando registros en la base de datos</p>
+                    <p className="text-[10px] text-slate-500 mt-0.5">
+                      Guardando registros en la base de datos
+                    </p>
                   </div>
                 </div>
               ) : !selectedFile ? (
                 <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 hover:border-[#16275d] rounded-2xl p-6 cursor-pointer bg-white transition-colors group">
                   <FileSpreadsheet className="w-8 h-8 text-slate-400 group-hover:text-[#16275d] mb-2 transition-colors" />
-                  <span className="text-xs font-semibold text-slate-700 text-center">Seleccionar archivo</span>
+                  <span className="text-xs font-semibold text-slate-700 text-center">
+                    Seleccionar archivo
+                  </span>
                   <span className="text-[10px] text-slate-400 mt-0.5">.xlsx, .xls o .csv</span>
-                  <input 
-                    type="file" 
-                    accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" 
-                    onChange={handleFileChange} 
-                    className="hidden" 
+                  <input
+                    type="file"
+                    accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+                    onChange={handleFileChange}
+                    className="hidden"
                   />
                 </label>
               ) : (
@@ -332,15 +339,22 @@ export default function ExportImportModal({
                         <FileText className="w-5 h-5" />
                       </div>
                       <div className="overflow-hidden">
-                        <p className="text-xs font-bold text-slate-800 truncate" title={selectedFile.name}>
+                        <p
+                          className="text-xs font-bold text-slate-800 truncate"
+                          title={selectedFile.name}
+                        >
                           {selectedFile.name}
                         </p>
                         <p className="text-[10px] text-slate-500 font-medium">
-                          Peso: <span className="text-amber-600 font-bold">{formatFileSize(selectedFile.size)}</span>
+                          Peso:{" "}
+                          <span className="text-amber-600 font-bold">
+                            {formatFileSize(selectedFile.size)}
+                          </span>
                         </p>
                       </div>
                     </div>
-                    <button 
+                    <button
+                      type="button"
                       onClick={() => setSelectedFile(null)}
                       className="text-gray-400 hover:text-rose-500 transition-colors shrink-0 cursor-pointer"
                       title="Cambiar archivo"
@@ -357,11 +371,12 @@ export default function ExportImportModal({
             </div>
 
             <button
+              type="button"
               onClick={handleConfirmImport}
               disabled={!selectedFile || isImporting}
               className={`w-full font-bold py-2.5 px-4 rounded-xl text-xs transition-colors shadow-sm outline-none flex items-center justify-center gap-2 ${
                 selectedFile && !isImporting
-                  ? "bg-amber-400 hover:bg-amber-500 text-[#111c38] cursor-pointer" 
+                  ? "bg-amber-400 hover:bg-amber-500 text-[#111c38] cursor-pointer"
                   : "bg-slate-200 text-slate-400 cursor-not-allowed"
               }`}
             >
@@ -378,9 +393,7 @@ export default function ExportImportModal({
               )}
             </button>
           </div>
-
         </div>
-
       </div>
     </div>
   );

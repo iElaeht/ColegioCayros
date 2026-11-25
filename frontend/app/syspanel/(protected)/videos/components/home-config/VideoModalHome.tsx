@@ -1,4 +1,3 @@
-// frontend/app/syspanel/(protected)/videos/components/home-config/VideoModalHome.tsx
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
@@ -25,6 +24,8 @@ interface VideoModalHomeProps {
   onLimitReached?: () => void;
 }
 
+const ITEMS_PER_PAGE = 16;
+
 export default function VideoModalHome({
   isOpen,
   onClose,
@@ -36,21 +37,15 @@ export default function VideoModalHome({
 }: VideoModalHomeProps) {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [activeTab, setActiveTab] = useState<"all" | "selected">("all");
-
-  const ITEMS_PER_PAGE = 16;
   const [visibleLimit, setVisibleLimit] = useState<number>(ITEMS_PER_PAGE);
-
   const [tempSlots, setTempSlots] = useState<(number | null)[]>([]);
-  
-  // Referencia para el contenedor de scroll inteligente
+
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [hasScroll, setHasScroll] = useState<boolean>(false);
 
-  // Efecto limpio para el bloqueo de scroll y la escucha de la tecla ESC
   useEffect(() => {
     if (!isOpen) return;
 
-    // Inicializar slots
     const initialSlots: (number | null)[] = Array(homeLimit).fill(null);
     if (Array.isArray(selectedIds)) {
       selectedIds.forEach((id, index) => {
@@ -59,21 +54,20 @@ export default function VideoModalHome({
         }
       });
     }
-    setTempSlots(initialSlots);
 
-    // Bloqueo de scroll seguro sin alterar la posición fija del body
     const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
     document.body.style.overflow = "hidden";
     if (scrollbarWidth > 0) {
       document.body.style.paddingRight = `${scrollbarWidth}px`;
     }
-    
-    // Resetear estados internos al abrir
-    setSearchTerm("");
-    setActiveTab("all");
-    setVisibleLimit(ITEMS_PER_PAGE);
 
-    // Manejador para cerrar con la tecla ESC
+    const initTimer = setTimeout(() => {
+      setTempSlots(initialSlots);
+      setSearchTerm("");
+      setActiveTab("all");
+      setVisibleLimit(ITEMS_PER_PAGE);
+    }, 0);
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         onClose();
@@ -82,8 +76,8 @@ export default function VideoModalHome({
 
     window.addEventListener("keydown", handleKeyDown);
 
-    // Limpieza del efecto
     return () => {
+      clearTimeout(initTimer);
       window.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "unset";
       document.body.style.paddingRight = "0px";
@@ -98,17 +92,17 @@ export default function VideoModalHome({
         const newSlots = [...prev];
         newSlots[existingIndex] = null;
         return newSlots;
-      } else {
-        const firstEmptyIndex = prev.indexOf(null);
-        if (firstEmptyIndex === -1) {
-            if (onLimitReached) onLimitReached();
-            return prev;
-        }
-
-        const newSlots = [...prev];
-        newSlots[firstEmptyIndex] = id;
-        return newSlots;
       }
+
+      const firstEmptyIndex = prev.indexOf(null);
+      if (firstEmptyIndex === -1) {
+        if (onLimitReached) onLimitReached();
+        return prev;
+      }
+
+      const newSlots = [...prev];
+      newSlots[firstEmptyIndex] = id;
+      return newSlots;
     });
   };
 
@@ -139,15 +133,11 @@ export default function VideoModalHome({
 
   const filteredVideos = useMemo(() => {
     const safeVideos = Array.isArray(allVideos) ? allVideos : [];
-    const activeSelectedIds = tempSlots.filter(
-      (id): id is number => id !== null
-    );
+    const activeSelectedIds = tempSlots.filter((id): id is number => id !== null);
 
     return safeVideos.filter((vid) => {
       const altText = vid?.alt || "";
-      const matchesSearch = altText
-        .toLowerCase()
-        .includes((searchTerm || "").toLowerCase());
+      const matchesSearch = altText.toLowerCase().includes((searchTerm || "").toLowerCase());
       const isSelected = activeSelectedIds.includes(vid.id);
       const matchesTab = activeTab === "all" ? true : isSelected;
       return matchesSearch && matchesTab;
@@ -166,7 +156,6 @@ export default function VideoModalHome({
       }
     };
 
-    checkScroll();
     const timer = setTimeout(checkScroll, 50);
     return () => clearTimeout(timer);
   }, [paginatedVideos, visibleLimit]);
@@ -184,8 +173,6 @@ export default function VideoModalHome({
   return (
     <div className="fixed inset-0 z-[99999] overflow-y-auto bg-slate-950/60 backdrop-blur-xs flex min-h-full items-center justify-center p-3 sm:p-6 select-none animate-in fade-in duration-200">
       <div className="bg-white w-full max-w-4xl max-h-[85vh] rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col my-auto">
-        
-        {/* Cabecera del Modal */}
         <div className="p-4 sm:p-6 border-b border-slate-100 flex flex-col gap-3.5 bg-slate-50/80 shrink-0">
           <div className="flex items-center justify-between gap-2">
             <div className="space-y-0.5">
@@ -222,8 +209,7 @@ export default function VideoModalHome({
           </div>
         </div>
 
-        {/* Contenido con scroll condicional */}
-        <div 
+        <div
           ref={scrollContainerRef}
           className={`p-4 sm:p-6 overflow-x-hidden flex-1 flex flex-col bg-white ${
             hasScroll ? "overflow-y-auto custom-scrollbar" : "overflow-y-hidden"
@@ -234,12 +220,11 @@ export default function VideoModalHome({
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                 {paginatedVideos.map((vid) => {
                   const currentSelectedIds = tempSlots.filter(
-                    (id): id is number => id !== null
+                    (id): id is number => id !== null,
                   );
                   const isSelected = currentSelectedIds.includes(vid.id);
                   const selectionIndex = tempSlots.indexOf(vid.id);
-                  const selectionNumber =
-                    selectionIndex !== -1 ? selectionIndex + 1 : null;
+                  const selectionNumber = selectionIndex !== -1 ? selectionIndex + 1 : null;
 
                   return (
                     <div key={vid.id} className="w-full">
@@ -262,8 +247,7 @@ export default function VideoModalHome({
                     onClick={handleLoadMore}
                     className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-[#16275d] text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs truncate"
                   >
-                    Cargar más videos ({filteredVideos.length - visibleLimit}{" "}
-                    restantes)
+                    Cargar más videos ({filteredVideos.length - visibleLimit} restantes)
                   </button>
                 </div>
               )}
@@ -282,7 +266,6 @@ export default function VideoModalHome({
           )}
         </div>
 
-        {/* Footer del Modal */}
         <div className="p-4 sm:p-5 border-t border-slate-100 bg-slate-50/80 flex items-center justify-end gap-3 shrink-0">
           <button
             type="button"
@@ -291,7 +274,7 @@ export default function VideoModalHome({
           >
             Cancelar
           </button>
-          
+
           <button
             type="button"
             onClick={handleConfirmSave}

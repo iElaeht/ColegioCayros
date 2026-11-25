@@ -1,102 +1,205 @@
-// frontend/app/syspanel/matriculas/page.tsx
 "use client";
 
-import React, { useState, useEffect } from "react";
-import MatriculaConfigForm from "./components/MatriculaConfigForm";
-import MatriculaSolicitudesTable from "./components/MatriculaSolicitudesTable";
+import React, { useState, useEffect, useCallback } from "react";
+import { Suspense } from "react";
+import MatriculaSolicitudesTable, {
+  SolicitudMatricula,
+} from "./components/MatriculaSolicitudesTable";
+import ToastAlert from "../components/ToastAlert";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 export default function MatriculasPage() {
-  const [activeTab, setActiveTab] = useState<"config" | "solicitudes">("config");
-  const [count, setCount] = useState<number>(0);
+  const [solicitudes, setSolicitudes] = useState<SolicitudMatricula[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
-  // Título dinámico para la pestaña del navegador
   useEffect(() => {
     document.title = "Gestión de Matrículas | Colegio Cayros";
   }, []);
 
-  // Obtener el conteo total de solicitudes en tiempo real para el badge de la pestaña
-  useEffect(() => {
-    fetch("http://localhost:4000/api/matricula-inscripcion")
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setCount(data.length);
-        }
-      })
-      .catch((err) => console.error("Error al obtener contador de solicitudes:", err));
+  const fetchSolicitudes = useCallback(async (isManualRefresh = false) => {
+    if (isManualRefresh) {
+      setIsRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/api/matricula-inscripcion?t=${Date.now()}`, {
+        cache: "no-store",
+      });
+      if (!res.ok) throw new Error("Error al obtener solicitudes");
+
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setSolicitudes(data);
+      }
+    } catch (err) {
+      console.error("Error al cargar solicitudes:", err);
+      setToast({ message: "Error al conectar con el servidor.", type: "error" });
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
+    }
   }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadInitialSolicitudes = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`${API_URL}/api/matricula-inscripcion?t=${Date.now()}`, {
+          cache: "no-store",
+        });
+        if (!res.ok) throw new Error("Error al obtener solicitudes");
+
+        const data = await res.json();
+        if (active && Array.isArray(data)) {
+          setSolicitudes(data);
+        }
+      } catch (err) {
+        if (active) {
+          console.error("Error al cargar solicitudes:", err);
+          setToast({ message: "Error al conectar con el servidor.", type: "error" });
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void loadInitialSolicitudes();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const handleDeleteOne = useCallback(async (id: number): Promise<boolean> => {
+    try {
+      const res = await fetch(`${API_URL}/api/matricula-inscripcion/${id}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        setSolicitudes((prev) => prev.filter((item) => item.id !== id));
+        setToast({ message: "Solicitud eliminada con éxito.", type: "success" });
+        return true;
+      }
+
+      setToast({ message: "No se pudo eliminar la solicitud.", type: "error" });
+      return false;
+    } catch (err) {
+      console.error("Error al eliminar la solicitud:", err);
+      setToast({ message: "Error de red al intentar eliminar.", type: "error" });
+      return false;
+    }
+  }, []);
+
+  const handleDeleteSelected = useCallback(async (ids: number[]) => {
+    if (!ids.length) return;
+
+    try {
+      const res = await fetch(`${API_URL}/api/matricula-inscripcion/eliminar-masivo`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      });
+
+      if (res.ok) {
+        setSolicitudes((prev) => prev.filter((item) => !ids.includes(item.id)));
+        setToast({
+          message: `${ids.length} ${
+            ids.length === 1 ? "solicitud eliminada" : "solicitudes eliminadas"
+          } con éxito.`,
+          type: "success",
+        });
+      } else {
+        setToast({
+          message: "No se pudieron eliminar las solicitudes seleccionadas.",
+          type: "error",
+        });
+      }
+    } catch (err) {
+      console.error("Error al eliminar seleccionados:", err);
+      setToast({ message: "Error de red al eliminar seleccionados.", type: "error" });
+    }
+  }, []);
+
+  const handleImportData = useCallback(
+    async (importedJson: Record<string, unknown>[]) => {
+      try {
+        const res = await fetch(`${API_URL}/api/matricula-inscripcion/importar`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ matriculas: importedJson }),
+        });
+
+        if (res.ok) {
+          await fetchSolicitudes(false);
+          setToast({ message: "¡Matrículas importadas y guardadas con éxito!", type: "success" });
+        } else {
+          setToast({ message: "Error al guardar las matrículas importadas.", type: "error" });
+        }
+      } catch (err) {
+        console.error("Error al importar matrículas:", err);
+        setToast({ message: "Error de red al intentar importar.", type: "error" });
+      }
+    },
+    [fetchSolicitudes],
+  );
 
   return (
     <div className="p-4 sm:p-8 lg:p-10 space-y-6 sm:space-y-8 max-w-7xl mx-auto select-none">
-      {/* Cabecera Limpia, Responsiva y Visible */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 border-b border-slate-200/80 pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-6">
         <div>
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-[#16275d] tracking-tight">
             Gestión de Matrículas
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">
-            Configura las imágenes del carrusel y revisa las solicitudes de pre-inscripción en tiempo real.
+            Revisa, filtra, exporta o administra las solicitudes de pre-inscripción registradas.
           </p>
         </div>
 
-        {/* Pestañas con Animación de Desplazamiento Fluido */}
-        <div className="relative flex items-center bg-slate-100 border border-slate-200/80 p-1.5 rounded-2xl w-full lg:w-auto shadow-2xs">
-          
-          {/* Fondo deslizante animado */}
-          <div 
-            className={`absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] lg:w-[160px] bg-[#16275d] rounded-xl shadow-xs transition-all duration-300 ease-in-out ${
-              activeTab === "config" ? "left-1.5" : "left-[calc(50%+2px)] lg:left-[calc(160px+8px)]"
-            }`}
-          />
-
-          <button
-            type="button"
-            onClick={(e) => {
-              e.currentTarget.blur();
-              setActiveTab("config");
-            }}
-            className={`relative z-10 flex-1 lg:w-[160px] px-3 sm:px-4 py-2.5 text-xs font-bold rounded-xl transition-colors duration-300 cursor-pointer text-center outline-none ${
-              activeTab === "config"
-                ? "text-amber-400"
-                : "text-slate-600 hover:text-[#16275d]"
-            }`}
-          >
-            Configuración del Cartel
-          </button>
-          
-          <button
-            type="button"
-            onClick={(e) => {
-              e.currentTarget.blur();
-              setActiveTab("solicitudes");
-            }}
-            className={`relative z-10 flex-1 lg:w-[160px] px-3 sm:px-4 py-2.5 text-xs font-bold rounded-xl transition-colors duration-300 cursor-pointer flex items-center justify-center gap-2 outline-none ${
-              activeTab === "solicitudes"
-                ? "text-amber-400"
-                : "text-slate-600 hover:text-[#16275d]"
-            }`}
-          >
-            Solicitudes
-            <span className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors duration-300 font-extrabold ${
-              activeTab === "solicitudes" 
-                ? "bg-amber-400/20 text-amber-400 border-amber-400/40" 
-                : "bg-amber-100 text-amber-800 border-amber-300"
-            }`}>
-              {count}
-            </span>
-          </button>
+        <div className="inline-flex items-center gap-2.5 self-start sm:self-auto bg-white border border-slate-200/90 px-4 py-2 rounded-2xl shadow-2xs">
+          <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+          <span className="text-xs font-medium text-slate-500">Solicitudes registradas</span>
+          <span className="text-sm font-black text-[#16275d] tabular-nums">
+            {solicitudes.length}
+          </span>
         </div>
       </div>
 
-      {/* Contenido Dinámico */}
-      {activeTab === "config" ? (
-        <div className="animate-in fade-in duration-200">
-          <MatriculaConfigForm />
-        </div>
-      ) : (
-        <div className="animate-in fade-in duration-200">
-          <MatriculaSolicitudesTable onCountChange={(newCount) => setCount(newCount)} />
-        </div>
+      <div className="animate-in fade-in duration-200">
+        <Suspense
+          fallback={
+            <div className="p-12 text-center text-slate-400 text-xs font-medium">
+              Cargando vista de matrículas...
+            </div>
+          }
+        >
+          <MatriculaSolicitudesTable
+            solicitudes={solicitudes}
+            loading={loading}
+            isRefreshing={isRefreshing}
+            onRefresh={() => fetchSolicitudes(true)}
+            onDeleteOne={handleDeleteOne}
+            onDeleteSelected={handleDeleteSelected}
+            onImportData={handleImportData}
+          />
+        </Suspense>
+      </div>
+
+      {toast && (
+        <ToastAlert
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
       )}
     </div>
   );

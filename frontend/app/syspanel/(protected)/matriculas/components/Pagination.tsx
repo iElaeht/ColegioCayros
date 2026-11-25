@@ -1,4 +1,3 @@
-// frontend/components/Pagination.tsx
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -9,6 +8,7 @@ interface PaginationProps {
   itemsPerPage: number;
   totalItems: number;
   onPageChange: (page: number) => void;
+  itemLabel?: string;
 }
 
 export default function Pagination({
@@ -17,11 +17,13 @@ export default function Pagination({
   itemsPerPage,
   totalItems,
   onPageChange,
+  itemLabel = "solicitudes",
 }: PaginationProps) {
-  const safeTotalItems = Number(totalItems) || 0;
-  const safeCurrentPage = Number(currentPage) || 1;
-  const safeItemsPerPage = Number(itemsPerPage) || 10;
-  const safeTotalPages = Number(totalPages) || 0;
+  const safeTotalItems = Math.max(0, Number(totalItems) || 0);
+  const safeItemsPerPage = Math.max(1, Number(itemsPerPage) || 10);
+  const safeTotalPages = Math.max(0, Number(totalPages) || 0);
+  const rawPage = Math.max(1, Number(currentPage) || 1);
+  const safeCurrentPage = safeTotalPages > 0 ? Math.min(rawPage, safeTotalPages) : 1;
 
   if (safeTotalPages <= 1 && safeTotalItems === 0) return null;
 
@@ -33,7 +35,7 @@ export default function Pagination({
       <p className="text-xs font-medium text-slate-500">
         Mostrando <span className="font-bold text-slate-800">{startItem}</span> a{" "}
         <span className="font-bold text-slate-800">{endItem}</span> de{" "}
-        <span className="font-bold text-slate-800">{safeTotalItems}</span> solicitudes
+        <span className="font-bold text-slate-800">{safeTotalItems}</span> {itemLabel}
       </p>
 
       <div className="flex items-center gap-3">
@@ -48,7 +50,7 @@ export default function Pagination({
               e.currentTarget.blur();
               onPageChange(safeCurrentPage - 1);
             }}
-            disabled={safeCurrentPage === 1}
+            disabled={safeCurrentPage <= 1}
             className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-700 bg-white border border-slate-200/90 rounded-xl hover:bg-slate-50 hover:border-slate-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer outline-none"
           >
             <ChevronLeft className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -61,7 +63,7 @@ export default function Pagination({
               e.currentTarget.blur();
               onPageChange(safeCurrentPage + 1);
             }}
-            disabled={safeCurrentPage === safeTotalPages || safeTotalPages === 0}
+            disabled={safeCurrentPage >= safeTotalPages || safeTotalPages === 0}
             className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-700 bg-white border border-slate-200/90 rounded-xl hover:bg-slate-50 hover:border-slate-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer outline-none"
           >
             Siguiente

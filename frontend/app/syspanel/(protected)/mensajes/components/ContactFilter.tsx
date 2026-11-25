@@ -1,4 +1,3 @@
-// frontend/app/syspanel/mensajes/components/ContactFilter.tsx
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
@@ -6,18 +5,25 @@ import { Search, ArrowUpDown, X, ChevronDown, Check, ArrowLeftRight } from "luci
 import CustomDatePicker from "../../../../components/ui/CustomDatePicker";
 import ExportImportModal from "../../components/ExportImport";
 
-interface ContactFilterProps {
+interface ContactFilterProps<T extends object> {
   searchTerm: string;
   setSearchTerm: (value: string) => void;
   selectedDate: string;
   setSelectedDate: (value: string) => void;
   sortOrder: string;
   setSortOrder: (value: string) => void;
-  exportData: Record<string, unknown>[];
+  exportData: T[];
   onImportData?: (importedJson: Record<string, unknown>[]) => Promise<void> | void;
 }
 
-export default function ContactFilter({
+const SORT_OPTIONS = [
+  { id: "recientes", label: "Más recientes primero" },
+  { id: "antiguos", label: "Más antiguos primero" },
+  { id: "az", label: "Nombre (A - Z)" },
+  { id: "za", label: "Nombre (Z - A)" },
+] as const;
+
+export default function ContactFilter<T extends object>({
   searchTerm,
   setSearchTerm,
   selectedDate,
@@ -26,7 +32,7 @@ export default function ContactFilter({
   setSortOrder,
   exportData,
   onImportData,
-}: ContactFilterProps) {
+}: ContactFilterProps<T>) {
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const sortRef = useRef<HTMLDivElement>(null);
@@ -67,21 +73,12 @@ export default function ContactFilter({
     setSortOrder("recientes");
   };
 
-  const sortOptions = [
-    { id: "recientes", label: "Más recientes primero" },
-    { id: "antiguos", label: "Más antiguos primero" },
-    { id: "az", label: "Nombre (A - Z)" },
-    { id: "za", label: "Nombre (Z - A)" },
-  ];
-
-  const currentSortLabel = sortOptions.find((opt) => opt.id === sortOrder)?.label || "Ordenar por";
+  const currentSortLabel =
+    SORT_OPTIONS.find((opt) => opt.id === sortOrder)?.label || "Ordenar por";
 
   return (
     <>
-      {/* Contenedor principal: Columna en móvil (captura 1) y Fila perfecta en web (captura 2) */}
       <div className="bg-white p-4 sm:p-5 border border-slate-200/85 rounded-3xl shadow-sm flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 select-none w-full">
-        
-        {/* 1. Buscador Principal */}
         <div className="relative w-full lg:w-80 group">
           <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[#16275d] transition-colors">
             <Search className="w-4 h-4" />
@@ -105,18 +102,11 @@ export default function ContactFilter({
           )}
         </div>
 
-        {/* 2. Contenedor de Filtros Secundarios y Botones */}
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3 lg:gap-2.5 w-full lg:w-auto">
-          
-          {/* Selector de Fecha */}
           <div className="w-full lg:w-auto">
-            <CustomDatePicker
-              selectedDate={selectedDate}
-              onChange={setSelectedDate}
-            />
+            <CustomDatePicker selectedDate={selectedDate} onChange={setSelectedDate} />
           </div>
 
-          {/* Menú Desplegable de Ordenamiento */}
           <div className="relative w-full lg:w-auto" ref={sortRef}>
             <button
               type="button"
@@ -138,12 +128,16 @@ export default function ContactFilter({
                 <ArrowUpDown className="w-3.5 h-3.5 text-[#16275d] shrink-0" />
                 <span className="truncate">{currentSortLabel}</span>
               </div>
-              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ${isSortOpen ? "rotate-180 text-[#16275d]" : ""}`} />
+              <ChevronDown
+                className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ${
+                  isSortOpen ? "rotate-180 text-[#16275d]" : ""
+                }`}
+              />
             </button>
 
             {isSortOpen && (
               <div className="absolute left-0 lg:right-0 lg:left-auto mt-2 w-full lg:w-56 bg-white border border-slate-200 rounded-2xl shadow-xl z-[99999] overflow-hidden p-1.5 animate-in fade-in zoom-in-95 duration-150">
-                {sortOptions.map((option) => {
+                {SORT_OPTIONS.map((option) => {
                   const isSelected = sortOrder === option.id;
                   return (
                     <button
@@ -161,7 +155,9 @@ export default function ContactFilter({
                       }`}
                     >
                       <span className="truncate">{option.label}</span>
-                      {isSelected && <Check className="w-3.5 h-3.5 text-[#16275d] shrink-0 ml-2" />}
+                      {isSelected && (
+                        <Check className="w-3.5 h-3.5 text-[#16275d] shrink-0 ml-2" />
+                      )}
                     </button>
                   );
                 })}
@@ -169,7 +165,6 @@ export default function ContactFilter({
             )}
           </div>
 
-          {/* Botón de Limpiar Global (Aparece de forma inteligente solo si hay filtros activos) */}
           {hasFilters && (
             <button
               type="button"
@@ -182,7 +177,6 @@ export default function ContactFilter({
             </button>
           )}
 
-          {/* Botón Integrado de Exportar / Importar */}
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
@@ -192,17 +186,15 @@ export default function ContactFilter({
             <ArrowLeftRight className="w-3.5 h-3.5" />
             <span>Exportar / Importar</span>
           </button>
-
         </div>
       </div>
 
-      {/* Modal Modular Genérico */}
       <ExportImportModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title="Gestión de Mensajes"
-        data={exportData}
-        filename=""
+        data={exportData as Record<string, unknown>[]}
+        filename="Mensajes_Cayros"
         onImportData={onImportData}
       />
     </>

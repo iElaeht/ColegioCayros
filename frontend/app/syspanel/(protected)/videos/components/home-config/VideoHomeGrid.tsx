@@ -1,4 +1,3 @@
-// frontend/app/syspanel/(protected)/videos/components/home-config/VideoHomeGrid.tsx
 "use client";
 
 import VideoCard from "./VideoHomeCard";
@@ -19,13 +18,13 @@ interface VideoHomeGridProps {
   onOpenModal: () => void;
 }
 
+const HOME_LIMIT = 8;
+
 export default function VideoHomeGrid({
   allVideos,
   selectedIds,
   onOpenModal,
 }: VideoHomeGridProps) {
-  const HOME_LIMIT = 8;
-
   const selectedItems = selectedIds
     .map((id) => allVideos.find((vid) => vid.id === id))
     .filter((vid): vid is VideoItem => vid !== undefined);
