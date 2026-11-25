@@ -37,9 +37,8 @@ model MensajeContacto {
 
 model Usuario {
   id       Int    @id @default(autoincrement())
-  usuario  String
+  usuario  String @unique
   password String
-  dni      String @unique
 }
 
 model Galeria {
