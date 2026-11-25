@@ -36,16 +36,16 @@ Digitalizar y optimizar los procesos operativos y de comunicación del **Colegio
 
 ## 🛠 Stack Tecnológico y Arquitectura
 
-El sistema está construido bajo un stack unificado en **TypeScript**, facilitando el tipado estático de extremo a extremo entre el cliente, el servidor y la base de datos:
+El sistema está construido bajo un stack unificado en **TypeScript**, separando el servidor API (`backend`) de la aplicación cliente (`frontend`):
 
 | Capa | Tecnología | Descripción / Responsabilidad |
 | :--- | :--- | :--- |
-| **Lenguaje** | **TypeScript** | Tipado estático en toda la aplicación para modelos de datos, validaciones y lógica de negocio. |
+| **Lenguaje** | **TypeScript** | Tipado estático de extremo a extremo entre cliente, servidor y base de datos. |
 | **Frontend** | **Next.js + React** | Renderizado de páginas públicas, enrutamiento dinámico y construcción del panel administrativo (`/syspanel`). |
 | **Estilos & UI** | **Tailwind CSS + CSS** | Diseño responsivo, componentes modales, tablas interactivas, filtros avanzados y notificaciones. |
-| **Backend / API** | **Node.js / Next.js API** | Endpoints REST para gestión CRUD, subida de archivos/comprobantes, autenticación y consultas. |
-| **Base de Datos** | **PostgreSQL** | Motor de base de datos relacional (`colegio_db`) para almacenamiento persistente. |
-| **ORM** | **Prisma** | Modelado de esquemas (`schema.prisma`), migraciones y consultas tipadas hacia PostgreSQL. |
+| **Backend / API** | **Node.js + Express** | API REST modular para gestión CRUD, subida y limpieza atómica de archivos (`multer`) y autenticación administrativa. |
+| **Base de Datos** | **PostgreSQL** | Motor de base de datos relacional (`colegiocayros`) para almacenamiento persistente. |
+| **ORM** | **Prisma** | Modelado de esquemas (`schema.prisma`), migraciones, semillas (`seed.ts`) y consultas tipadas hacia PostgreSQL. |
 | **Exportación / Datos**| **XLSX & PapaParse** | Generación e importación de reportes administrativos en formatos Excel (`.xlsx`) y `.csv`. |
 | **Infraestructura** | **Render** | Alojamiento en la nube de los servicios web y conexión con la base de datos en producción/staging. |
 
@@ -57,45 +57,45 @@ El sistema está construido bajo un stack unificado en **TypeScript**, facilitan
 * **Inicio (`/`):** Carrusel principal (*Hero*) dinámico, accesos rápidos y cartel informativo de matrícula.
 * **Información Institucional:** Secciones dedicadas a *Nosotros*, oferta académica (nivel *Inicial*), ubicación de *Sedes* y *Boletín* informativo.
 * **Multimedia y Comunidad:** Módulos dinámicos de *Galería* fotográfica, *Videos* institucionales y agenda de *Eventos*.
-* **Matrícula en Línea (`/matricula`):** Formulario guiado por pasos (multi-step) para el registro de datos del estudiante y apoderado, con visualización de cuentas bancarias institucionales.
+* **Matrícula en Línea (`/matricula`):** Formulario guiado por pasos (multi-step) para el registro de datos del estudiante y apoderado, con generación automática de código y clave de pago.
 * **Pagos Institucionales (`/pagos-institucional`):** Carga de comprobantes/vouchers de pago y consulta en tiempo real del estado de verificación del trámite.
 * **Contáctanos (`/contactanos`):** Formulario de consultas conectado directamente a la bandeja de entrada del panel administrativo.
 
 ### 🔐 2. Panel de Administración (`/syspanel`)
-* **Autenticación y Seguridad:** Acceso restringido mediante credenciales administrativas y protección de rutas.
+* **Autenticación y Seguridad:** Acceso restringido mediante usuario y contraseña administrativa (validados con `bcrypt`) y usuario inicial configurable por variables de entorno.
 * **Dashboard General:** Resumen ejecutivo con indicadores rápidos de matrículas, pagos pendientes y mensajes recientes.
 * **Gestión de Matrículas:** Listado completo de postulantes con búsqueda, filtros por estado/fecha y visualización detallada.
-* **Revisión de Pagos y Vouchers:** Modal de inspección de comprobantes adjuntos con flujo de aprobación o rechazo y actualización de estado.
-* **Bandeja de Mensajes:** Gestión de consultas recibidas desde la web con herramientas de filtrado y ordenamiento.
-* **Gestor de Contenidos (CMS):** Administración CRUD de imágenes del *Hero*, *Cartel de Matrícula*, *Eventos*, *Galería* y *Videos*.
+* **Revisión de Pagos y Vouchers:** Modal de inspección de comprobantes adjuntos con flujo de aprobación o rechazo (ventana de 48h para reintento) y actualización de estado.
+* **Bandeja de Mensajes:** Gestión de consultas recibidas desde la web con herramientas de filtrado, ordenamiento y eliminación masiva.
+* **Gestor de Contenidos (CMS):** Administración CRUD de imágenes del *Hero*, *Cartel de Matrícula*, *Eventos*, *Galería* y *Videos*, con sincronización y limpieza de archivos huérfanos en disco.
 * **Herramientas de Datos:** Exportación e importación de registros en **Excel (`.xlsx`)** y **CSV (`.csv`)**, además de eliminación individual o masiva con confirmación.
 
 ---
 
 ## 📁 Estructura del Proyecto
 
-> *Nota: La estructura exacta puede variar ligeramente según la rama activa del repositorio.*
-
 ```text
-colegio-cayros/
-├── prisma/
-│   ├── schema.prisma        # Modelos de datos y configuración de PostgreSQL
-│   └── migrations/          # Historial de migraciones de la base de datos
-├── public/
-│   └── images/              # Recursos estáticos, logos e imágenes institucionales
-├── src/                     # (o estructura raíz app/ / pages/ + backend/)
-│   ├── app/ o pages/        # Rutas públicas y rutas protegidas de /syspanel
-│   │   ├── matricula/       # Flujo multi-paso de matrícula
-│   │   ├── pagos-institucional/ # Registro y consulta de pagos
-│   │   └── syspanel/        # Módulos del panel administrativo
-│   ├── components/          # Componentes reutilizables (Modales, Tablas, Filtros, Navbar, Footer)
-│   ├── lib/ o services/     # Cliente de Prisma, helpers de exportación (XLSX/CSV) y servicios API
-│   └── styles/              # Estilos globales y configuración de Tailwind CSS
-├── .env.example             # Plantilla de variables de entorno requeridas
-├── next.config.mjs          # Configuración de Next.js
-├── package.json             # Dependencias y scripts del proyecto
-├── tailwind.config.ts       # Configuración de diseño y temas de Tailwind
-└── tsconfig.json            # Configuración del compilador TypeScript
+ColegioCayros/
+├── backend/
+│   ├── prisma/
+│   │   ├── migrations/          # Historial de migraciones de PostgreSQL
+│   │   ├── seeders/             # Semillas iniciales (usuario.seeder.ts)
+│   │   ├── schema.prisma        # Modelos de datos y configuración de Prisma
+│   │   └── seed.ts              # Script principal de siembra (admin por defecto)
+│   ├── routes/                  # Endpoints REST (auth, eventos, galeria, hero, matricula, pagos, videos, mensajes)
+│   ├── uploads/                 # Almacenamiento local de imágenes, videos y comprobantes
+│   ├── .env                     # Variables de entorno del servidor API
+│   ├── db.ts                    # Instancia del cliente Prisma
+│   └── package.json             # Dependencias y scripts del backend
+├── frontend/
+│   ├── public/                  # Recursos estáticos, logos e imágenes institucionales
+│   ├── src/
+│   │   ├── app/                 # Rutas públicas y vistas protegidas de /syspanel
+│   │   ├── components/          # Componentes reutilizables (Modales, Tablas, Filtros, Navbar, Footer)
+│   │   └── lib/                 # Servicios API, utilidades de exportación (XLSX/CSV) y helpers
+│   ├── .env.local               # Variables de entorno del cliente Next.js
+│   └── package.json             # Dependencias y scripts del frontend
+└── README.md
 ```
 
 ---
@@ -114,30 +114,35 @@ Antes de ejecutar el proyecto en un entorno local, asegúrate de contar con:
 
 1. **Clonar el repositorio:**
    ```bash
-   git clone https://github.com/<usuario-o-organizacion>/<nombre-del-repositorio>.git
-   cd <nombre-del-repositorio>
+   git clone https://github.com/<usuario-o-organizacion>/ColegioCayros.git
+   cd ColegioCayros
    ```
 
-2. **Instalar dependencias:**
+2. **Configurar e iniciar el Backend:**
    ```bash
+   cd backend
    npm install
    ```
-
-3. **Configurar variables de entorno:**
-   Crea un archivo `.env` en la raíz del proyecto tomando como base `.env.example` (ver sección [Variables de Entorno](#-variables-de-entorno)).
-
-4. **Sincronizar la base de datos con Prisma:**
+   Crea el archivo `backend/.env` (ver sección [Variables de Entorno](#-variables-de-entorno)), luego genera el cliente de Prisma, ejecuta las migraciones, siembra el administrador inicial y levanta el servidor:
    ```bash
    npx prisma generate
    npx prisma migrate dev
+   npx prisma db seed
+   npm run dev
    ```
+   El servidor API quedará disponible en `http://localhost:4000`.
 
-5. **Iniciar el servidor de desarrollo:**
+3. **Configurar e iniciar el Frontend (en otra terminal):**
+   ```bash
+   cd frontend
+   npm install
+   ```
+   Crea el archivo `frontend/.env.local` apuntando a la URL del backend y levanta Next.js:
    ```bash
    npm run dev
    ```
 
-6. **Abrir en el navegador:**
+4. **Abrir en el navegador:**
    * Portal público: `http://localhost:3000`
    * Panel administrativo: `http://localhost:3000/syspanel`
 
@@ -145,29 +150,36 @@ Antes de ejecutar el proyecto en un entorno local, asegúrate de contar con:
 
 ## 🔑 Variables de Entorno
 
-Crea un archivo `.env` en la raíz del proyecto con las siguientes variables (ajusta los valores según tu entorno local o de producción):
+El proyecto utiliza archivos de entorno separados para el servidor API (`backend`) y la aplicación web (`frontend`).
+
+### 1. Backend (`backend/.env`)
 
 ```env
 # Conexión a PostgreSQL (Prisma)
-DATABASE_URL="postgresql://USUARIO:PASSWORD@localhost:5432/colegio_db?schema=public"
+DATABASE_URL="postgresql://USUARIO:PASSWORD@localhost:5432/colegiocayros?schema=public"
 
-# Configuración de Autenticación / JWT / Sesión del Syspanel
-JWT_SECRET="tu_clave_secreta_segura"
-NEXTAUTH_SECRET="tu_secreto_de_sesion"
-NEXTAUTH_URL="http://localhost:3000"
+# Puerto del servidor Express
+PORT=4000
 
-# Configuración de almacenamiento / subida de archivos (si aplica)
-UPLOAD_DIR="./public/uploads"
-
-# Entorno de ejecución
-NODE_ENV="development"
+# Credenciales del administrador por defecto (usadas en prisma/seed.ts)
+DEFAULT_ADMIN_USER="Admin"
+DEFAULT_ADMIN_PASS="Admin"
 ```
+
+### 2. Frontend (`frontend/.env.local` o `frontend/.env`)
+
+```env
+# URL base del backend API
+NEXT_PUBLIC_API_URL=http://localhost:4000
+```
+
+> **Nota de seguridad:** No subas tus archivos `.env` con credenciales reales o de producción al repositorio. Usa siempre contraseñas robustas en entornos públicos o desplegados.
 
 ---
 
 ## 🗄 Base de Datos y Prisma
 
-Comandos útiles para administrar el esquema de **PostgreSQL** durante el desarrollo:
+Todos los comandos de Prisma se ejecutan dentro de la carpeta `backend/`:
 
 * **Generar el cliente de Prisma tras modificar `schema.prisma`:**
   ```bash
@@ -177,7 +189,15 @@ Comandos útiles para administrar el esquema de **PostgreSQL** durante el desarr
   ```bash
   npx prisma migrate dev --name nombre_del_cambio
   ```
-* **Abrir Prisma Studio (interfaz visual para ver/editar registros):**
+* **Ejecutar el seed manualmente (crear/actualizar el usuario administrador por defecto):**
+  ```bash
+  npx prisma db seed
+  ```
+* **Reiniciar la base de datos desde cero (borra datos, reaplica migraciones y ejecuta `seed.ts`):**
+  ```bash
+  npx prisma migrate reset --force
+  ```
+* **Abrir Prisma Studio (interfaz visual para inspeccionar registros):**
   ```bash
   npx prisma studio
   ```
@@ -186,27 +206,40 @@ Comandos útiles para administrar el esquema de **PostgreSQL** durante el desarr
 
 ## ☁️ Despliegue en Render
 
-El proyecto está configurado para desplegarse en **Render**:
+Al estar dividido en dos aplicaciones (`backend` y `frontend`), en **Render** se despliegan como dos servicios independientes:
 
-1. **Build Command:**
-   ```bash
-   npm install && npx prisma generate && npm run build
-   ```
-2. **Start Command:**
-   ```bash
-   npm start
-   ```
-3. **Variables de Entorno en Render:**
-   Asegúrate de registrar `DATABASE_URL` (apuntando a la instancia PostgreSQL de Render o externa) y las claves de sesión (`JWT_SECRET` / `NEXTAUTH_SECRET`) en la pestaña **Environment** del servicio web.
+### 1. Servicio Backend (Web Service)
+* **Root Directory:** `backend`
+* **Build Command:**
+  ```bash
+  npm install && npx prisma generate && npx prisma migrate deploy
+  ```
+* **Start Command:**
+  ```bash
+  npm start
+  ```
+* **Environment Variables:** `DATABASE_URL`, `PORT`, `DEFAULT_ADMIN_USER`, `DEFAULT_ADMIN_PASS`.
+
+### 2. Servicio Frontend (Web Service)
+* **Root Directory:** `frontend`
+* **Build Command:**
+  ```bash
+  npm install && npm run build
+  ```
+* **Start Command:**
+  ```bash
+  npm start
+  ```
+* **Environment Variables:** `NEXT_PUBLIC_API_URL` (apuntando a la URL pública del servicio backend en Render).
 
 ---
 
 ## 📌 Notas para Revisores y Colaboradores
 
-* **Punto de partida recomendado:** Revisar `prisma/schema.prisma` para comprender rápidamente todas las entidades del negocio (matrículas, pagos, mensajes y módulos CMS) antes de explorar las vistas.
+* **Punto de partida recomendado:** Revisar `backend/prisma/schema.prisma` para comprender rápidamente todas las entidades del negocio (matrículas, pagos, mensajes y módulos CMS) antes de explorar las vistas y rutas.
 * **Flujo crítico:** Los módulos de `/matricula`, `/pagos-institucional` y su contraparte de aprobación en `/syspanel` representan el núcleo operativo actual del colegio.
-* **Planificación de mejoras:** La estructura modular de componentes y servicios permite escalar fácilmente hacia nuevos módulos académicos (intranet de notas, pensiones recurrentes, pasarela de pagos en línea o roles granulares de usuario).
+* **Gestión de archivos:** Las rutas multimedia (`eventos`, `galeria`, `hero`, `videos`, `matriculaGaleria`) y de pagos eliminan automáticamente los archivos físicos en `backend/uploads/` al actualizar o borrar registros, y disponen de endpoints `/cleanup-orphans` para mantenimiento.
 
 ---
 
-Desarrollado inicialmente por **Luis Alessandro Moran Zurita** para el **Colegio Cayros**.
+Desarrollado inicialmente por **Luis Alessandro Morán Zurita** para el **Colegio Cayros**.
